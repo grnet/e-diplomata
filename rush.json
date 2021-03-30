@@ -389,6 +389,18 @@
    * 3. It's useful to have a centralized inventory of all projects and their important metadata.
    */
   "projects": [
+    {
+      "packageName": "issuer",
+      "projectFolder": "apps/issuer"
+    },
+    {
+      "packageName": "holder",
+      "projectFolder": "apps/holder"
+    },
+    {
+      "packageName": "verifier",
+      "projectFolder": "apps/verifier"
+    }
     // {
     //   /**
     //    * The NPM package name of the project (must match package.json)
