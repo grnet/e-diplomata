@@ -11,6 +11,12 @@
    * "rush my-global-command --help".
    */
   "commands": [
+    {
+      "commandKind": "bulk",
+      "name": "dev",
+      "summary": "Running the `digigov dev` to the three applications",
+      "enableParallelism": true
+    }
     // {
     //   /**
     //    * (Required) Determines the type of custom command.
