@@ -15,7 +15,9 @@
       "commandKind": "bulk",
       "name": "dev",
       "summary": "Running the `digigov dev` to the three applications",
-      "enableParallelism": true
+      "enableParallelism": true,
+      "incremental": true,
+      "watchForChanges": true
     }
     // {
     //   /**
