@@ -400,6 +400,10 @@
     {
       "packageName": "verifier",
       "projectFolder": "apps/verifier"
+    },
+    {
+      "packageName": "ediplomas-blockchain-protocol",
+      "projectFolder": "libs/ediplomas-blockchain-protocol"
     }
     // {
     //   /**
