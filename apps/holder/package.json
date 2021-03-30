@@ -1,0 +1,33 @@
+{
+  "name": "holder",
+  "version": "0.1.0",
+  "description": "My dazzling DigiGOV project.",
+  "author": "GRNET Devs",
+  "private": true,
+  "scripts": {
+    "dev": "digigov dev -p 3000",
+    "build": "digigov build",
+    "start": "digigov start",
+    "export": "digigov export"
+  },
+  "dependencies": {
+    "@digigov/ui": "latest",
+    "@digigov/nextjs": "latest",
+    "@material-ui/core": "^4.9.0",
+    "@material-ui/styles": "^4.9.0",
+    "@material-ui/icons": "^4.5.1",
+    "@material-ui/lab": "^4.0.0-alpha.40",
+    "clsx": "^1.1.0",
+    "i18next": "^19.1.0",
+    "next": "^9.2.1",
+    "react": "16.12.0",
+    "react-dom": "16.12.0",
+    "react-i18next": "^11.3.3"
+  },
+  "devDependencies": {
+    "@digigov/dev": "latest",
+    "@types/react": "16.8.24",
+    "@types/node": "12.12.2",
+    "typescript": "4.0.5"
+  }
+}
