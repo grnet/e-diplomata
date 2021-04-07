@@ -3395,11 +3395,11 @@ packages:
       react-dom: ^16.12.0
     resolution:
       integrity: sha512-SFnjWYo+cFDkTKOqYdc2eGbYjzqY9GZkLoLK0EjpxU9O0i9Cnyhn5tXyuKVvwg22WZ2m1Tb0ZCGXmk8lmVPT7g==
-  /@digigov/auth/0.2.0_react-dom@16.14.0+react@16.14.0:
+  /@digigov/auth/0.2.0_react-dom@16.12.0+react@16.12.0:
     dependencies:
       qs: 6.10.1
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
+      react: 16.12.0
+      react-dom: 16.12.0_react@16.12.0
     dev: false
     peerDependencies:
       react: ^16.12.0
@@ -3446,6 +3446,32 @@ packages:
       express: 4.17.1
       http-proxy-middleware: 1.0.3
       next: 10.0.9_b958e7dd147f90c3340abf309afb59c9
+      next-images: 1.3.0
+      rimraf: 3.0.2
+      typescript: 4.2.3
+      url-loader: 4.1.1
+    dev: false
+    peerDependencies:
+      '@digigov/cli': 0.5.3-beta-1
+      '@types/node': 14.14.9
+      '@types/react': 16.9.56
+      execa: 5.0.0
+      react: '*'
+      react-dom: '*'
+      rimraf: 3.0.2
+      typescript: 4.2.3
+    resolution:
+      integrity: sha512-nqG3KQxTXTQoejkRrKdLairQ72EL2mnRhJxUlVXZt7hsq0eFRcc1t9PLIbHyRTeBai1+MjStaWsWquFMhP8w4A==
+  /@digigov/cli-app/0.3.3-beta-1_eddd3419856f0b8a444bda3e285db910:
+    dependencies:
+      '@digigov/cli': 0.5.3-beta-1
+      '@digigov/cli-build': 0.3.4-beta-1_8152869bc95464a512f18f830f09e09d
+      '@types/node': 14.14.9
+      '@types/react': 16.9.56
+      babel-loader: 8.2.1
+      express: 4.17.1
+      http-proxy-middleware: 1.0.3
+      next: 10.0.9_fb391b034b0763948cb5d5a1d185e967
       next-images: 1.3.0
       rimraf: 3.0.2
       typescript: 4.2.3
@@ -3569,7 +3595,7 @@ packages:
       typescript: '*'
     resolution:
       integrity: sha512-YJIACB4+zyBDWEmksSnuy7cHTNyriHGAhgZ32NZ60oPE6RZuOjGEgfE5VGZOaGobGOc0yPLmW9j/AlwvNHLIQA==
-  /@digigov/cli-lint/0.3.1-dce9221f_f4be503647339cd79639c579ad4e2d48:
+  /@digigov/cli-lint/0.3.1-dce9221f_f7b78cdf2796262c0d1a54c0b1d4b329:
     dependencies:
       '@babel/eslint-parser': 7.13.8_eslint@7.22.0
       '@digigov/cli': 0.5.3-beta-1
@@ -3587,7 +3613,7 @@ packages:
       eslint-plugin-import: 2.20.1_eslint@7.22.0
       eslint-plugin-jest: 24.1.3_eslint@7.22.0+typescript@4.2.3
       eslint-plugin-json: 2.0.1
-      eslint-plugin-mdx: 1.6.8_eslint@7.22.0+react@16.14.0
+      eslint-plugin-mdx: 1.6.8_eslint@7.22.0+react@16.12.0
       eslint-plugin-prettier: 3.1.2_eslint@7.22.0+prettier@2.0.2
       eslint-plugin-promise: 4.2.1
       eslint-plugin-react: 7.18.0_eslint@7.22.0
@@ -3616,6 +3642,34 @@ packages:
       babel-plugin-istanbul: 6.0.0
       enzyme: 3.11.0
       enzyme-adapter-react-16: 1.15.2_4f82faf5e8cab057bc46d4d95079ec42
+      enzyme-to-json: 3.4.3_enzyme@3.11.0
+      jest: 26.6.3
+      jest-cli: 26.6.3
+      typescript: 4.2.3
+    dev: false
+    peerDependencies:
+      '@digigov/cli': 0.5.3-beta-1
+      '@digigov/cli-build': 0.3.4-beta-1
+      '@types/node': 14.14.9
+      '@types/react': 16.9.56
+      react: '*'
+      react-dom: '*'
+      typescript: 4.2.3
+    resolution:
+      integrity: sha512-9Sxp7qpueXu9C7LqqUlVsOiUMZqOhytom9TQ6OetSMXgfExW17fbTg91iNoJid/t3kx/e5usMaQppZAYxg0GFA==
+  /@digigov/cli-test/0.3.1-beta-1_b79a0a58d8f38747971d6ec36766d880:
+    dependencies:
+      '@digigov/cli': 0.5.3-beta-1
+      '@digigov/cli-build': 0.3.4-beta-1_8152869bc95464a512f18f830f09e09d
+      '@types/enzyme': 3.10.8
+      '@types/enzyme-adapter-react-16': 1.0.5
+      '@types/jest': 26.0.15
+      '@types/node': 14.14.9
+      '@types/react': 16.9.56
+      babel-jest: 26.6.3
+      babel-plugin-istanbul: 6.0.0
+      enzyme: 3.11.0
+      enzyme-adapter-react-16: 1.15.2_3302d41cb01481e7edfc8c11c26d98df
       enzyme-to-json: 3.4.3_enzyme@3.11.0
       jest: 26.6.3
       jest-cli: 26.6.3
@@ -3845,15 +3899,15 @@ packages:
       react-dom: ^16.12.0
     resolution:
       integrity: sha512-v1mhBjJB8Cggyj54xocF2eCz8syVz76TutobcJpEUvP46uORj9Te5igJGDXoFMWY4R1PELZqzgLlYaVm1QhTfQ==
-  /@digigov/form/0.3.1_fff47dbf8df3fbe23f564199a063d4a3:
+  /@digigov/form/0.3.1_2869913c77bec845ce84279576fb65df:
     dependencies:
-      '@digigov/ui': 0.4.1_9927b3c065f6acb466335db19dbdd22b
-      '@material-ui/core': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
-      '@material-ui/icons': 4.11.2_0d762b53e6ef0e32f5c62d92bee63937
+      '@digigov/ui': 0.4.1_551f86b1f8b41844d6bacc5ce665104e
+      '@material-ui/core': 4.11.3_5f2ce203283fd70158309f9029215540
+      '@material-ui/icons': 4.11.2_259f4263e9be2933c34cf397433a3019
       clsx: 1.1.1
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
-      react-hook-form: 6.15.5_react@16.14.0
+      react: 16.12.0
+      react-dom: 16.12.0_react@16.12.0
+      react-hook-form: 6.15.5_react@16.12.0
     dev: false
     peerDependencies:
       '@digigov/ui': ^0.0.1-rc.3
@@ -3888,16 +3942,16 @@ packages:
       react-i18next: ^11.3.3
     resolution:
       integrity: sha512-WnoMHGiJ4AYiHzBeq3434HeF3/juEMFilQP+vNl2+OGIpZysTKjVPK3NX4J5XvN0avOO7T0K/PUYaexIPINd1A==
-  /@digigov/nextjs/0.2.4_b566cb9b067296b5cee91fa58df5b199:
+  /@digigov/nextjs/0.2.4_96dbfe1a8862a24a57723b3062b1440c:
     dependencies:
-      '@digigov/ui': 0.4.1_9927b3c065f6acb466335db19dbdd22b
-      '@material-ui/core': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
-      '@material-ui/icons': 4.11.2_0d762b53e6ef0e32f5c62d92bee63937
+      '@digigov/ui': 0.4.1_551f86b1f8b41844d6bacc5ce665104e
+      '@material-ui/core': 4.11.3_5f2ce203283fd70158309f9029215540
+      '@material-ui/icons': 4.11.2_259f4263e9be2933c34cf397433a3019
       clsx: 1.1.1
       i18next: 19.9.2
-      next: 10.0.9_b958e7dd147f90c3340abf309afb59c9
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
+      next: 10.0.9_fb391b034b0763948cb5d5a1d185e967
+      react: 16.12.0
+      react-dom: 16.12.0_react@16.12.0
       react-i18next: 11.8.12_i18next@19.9.2
     dev: false
     peerDependencies:
@@ -3922,26 +3976,6 @@ packages:
       react-dom: 16.12.0_react@16.12.0
       react-qr-reader: 2.2.1_react-dom@16.12.0+react@16.12.0
       react-query: 2.26.4_react-dom@16.12.0+react@16.12.0
-      yup: 0.30.0
-    dev: false
-    peerDependencies:
-      '@material-ui/core': ^4.9.1
-      '@material-ui/icons': ^4.4.3
-      clsx: ^1.1.0
-      react: ^16.12.0
-      react-dom: ^16.12.0
-    resolution:
-      integrity: sha512-iL4igMvta7Y6D+OkdqVJEojT8LwmJL+P5uAIS1A6+ZLqUBQC6W8yflFh2nptu20xml5cmYLsrPM0ob82iryXcA==
-  /@digigov/ui/0.4.1_9927b3c065f6acb466335db19dbdd22b:
-    dependencies:
-      '@material-ui/core': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
-      '@material-ui/icons': 4.11.2_0d762b53e6ef0e32f5c62d92bee63937
-      clsx: 1.1.1
-      google-libphonenumber: 3.2.19
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
-      react-qr-reader: 2.2.1_react-dom@16.14.0+react@16.14.0
-      react-query: 2.26.4_react-dom@16.14.0+react@16.14.0
       yup: 0.30.0
     dev: false
     peerDependencies:
@@ -4204,6 +4238,21 @@ packages:
     optional: true
     resolution:
       integrity: sha512-fU2VtSVlHiF27empSbxi1O2JFdNWZO+2NFHfwO0pxgTep6Xa3uGb+3pVKfLww2l/IBGLNEZl5Xf/++A4wAYDYQ==
+  /@emotion/core/10.1.1_react@16.12.0:
+    dependencies:
+      '@babel/runtime': 7.13.10
+      '@emotion/cache': 10.0.29
+      '@emotion/css': 10.0.27
+      '@emotion/serialize': 0.11.16
+      '@emotion/sheet': 0.9.4
+      '@emotion/utils': 0.11.3
+      react: 16.12.0
+    dev: false
+    optional: true
+    peerDependencies:
+      react: '>=16.3.0'
+    resolution:
+      integrity: sha512-ZMLG6qpXR8x031NXD8HJqugy/AZSkAuMxxqB46pmAR7ze47MhNJ56cdoX243QPZdGctrdfo+s08yZTiwaUcRKA==
   /@emotion/core/10.1.1_react@16.14.0:
     dependencies:
       '@babel/runtime': 7.13.10
@@ -4280,12 +4329,40 @@ packages:
       react: '>=16.3.0'
     resolution:
       integrity: sha512-wTOE1NcXmqMWlyrtwdkqg87Mu6Rj1MaukEoEmEkHirO5IoHDJ8LgCQL4MjJODgxWxXibGR3opGp1p7YvkNEdXQ==
+  /@emotion/styled-base/10.0.31_985e4baae7a0e55ff6957f2fbc77beb7:
+    dependencies:
+      '@babel/runtime': 7.13.10
+      '@emotion/core': 10.1.1_react@16.12.0
+      '@emotion/is-prop-valid': 0.8.8
+      '@emotion/serialize': 0.11.16
+      '@emotion/utils': 0.11.3
+      react: 16.12.0
+    dev: false
+    optional: true
+    peerDependencies:
+      '@emotion/core': ^10.0.28
+      react: '>=16.3.0'
+    resolution:
+      integrity: sha512-wTOE1NcXmqMWlyrtwdkqg87Mu6Rj1MaukEoEmEkHirO5IoHDJ8LgCQL4MjJODgxWxXibGR3opGp1p7YvkNEdXQ==
   /@emotion/styled/10.0.27_5f216699bc8c1f24088b3bf77b7cbbdf:
     dependencies:
       '@emotion/core': 10.1.1_react@16.14.0
       '@emotion/styled-base': 10.0.31_5f216699bc8c1f24088b3bf77b7cbbdf
       babel-plugin-emotion: 10.2.2
       react: 16.14.0
+    dev: false
+    optional: true
+    peerDependencies:
+      '@emotion/core': ^10.0.27
+      react: '>=16.3.0'
+    resolution:
+      integrity: sha512-iK/8Sh7+NLJzyp9a5+vIQIXTYxfT4yB/OJbjzQanB2RZpvmzBQOHZWhpAMZWYEKRNNbsD6WfBw5sVWkb6WzS/Q==
+  /@emotion/styled/10.0.27_985e4baae7a0e55ff6957f2fbc77beb7:
+    dependencies:
+      '@emotion/core': 10.1.1_react@16.12.0
+      '@emotion/styled-base': 10.0.31_985e4baae7a0e55ff6957f2fbc77beb7
+      babel-plugin-emotion: 10.2.2
+      react: 16.12.0
     dev: false
     optional: true
     peerDependencies:
@@ -5931,23 +6008,23 @@ packages:
         optional: true
     resolution:
       integrity: sha512-Adt40rGW6Uds+cAyk3pVgcErpzU/qxc7KBR94jFHBYretU4AtWZltYcNsbeMn9tXL86jjVL1kuGcIHsgLgFGRw==
-  /@material-ui/core/4.11.3_9f48369ed4321469d5d721870f4dbdbc:
+  /@material-ui/core/4.11.3_5f2ce203283fd70158309f9029215540:
     dependencies:
       '@babel/runtime': 7.13.10
-      '@material-ui/styles': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
-      '@material-ui/system': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
+      '@material-ui/styles': 4.11.3_5f2ce203283fd70158309f9029215540
+      '@material-ui/system': 4.11.3_5f2ce203283fd70158309f9029215540
       '@material-ui/types': 5.1.0_@types+react@16.9.56
-      '@material-ui/utils': 4.11.2_react-dom@16.14.0+react@16.14.0
+      '@material-ui/utils': 4.11.2_react-dom@16.12.0+react@16.12.0
       '@types/react': 16.9.56
       '@types/react-transition-group': 4.4.1
       clsx: 1.1.1
       hoist-non-react-statics: 3.3.2
       popper.js: 1.16.1-lts
       prop-types: 15.7.2
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
+      react: 16.12.0
+      react-dom: 16.12.0_react@16.12.0
       react-is: 17.0.2
-      react-transition-group: 4.4.1_react-dom@16.14.0+react@16.14.0
+      react-transition-group: 4.4.1_react-dom@16.12.0+react@16.12.0
     dev: false
     engines:
       node: '>=8.0.0'
@@ -5960,13 +6037,13 @@ packages:
         optional: true
     resolution:
       integrity: sha512-Adt40rGW6Uds+cAyk3pVgcErpzU/qxc7KBR94jFHBYretU4AtWZltYcNsbeMn9tXL86jjVL1kuGcIHsgLgFGRw==
-  /@material-ui/icons/4.11.2_0d762b53e6ef0e32f5c62d92bee63937:
+  /@material-ui/icons/4.11.2_259f4263e9be2933c34cf397433a3019:
     dependencies:
       '@babel/runtime': 7.13.10
-      '@material-ui/core': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
+      '@material-ui/core': 4.11.3_5f2ce203283fd70158309f9029215540
       '@types/react': 16.9.56
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
+      react: 16.12.0
+      react-dom: 16.12.0_react@16.12.0
     dev: false
     engines:
       node: '>=8.0.0'
@@ -6107,12 +6184,12 @@ packages:
         optional: true
     resolution:
       integrity: sha512-HzVzCG+PpgUGMUYEJ2rTEmQYeonGh41BYfILNFb/1ueqma+p1meSdu4RX6NjxYBMhf7k+jgfHFTTz+L1SXL/Zg==
-  /@material-ui/styles/4.11.3_9f48369ed4321469d5d721870f4dbdbc:
+  /@material-ui/styles/4.11.3_5f2ce203283fd70158309f9029215540:
     dependencies:
       '@babel/runtime': 7.13.10
       '@emotion/hash': 0.8.0
       '@material-ui/types': 5.1.0_@types+react@16.9.56
-      '@material-ui/utils': 4.11.2_react-dom@16.14.0+react@16.14.0
+      '@material-ui/utils': 4.11.2_react-dom@16.12.0+react@16.12.0
       '@types/react': 16.9.56
       clsx: 1.1.1
       csstype: 2.6.16
@@ -6126,8 +6203,8 @@ packages:
       jss-plugin-rule-value-function: 10.6.0
       jss-plugin-vendor-prefixer: 10.6.0
       prop-types: 15.7.2
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
+      react: 16.12.0
+      react-dom: 16.12.0_react@16.12.0
     dev: false
     engines:
       node: '>=8.0.0'
@@ -6161,15 +6238,15 @@ packages:
         optional: true
     resolution:
       integrity: sha512-SY7otguNGol41Mu2Sg6KbBP1ZRFIbFLHGK81y4KYbsV2yIcaEPOmsCK6zwWlp+2yTV3J/VwT6oSBARtGIVdXPw==
-  /@material-ui/system/4.11.3_9f48369ed4321469d5d721870f4dbdbc:
+  /@material-ui/system/4.11.3_5f2ce203283fd70158309f9029215540:
     dependencies:
       '@babel/runtime': 7.13.10
-      '@material-ui/utils': 4.11.2_react-dom@16.14.0+react@16.14.0
+      '@material-ui/utils': 4.11.2_react-dom@16.12.0+react@16.12.0
       '@types/react': 16.9.56
       csstype: 2.6.16
       prop-types: 15.7.2
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
+      react: 16.12.0
+      react-dom: 16.12.0_react@16.12.0
     dev: false
     engines:
       node: '>=8.0.0'
@@ -6232,21 +6309,6 @@ packages:
       prop-types: 15.7.2
       react: 16.12.0
       react-dom: 16.12.0_react@16.12.0
-      react-is: 17.0.2
-    dev: false
-    engines:
-      node: '>=8.0.0'
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0
-      react-dom: ^16.8.0 || ^17.0.0
-    resolution:
-      integrity: sha512-Uul8w38u+PICe2Fg2pDKCaIG7kOyhowZ9vjiC1FsVwPABTW8vPPKfF6OvxRq3IiBaI1faOJmgdvMG7rMJARBhA==
-  /@material-ui/utils/4.11.2_react-dom@16.14.0+react@16.14.0:
-    dependencies:
-      '@babel/runtime': 7.13.10
-      prop-types: 15.7.2
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
       react-is: 17.0.2
     dev: false
     engines:
@@ -6338,6 +6400,27 @@ packages:
       css.escape: 1.5.1
       data-uri-to-buffer: 3.0.1
       platform: 1.3.6
+      shell-quote: 1.7.2
+      source-map: 0.8.0-beta.0
+      stacktrace-parser: 0.1.10
+      strip-ansi: 6.0.0
+    dev: false
+    peerDependencies:
+      react: ^16.9.0 || ^17
+      react-dom: ^16.9.0 || ^17
+    resolution:
+      integrity: sha512-JsSh2Y004MEuPYqBD9eTl4PVZIjSzSy2GcD7MrW/gQcExYNpeMIJAbh8/OcyO1t+OnQeIHF5s/xTMsDHBGNcew==
+  /@next/react-dev-overlay/10.0.9_react-dom@16.12.0+react@16.12.0:
+    dependencies:
+      '@babel/code-frame': 7.12.11
+      anser: 1.4.9
+      chalk: 4.0.0
+      classnames: 2.2.6
+      css.escape: 1.5.1
+      data-uri-to-buffer: 3.0.1
+      platform: 1.3.6
+      react: 16.12.0
+      react-dom: 16.12.0_react@16.12.0
       shell-quote: 1.7.2
       source-map: 0.8.0-beta.0
       stacktrace-parser: 0.1.10
@@ -11960,6 +12043,27 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-TQXTYFVVwwluWSFis6K2XKxgrD22jEv0FTuLCQI+OjH7rn93+iY0fSSFM5lrSxFY+H1+B0/cvvlamr3UsBivdQ==
+  /enzyme-adapter-react-16/1.15.2_3302d41cb01481e7edfc8c11c26d98df:
+    dependencies:
+      enzyme: 3.11.0
+      enzyme-adapter-utils: 1.14.0_react@16.12.0
+      enzyme-shallow-equal: 1.0.4
+      has: 1.0.3
+      object.assign: 4.1.2
+      object.values: 1.1.3
+      prop-types: 15.7.2
+      react: 16.12.0
+      react-dom: 16.12.0_react@16.12.0
+      react-is: 16.13.1
+      react-test-renderer: 16.14.0_react@16.12.0
+      semver: 5.7.1
+    dev: false
+    peerDependencies:
+      enzyme: ^3.0.0
+      react: ^16.0.0-0
+      react-dom: ^16.0.0-0
+    resolution:
+      integrity: sha512-SkvDrb8xU3lSxID8Qic9rB8pvevDbLybxPK6D/vW7PrT0s2Cl/zJYuXvsd1EBTz0q4o3iqG3FJhpYz3nUNpM2Q==
   /enzyme-adapter-react-16/1.15.2_4f82faf5e8cab057bc46d4d95079ec42:
     dependencies:
       enzyme: 3.11.0
@@ -12711,6 +12815,28 @@ packages:
       eslint: '>=5.0.0'
     resolution:
       integrity: sha512-LZ9TZG6kfoSftBKR8Ss7lnWaI/Wm2DWYxtpGBRtGaJ+nmPGCyafPKvNBmHT729MgN8UBAJ2ueURD2itTFnh+Kw==
+  /eslint-plugin-mdx/1.6.8_eslint@7.22.0+react@16.12.0:
+    dependencies:
+      cosmiconfig: 6.0.0
+      eslint: 7.22.0
+      eslint-mdx: 1.11.1_eslint@7.22.0
+      eslint-plugin-react: 7.23.1_eslint@7.22.0
+      remark-mdx: 1.6.22
+      remark-parse: 7.0.2
+      remark-stringify: 7.0.4
+      tslib: 1.14.1
+      unified: 8.4.2
+      vfile: 4.2.1
+    dev: false
+    engines:
+      node: '>=7.0.0'
+    optionalDependencies:
+      rebass: 4.0.7_react@16.12.0
+    peerDependencies:
+      eslint: '>=5.0.0'
+      react: '*'
+    resolution:
+      integrity: sha512-r/MEhyl2YAs5A0Lmo6r14t4/ko4UTN8W8fuk0CXJeXNTqPGLcI+1quQOIMSLUZbRHaNU4xQ0K7K7kuofmJRRbA==
   /eslint-plugin-mdx/1.6.8_eslint@7.22.0+react@16.14.0:
     dependencies:
       cosmiconfig: 6.0.0
@@ -18645,6 +18771,67 @@ packages:
         optional: true
     resolution:
       integrity: sha512-HyoVjYydcM6LaFAUOHSxVQCcKOsIimVO/IKXCuWUu1rr6DDgXbWNg/8ckH084qD46MOYlLzjViiZ3KCmNQL4Cw==
+  /next/10.0.9_fb391b034b0763948cb5d5a1d185e967:
+    dependencies:
+      '@babel/runtime': 7.12.5
+      '@hapi/accept': 5.0.1
+      '@next/env': 10.0.9
+      '@next/polyfill-module': 10.0.9
+      '@next/react-dev-overlay': 10.0.9_react-dom@16.12.0+react@16.12.0
+      '@next/react-refresh-utils': 10.0.9_react-refresh@0.8.3
+      '@opentelemetry/api': 0.14.0
+      ast-types: 0.13.2
+      browserslist: 4.16.1
+      buffer: 5.6.0
+      caniuse-lite: 1.0.30001204
+      chalk: 2.4.2
+      chokidar: 3.5.1
+      crypto-browserify: 3.12.0
+      cssnano-simple: 1.2.2
+      etag: 1.8.1
+      find-cache-dir: 3.3.1
+      get-orientation: 1.1.2
+      jest-worker: 24.9.0
+      native-url: 0.3.4
+      node-fetch: 2.6.1
+      node-html-parser: 1.4.9
+      node-libs-browser: 2.2.1
+      p-limit: 3.1.0
+      path-browserify: 1.0.1
+      pnp-webpack-plugin: 1.6.4_typescript@4.2.3
+      postcss: 8.1.7
+      process: 0.11.10
+      prop-types: 15.7.2
+      raw-body: 2.4.1
+      react: 16.12.0
+      react-dom: 16.12.0_react@16.12.0
+      react-is: 16.13.1
+      react-refresh: 0.8.3
+      stream-browserify: 3.0.0
+      styled-jsx: 3.3.2_react@16.12.0
+      use-subscription: 1.5.1_react@16.12.0
+      vm-browserify: 1.1.2
+      watchpack: 2.1.1
+    dev: false
+    engines:
+      node: '>=10.13.0'
+    hasBin: true
+    peerDependencies:
+      fibers: '>= 3.1.0'
+      node-sass: ^4.0.0 || ^5.0.0
+      react: ^16.6.0 || ^17
+      react-dom: ^16.6.0 || ^17
+      sass: ^1.3.0
+      typescript: '*'
+    peerDependenciesMeta:
+      fibers:
+        optional: true
+      node-sass:
+        optional: true
+      sass:
+        optional: true
+    resolution:
+      integrity: sha512-HyoVjYydcM6LaFAUOHSxVQCcKOsIimVO/IKXCuWUu1rr6DDgXbWNg/8ckH084qD46MOYlLzjViiZ3KCmNQL4Cw==
   /next/9.5.5_4d8b07fd1d96df7e8e35b148dafcca25:
     dependencies:
       '@ampproject/toolbox-optimizer': 2.6.0
@@ -21330,9 +21517,9 @@ packages:
       react: ^16.8.0 || ^17
     resolution:
       integrity: sha512-so2jEPYKdVk1olMo+HQ9D9n1hVzaPPFO4wsjgSeZ964R7q7CHsYRbVF0PGBi83FcycA5482WHflasdwLIUVENg==
-  /react-hook-form/6.15.5_react@16.14.0:
+  /react-hook-form/6.15.5_react@16.12.0:
     dependencies:
-      react: 16.14.0
+      react: 16.12.0
     dev: false
     peerDependencies:
       react: ^16.8.0 || ^17
@@ -21412,41 +21599,11 @@ packages:
       react-dom: ~16
     resolution:
       integrity: sha512-EL5JEj53u2yAOgtpAKAVBzD/SiKWn0Bl7AZy6ZrSf1lub7xHwtaXe6XSx36Wbhl1VMGmvmrwYMRwO1aSCT2fwA==
-  /react-qr-reader/2.2.1_react-dom@16.14.0+react@16.14.0:
-    dependencies:
-      jsqr: 1.3.1
-      prop-types: 15.7.2
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
-      webrtc-adapter: 7.7.1
-    dev: false
-    peerDependencies:
-      react: ~16
-      react-dom: ~16
-    resolution:
-      integrity: sha512-EL5JEj53u2yAOgtpAKAVBzD/SiKWn0Bl7AZy6ZrSf1lub7xHwtaXe6XSx36Wbhl1VMGmvmrwYMRwO1aSCT2fwA==
   /react-query/2.26.4_react-dom@16.12.0+react@16.12.0:
     dependencies:
       '@babel/runtime': 7.13.10
       react: 16.12.0
       react-dom: 16.12.0_react@16.12.0
-    dev: false
-    peerDependencies:
-      react: ^16.8.0 || ^17.0.0
-      react-dom: '*'
-      react-native: '*'
-    peerDependenciesMeta:
-      react-dom:
-        optional: true
-      react-native:
-        optional: true
-    resolution:
-      integrity: sha512-sXGG0gh1ah11AcfptYOCRpGDoYMnssq6riQUpQaLSM2EOodVkexp3zNLk1MFDgfRGuXQst40Tnu17oNwni66aA==
-  /react-query/2.26.4_react-dom@16.14.0+react@16.14.0:
-    dependencies:
-      '@babel/runtime': 7.13.10
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
     dev: false
     peerDependencies:
       react: ^16.8.0 || ^17.0.0
@@ -21607,20 +21764,6 @@ packages:
       prop-types: 15.7.2
       react: 16.12.0
       react-dom: 16.12.0_react@16.12.0
-    dev: false
-    peerDependencies:
-      react: '>=16.6.0'
-      react-dom: '>=16.6.0'
-    resolution:
-      integrity: sha512-Djqr7OQ2aPUiYurhPalTrVy9ddmFCCzwhqQmtN+J3+3DzLO209Fdr70QrN8Z3DsglWql6iY1lDWAfpFiBtuKGw==
-  /react-transition-group/4.4.1_react-dom@16.14.0+react@16.14.0:
-    dependencies:
-      '@babel/runtime': 7.13.10
-      dom-helpers: 5.2.0
-      loose-envify: 1.4.0
-      prop-types: 15.7.2
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
     dev: false
     peerDependencies:
       react: '>=16.6.0'
@@ -21839,6 +21982,15 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-v1SEYUOXXdbBZK8ZuNgO4TBjamPsiSgcFr0aP+tEKpQZK8vooEUqV6nm6Cv502mX4NF2EfsnVqtNAHG+/6Ur1Q==
+  /rebass/4.0.7_react@16.12.0:
+    dependencies:
+      reflexbox: 4.0.6_react@16.12.0
+    dev: false
+    optional: true
+    peerDependencies:
+      react: '*'
+    resolution:
+      integrity: sha512-GJot6j6Qcr7jk1QIgf9qBoud75CGRpN8pGcEo98TSp4KNSWV01ZLvGwFKGI35oEBuNs+lpEd3+pnwkQUTSFytg==
   /rebass/4.0.7_react@16.14.0:
     dependencies:
       reflexbox: 4.0.6_react@16.14.0
@@ -21901,6 +22053,20 @@ packages:
     dev: false
     resolution:
       integrity: sha1-dJrO7H8/34tj+SegSAnpDFwLNGA=
+  /reflexbox/4.0.6_react@16.12.0:
+    dependencies:
+      '@emotion/core': 10.1.1_react@16.12.0
+      '@emotion/styled': 10.0.27_985e4baae7a0e55ff6957f2fbc77beb7
+      '@styled-system/css': 5.1.5
+      '@styled-system/should-forward-prop': 5.1.5
+      react: 16.12.0
+      styled-system: 5.1.5
+    dev: false
+    optional: true
+    peerDependencies:
+      react: ^16.8.6
+    resolution:
+      integrity: sha512-UNUL4YoJEXAPjRKHuty1tuOk+LV1nDJ2KYViDcH7lYm5yU3AQ+EKNXxPU3E14bQNK/pE09b1hYl+ZKdA94tWLQ==
   /reflexbox/4.0.6_react@16.14.0:
     dependencies:
       '@emotion/core': 10.1.1_react@16.14.0
@@ -23737,6 +23903,22 @@ packages:
       react: 15.x.x || 16.x.x || 17.x.x
     resolution:
       integrity: sha512-daAkGd5mqhbBhLd6jYAjYBa9LpxYCzsgo/f6qzPdFxVB8yoGbhxvzQgkC0pfmCVvW3JuAEBn0UzFLBfkHVZG1g==
+  /styled-jsx/3.3.2_react@16.12.0:
+    dependencies:
+      '@babel/types': 7.8.3
+      babel-plugin-syntax-jsx: 6.18.0
+      convert-source-map: 1.7.0
+      loader-utils: 1.2.3
+      react: 16.12.0
+      source-map: 0.7.3
+      string-hash: 1.1.3
+      stylis: 3.5.4
+      stylis-rule-sheet: 0.0.10_stylis@3.5.4
+    dev: false
+    peerDependencies:
+      react: 15.x.x || 16.x.x || 17.x.x
+    resolution:
+      integrity: sha512-daAkGd5mqhbBhLd6jYAjYBa9LpxYCzsgo/f6qzPdFxVB8yoGbhxvzQgkC0pfmCVvW3JuAEBn0UzFLBfkHVZG1g==
   /styled-jsx/3.3.2_react@16.14.0:
     dependencies:
       '@babel/types': 7.8.3
@@ -25143,6 +25325,15 @@ packages:
       react: ^16.8.0 || ^17.0.0
     resolution:
       integrity: sha512-Xv2a1P/yReAjAbhylMfFplFKj9GssgTwN7RlcTxBujFQcloStWNDQdc4g4NRWH9xS4i/FDk04vQBptAXoF3VcA==
+  /use-subscription/1.5.1_react@16.12.0:
+    dependencies:
+      object-assign: 4.1.1
+      react: 16.12.0
+    dev: false
+    peerDependencies:
+      react: ^16.8.0 || ^17.0.0
+    resolution:
+      integrity: sha512-Xv2a1P/yReAjAbhylMfFplFKj9GssgTwN7RlcTxBujFQcloStWNDQdc4g4NRWH9xS4i/FDk04vQBptAXoF3VcA==
   /use-subscription/1.5.1_react@16.14.0:
     dependencies:
       object-assign: 4.1.1
@@ -26158,7 +26349,7 @@ packages:
     dev: false
     name: '@rush-temp/blockchain'
     resolution:
-      integrity: sha512-/Nf5sTzbfyAhXKbCvxLYjlM9Eqh/IBDyPDRhCA3MiG5E1ZGPOofHkOZnFM/8ukQAXKipy0etJ4Xja+kOAOOJbg==
+      integrity: sha512-Eb0qNRu1q2sc1mNCnUbJnngNu8jmoDxHjIQl///+ybn8JCDMp/69ZzvISxt743Dch9onSMaCAvK/Uh8Zrg0DcA==
       tarball: file:projects/blockchain.tgz
     version: 0.0.0
   file:projects/holder.tgz:
@@ -26212,23 +26403,23 @@ packages:
     version: 0.0.0
   file:projects/issuer.tgz_096efc5cae48682607b79f4bb8a7f94f:
     dependencies:
-      '@digigov/auth': 0.2.0_react-dom@16.14.0+react@16.14.0
+      '@digigov/auth': 0.2.0_react-dom@16.12.0+react@16.12.0
       '@digigov/cli': 0.5.3-beta-1
-      '@digigov/cli-app': 0.3.3-beta-1_d233c81561f2c4f8c1498cd8f877b606
+      '@digigov/cli-app': 0.3.3-beta-1_eddd3419856f0b8a444bda3e285db910
       '@digigov/cli-build': 0.3.4-beta-1_8152869bc95464a512f18f830f09e09d
-      '@digigov/cli-lint': 0.3.1-dce9221f_f4be503647339cd79639c579ad4e2d48
-      '@digigov/cli-test': 0.3.1-beta-1_603e222e08030e3a837a02252079232b
-      '@digigov/form': 0.3.1_fff47dbf8df3fbe23f564199a063d4a3
-      '@digigov/nextjs': 0.2.4_b566cb9b067296b5cee91fa58df5b199
-      '@digigov/ui': 0.4.1_9927b3c065f6acb466335db19dbdd22b
-      '@material-ui/core': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
-      '@material-ui/icons': 4.11.2_0d762b53e6ef0e32f5c62d92bee63937
+      '@digigov/cli-lint': 0.3.1-dce9221f_f7b78cdf2796262c0d1a54c0b1d4b329
+      '@digigov/cli-test': 0.3.1-beta-1_b79a0a58d8f38747971d6ec36766d880
+      '@digigov/form': 0.3.1_2869913c77bec845ce84279576fb65df
+      '@digigov/nextjs': 0.2.4_96dbfe1a8862a24a57723b3062b1440c
+      '@digigov/ui': 0.4.1_551f86b1f8b41844d6bacc5ce665104e
+      '@material-ui/core': 4.11.3_5f2ce203283fd70158309f9029215540
+      '@material-ui/icons': 4.11.2_259f4263e9be2933c34cf397433a3019
       '@types/node': 14.14.9
       '@types/react': 16.9.56
       clsx: 1.1.1
-      next: 10.0.9_b958e7dd147f90c3340abf309afb59c9
-      react: 16.14.0
-      react-dom: 16.14.0_react@16.14.0
+      next: 10.0.9_fb391b034b0763948cb5d5a1d185e967
+      react: 16.12.0
+      react-dom: 16.12.0_react@16.12.0
       typescript: 4.2.3
     dev: false
     id: file:projects/issuer.tgz
@@ -26238,7 +26429,7 @@ packages:
       react-i18next: '*'
       rimraf: '*'
     resolution:
-      integrity: sha512-5CzLZk0WjEfhp6lm2ycaC7j7SEeM0QkEtZjbGfx7dbQEdnMe/v6zL3zzacAgC1mXjelEQPbtATBernwi8egDgA==
+      integrity: sha512-JcP4PZwu+pQrxxJ21HYtHNgqlYTpGSFlWzQaCEK3st2uU7qIn5SGYCPwwsiDlVej3XhVQa0GpJHNCqGGB1KXBw==
       tarball: file:projects/issuer.tgz
     version: 0.0.0
   file:projects/verifier.tgz:
