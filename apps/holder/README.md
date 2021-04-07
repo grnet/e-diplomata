@@ -1,6 +1,6 @@
-# holder
+# issuer
 
-> My dazzling DigiGOV project.
+> My phenomenal DigiGOV project.
 
 ## Build Setup
 

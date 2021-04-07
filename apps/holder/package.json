@@ -1,11 +1,11 @@
 {
   "name": "holder",
   "version": "0.1.0",
-  "description": "My dazzling DigiGOV project.",
+  "description": "My phenomenal DigiGOV project.",
   "author": "GRNET Devs",
   "private": true,
   "scripts": {
-    "dev": "digigov dev -p 3000",
+    "dev": "digigov dev -p 3001",
     "build": "digigov build",
     "start": "digigov start",
     "export": "digigov export"
@@ -26,8 +26,8 @@
   },
   "devDependencies": {
     "@digigov/dev": "latest",
+    "@types/node": "~14.14.37",
     "@types/react": "16.8.24",
-    "@types/node": "12.12.2",
     "rimraf": "3.0.2",
     "typescript": "4.0.5"
   }

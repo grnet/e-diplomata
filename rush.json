@@ -391,19 +391,28 @@
   "projects": [
     {
       "packageName": "issuer",
-      "projectFolder": "apps/issuer"
+      "projectFolder": "apps/issuer",
+      "shouldPublish": false
     },
     {
       "packageName": "holder",
-      "projectFolder": "apps/holder"
+      "projectFolder": "apps/holder",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "issuer-server",
+      "projectFolder": "servers/issuer-server",
+      "shouldPublish": false
     },
     {
       "packageName": "verifier",
-      "projectFolder": "apps/verifier"
+      "projectFolder": "apps/verifier",
+      "shouldPublish": false
     },
     {
-      "packageName": "ediplomas-blockchain-protocol",
-      "projectFolder": "libs/ediplomas-blockchain-protocol"
+      "packageName": "@diplomas/blockchain",
+      "projectFolder": "libs/blockchain",
+      "shouldPublish": true
     }
     // {
     //   /**
