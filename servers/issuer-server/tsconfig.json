@@ -1,0 +1,19 @@
+{
+  "extends": "@digigov/cli-build/tsconfig.base",
+  "include": [
+    "pages"
+  ],
+  "exclude": [
+    "node_modules",
+    ".next"
+  ],
+  "compilerOptions": {
+    "skipLibCheck": true,
+    "strict": false,
+    "noEmit": true,
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "jsx": "preserve"
+  }
+}

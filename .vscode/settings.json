@@ -1,0 +1,10 @@
+{
+  "files.exclude": {
+  },
+  "eslint.format.enable": true,
+  "eslint.trace.server": "verbose",
+  "prettier.enable": false,
+  "eslint.debug": true,
+  "eslint.lintTask.enable": true,
+  "restructuredtext.languageServer.disabled": true
+}

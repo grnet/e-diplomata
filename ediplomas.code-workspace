@@ -1,0 +1,42 @@
+{
+  "folders": [
+    {
+      "path": "apps/holder",
+      "name": "holder-app"
+    },
+    {
+      "path": "apps/issuer",
+      "name": "issuer-app"
+    },
+    {
+      "path": "apps/verifier",
+      "name": "verifier-app"
+    },
+    {
+      "path": "libs/blockchain",
+      "name": "blockchain-lib"
+    },
+    {
+      "path": "servers/holder",
+      "name": "holder-server"
+    }
+  ],
+  "settings": {
+    "eslint.nodePath": "common/temp/node_modules",
+    "eslint.workingDirectories": [
+      {
+        "directory": "apps/issuer",
+        "changeProcessCWD": true
+      },{
+        "directory": "apps/verifier",
+        "changeProcessCWD": true
+      }
+    ],
+    "eslint.format.enable": true,
+    "eslint.codeActionsOnSave.mode": "all",
+    "eslint.lintTask.enable": true,
+    "editor.codeActionsOnSave": {
+      "source.fixAll": true,
+    }
+  }
+}
