@@ -3,7 +3,7 @@
   "version": "0.2.7",
   "private": true,
   "scripts": {
-    "dev": "node ganache.js & digigov app dev -p 4000",
+    "dev": "digigov app dev -p 4000",
     "build": "digigov app build",
     "start": "digigov app start",
     "lint": "digigov lint",
