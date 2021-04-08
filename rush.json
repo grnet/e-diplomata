@@ -395,18 +395,8 @@
       "shouldPublish": false
     },
     {
-      "packageName": "holder",
-      "projectFolder": "apps/holder",
-      "shouldPublish": false
-    },
-    {
       "packageName": "issuer-server",
       "projectFolder": "servers/issuer-server",
-      "shouldPublish": false
-    },
-    {
-      "packageName": "verifier",
-      "projectFolder": "apps/verifier",
       "shouldPublish": false
     },
     {
