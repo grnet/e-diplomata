@@ -62,22 +62,22 @@ export interface PublishAwardOutputInterface {
     the variable sawd is the one defined in d4.2
 */
 export interface PublishRequestInputInterface {
-  sawd: string,
-  VerifKeyPart1: string,
-  VerifKeyPart2: string,
-  VerifKeyPart3: string,
-  VerifKeyPart4: string,
+  sawd: string;
+  VerifKeyPart1: string;
+  VerifKeyPart2: string;
+  VerifKeyPart3: string;
+  VerifKeyPart4: string;
   //i think i should remove this one veriEth
 }
 
 export interface PublishAckInputInterface {
-  sprf: string,
-  eI: string,
+  sprf: string;
+  eI: string;
 }
 
 export interface PublishFailInputInterface {
-  sprf: string,
-  eI: string,
+  sprf: string;
+  eI: string;
 }
 
 const deployContract = async (): Promise<DeployContractInterface> => {
@@ -155,7 +155,7 @@ const publishProof = async (inputProof: PublishProofInputInterface)
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
-  //Call award function
+  //Call proof function
   let conInstancePr = new Contract(
     inputProof.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
   );
@@ -193,7 +193,7 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
-  //Call award function
+  //Call request function
   let conInstanceReq = new Contract(
     smartContractHolderVerifierService, CERTIFICATE_ABI, myaccount
   );
@@ -238,7 +238,7 @@ const publishAck = async (inputAck: PublishAckInputInterface)
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
-  //Call award function
+  //Call ack function
   let conInstanceAck = new Contract(
     smartContractHolderVerifierService, CERTIFICATE_ABI, myaccount
   );
@@ -278,7 +278,7 @@ const publishFail = async (inputFail: PublishFailInputInterface)
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
-  //Call award function
+  //Call fail function
   let conInstanceFail = new Contract(
     smartContractHolderVerifierService, CERTIFICATE_ABI, myaccount
   );
