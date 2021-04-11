@@ -62,7 +62,7 @@ export interface PublishAwardOutputInterface {
     the variable sawd is the one defined in d4.2
 */
 export interface PublishRequestInputInterface {
-  sawd: string;
+  sAwd: string;
   VerifKeyPart1: string;
   VerifKeyPart2: string;
   VerifKeyPart3: string;
@@ -71,13 +71,12 @@ export interface PublishRequestInputInterface {
 }
 
 export interface PublishAckInputInterface {
-  sprf: string;
+  sPrf: string;
   eI: string;
 }
 
 export interface PublishFailInputInterface {
-  sprf: string;
-  eI: string;
+  sPrf: string;
 }
 
 const deployContract = async (): Promise<DeployContractInterface> => {
@@ -200,7 +199,7 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
   //estimateGas
   let gasPrice = utils.parseUnits('10', "gwei").toNumber();
   let gas = await conInstanceReq.estimateGas.request(
-    inputRequest.sawd,
+    inputRequest.sAwd,
     inputRequest.VerifKeyPart1,
     inputRequest.VerifKeyPart2,
     inputRequest.VerifKeyPart3,
@@ -214,7 +213,7 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
     //from: myaccount.address //gia infura
   }
   let tx = await conInstanceReq.proof(
-    inputRequest.sawd,
+    inputRequest.sAwd,
     inputRequest.VerifKeyPart1,
     inputRequest.VerifKeyPart2,
     inputRequest.VerifKeyPart3,
@@ -245,7 +244,7 @@ const publishAck = async (inputAck: PublishAckInputInterface)
   //estimateGas
   let gasPrice = utils.parseUnits('10', "gwei").toNumber();
   let gas = await conInstanceAck.estimateGas.ack(
-    inputAck.sprf,
+    inputAck.sPrf,
     inputAck.eI
   );
   console.log(gasPrice);
@@ -257,7 +256,7 @@ const publishAck = async (inputAck: PublishAckInputInterface)
     //from: myaccount.address //gia infura
   }
   let tx = await conInstanceAck.ack(
-    inputAck.sprf,
+    inputAck.sPrf,
     inputAck.eI,
     options
   );
@@ -284,9 +283,8 @@ const publishFail = async (inputFail: PublishFailInputInterface)
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', "gwei").toNumber();
-  let gas = await conInstanceFail.estimateGas.ack(
-    inputFail.sprf,
-    inputFail.eI
+  let gas = await conInstanceFail.estimateGas.fail(
+    inputFail.sPrf
   );
   console.log(gasPrice);
   let options = {
@@ -297,8 +295,7 @@ const publishFail = async (inputFail: PublishFailInputInterface)
     //from: myaccount.address //gia infura
   }
   let tx = await conInstanceFail.fail(
-    inputFail.sprf,
-    inputFail.eI,
+    inputFail.sPrf,
     options
   );
   // wait for the transaction to be mined
