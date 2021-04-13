@@ -1,103 +1,37 @@
-# TSDX User Guide
+# Blockchain Library
 
-Congrats! You just saved yourself hours of work by bootstrapping this project with TSDX. Let’s get you oriented with what’s here and how to use it.
+Typescript library for executing functions of a smart contract published in Ethereum blockchain network. The code structure of the smart contract should be like the smart contract in the file 'Certific.sol', contained in this project. The library uses ['ether.js']('https://github.com/ethers-io/ethers.js') to communicate with Ethereum blockchain. The methods of the smart contract are implemented for the Diplomata Protocol, so one should refer to the description of the protocol for more detailed explanation of the input parameters in the functions.
 
-> This TSDX setup is meant for developing libraries (not apps!) that can be published to NPM. If you’re looking to build a Node app, you could use `ts-node-dev`, plain `ts-node`, or simple `tsc`.
+## Methods
+----------
+The methods deployContract, publishAward, publishProof are used by the Issuer service and the methods publishRequest, PublishAck, PublishFail are used by the Holder and Verifier service.
 
-> If you’re new to TypeScript, checkout [this handy cheatsheet](https://devhints.io/typescript)
+### Methods used by the Issuer service
+--------------------------------------
+**deployContract**
 
-## Commands
+Deploy an instance of 'Certific.sol' smart contract to Ethereum blockchain. The function executes the function deploy of the smart contract. After the transcaction is mined, the function returns the transactionHash and the Ethereum address of the smart contract instance. Every Issuer deploys an instance of 'Certific.sol' once and then refers to it using its Ethereum address.
 
-TSDX scaffolds your new library inside `/src`.
+**publishAward**
 
-To run TSDX, use:
+Publish an award request to Ethereum blockchain. The function executes the method award of the smart contract. The input parameters hashOfAwardFirstPart and hashOfAwardSecondPart hold the ElGamal encryption of the cryptographically secure hash of content  QUALIFICATION t. The parameter contractAddressUsedByIssuer holds the smart contract address that will refer to, in order to execute its method deploy. After the transcaction is mined, the function returns the transaction hash.
 
-```bash
-npm start # or yarn start
-```
+**publishProof**
 
-This builds to `/dist` and runs the project in watch mode so any edits you save inside `src` causes a rebuild to `/dist`.
+Publish a proof request to Ethereum blockchain. The function executes the method proof of the smart contract. The input parameter sReq holds a value that indicates that an Ethereum address has signed and published a transaction to the blockchain. This transaction was produced when a publishRequest function was executed. So sReq is a transaction hash. The parameters c, c2 hold the ElGamal re-encryption of the cryptographically secure hash of content QUALIFICATION t. The parameter nirence hold, a non-interactive (Fiat-Shamir) proof of reencryption of ciphertext c to c' (for more information of c and c' one should refer to the refer to the protocol of the protocol Diplomata), using the Chaum-Pedersen protocol. The parameter v holds a value that it was previously produced from an encryption scheme wherein entities are identified by their ElGamal keys. The parameter contractAddressUsedByIssuer holds the smart contract address that will refer to, in order to execute its method proof. After the transcaction is mined, the function returns the transaction hash.
 
-To do a one-off build, use `npm run build` or `yarn build`.
+### Methods used by the Holder and Verifier service
+---------------------------------------------------
+In the following functions, there is no need to specify the smart contract address that will be used for interacting with the smart contract because the service interacts with only one contract that the Issuer had deployed to the Ethereum and uses.
 
-To run tests, use `npm test` or `yarn test`.
+**publishRequest**
 
-## Configuration
+Publish a request for proof to Ethereum blockchain. The function executes the method request of the smart contract and executes a transaction with the Blockchain. The input parameter sAwd holds a value that indicates that an Ethereum address has signed and published a transaction to the blockchain. This transaction was produced when a publishAward function was executed. So sAws is a transaction hash. The parameters VerifKeyPart1, VerifKeyPart2, VerifKeyPart3, VerifKeyPart4 hold the value of the ElGamal public key, which we suppose is 1024 bits long, by which the Verifier is specified. After the transcaction is mined, the function returns the transaction hash.
 
-Code quality is set up for you with `prettier`, `husky`, and `lint-staged`. Adjust the respective fields in `package.json` accordingly.
+**publishAck**
 
-### Jest
+Publish an acknowledgement to Ethereum blockchain that the Verifier has received and verified the certificate. The function executes the method ack of the smart contract and executes a transaction with the Blockchain. The input parameter sPrf holds a value that indicates that an Ethereum address has signed and published a transaction to the blockchain. This transaction was produced when a publishProof function was executed. So sPrf is a transaction hash. The parameter eI holds a value that it was previously produced from an encryption scheme wherein entities are identified by their ElGamal keys. After the transcaction is mined, the function returns the transaction hash.
 
-Jest tests are set up to run with `npm test` or `yarn test`.
+**publishFail**
 
-### Bundle Analysis
-
-[`size-limit`](https://github.com/ai/size-limit) is set up to calculate the real cost of your library with `npm run size` and visualize the bundle with `npm run analyze`.
-
-#### Setup Files
-
-This is the folder structure we set up for you:
-
-```txt
-/src
-  index.tsx       # EDIT THIS
-/test
-  blah.test.tsx   # EDIT THIS
-.gitignore
-package.json
-README.md         # EDIT THIS
-tsconfig.json
-```
-
-### Rollup
-
-TSDX uses [Rollup](https://rollupjs.org) as a bundler and generates multiple rollup configs for various module formats and build settings. See [Optimizations](#optimizations) for details.
-
-### TypeScript
-
-`tsconfig.json` is set up to interpret `dom` and `esnext` types, as well as `react` for `jsx`. Adjust according to your needs.
-
-## Continuous Integration
-
-### GitHub Actions
-
-Two actions are added by default:
-
-- `main` which installs deps w/ cache, lints, tests, and builds on all pushes against a Node and OS matrix
-- `size` which comments cost comparison of your library on every pull request using [`size-limit`](https://github.com/ai/size-limit)
-
-## Optimizations
-
-Please see the main `tsdx` [optimizations docs](https://github.com/palmerhq/tsdx#optimizations). In particular, know that you can take advantage of development-only optimizations:
-
-```js
-// ./types/index.d.ts
-declare var __DEV__: boolean;
-
-// inside your code...
-if (__DEV__) {
-  console.log('foo');
-}
-```
-
-You can also choose to install and use [invariant](https://github.com/palmerhq/tsdx#invariant) and [warning](https://github.com/palmerhq/tsdx#warning) functions.
-
-## Module Formats
-
-CJS, ESModules, and UMD module formats are supported.
-
-The appropriate paths are configured in `package.json` and `dist/index.js` accordingly. Please report if any issues are found.
-
-## Named Exports
-
-Per Palmer Group guidelines, [always use named exports.](https://github.com/palmerhq/typescript#exports) Code split inside your React app instead of your React library.
-
-## Including Styles
-
-There are many ways to ship styles, including with CSS-in-JS. TSDX has no opinion on this, configure how you like.
-
-For vanilla CSS, you can include it at the root directory and add it to the `files` section in your `package.json`, so that it can be imported separately by your users and run through their bundler's loader.
-
-## Publishing to NPM
-
-We recommend using [np](https://github.com/sindresorhus/np).
+Publish an acknowledgement to Ethereum blockchain that the Verifier has failed to receive and verify the certificate. The function executes the method fail of the smart contract and executes a transaction with the Blockchain. The input parameter sPrf holds a value that indicates that an Ethereum address has signed and published a transaction to the blockchain. This transaction was produced when a publishProof function was executed. So sPrf is a transaction hash. After the transcaction is mined, the function returns the transaction hash.
