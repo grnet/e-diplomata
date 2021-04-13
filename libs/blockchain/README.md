@@ -3,7 +3,7 @@
 Typescript library for executing functions of a smart contract published in Ethereum blockchain network. The code structure of the smart contract should be like the smart contract in the file 'Certific.sol', contained in this project. The library uses ['ether.js']('https://github.com/ethers-io/ethers.js') to communicate with Ethereum blockchain. The methods of the smart contract are implemented for the Diplomata Protocol, so one should refer to the description of the protocol for more detailed explanation of the input parameters in the functions.
 
 ## Methods
-----------
+
 The methods deployContract, publishAward, publishProof are used by the Issuer service and the methods publishRequest, PublishAck, PublishFail are used by the Holder and Verifier service.
 
 ### Methods used by the Issuer service
