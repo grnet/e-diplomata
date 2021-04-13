@@ -1,13 +1,14 @@
 import { ethers } from "ethers";
 import {
   Bytecode,
-  CERTIFICATE_ABI
+  CERTIFICATE_ABI,
+  CERTIFICATE_ADDRESS
 } from "./contracts/Certificv2";
 
 const { Contract, utils, ContractFactory } = ethers;
 //gia ganache topika
 const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
-
+const smartContractHolderVerifierService = CERTIFICATE_ADDRESS;
 /*
 //gia INFURA
 const network = "ropsten";
@@ -50,6 +51,32 @@ export interface PublishProofInputInterface {
 // publishAward and publishProof
 export interface PublishAwardOutputInterface {
   transactionHash: string;
+}
+
+/* Holder-Verifier-Service
+    publishRequest
+    the variables VerifKeyPart1,VerifkeyPart2,VerifkeyPart3,VerifkeyPart4 hold
+    the Verifier's ElGamal public key which we suppose is 1024bits
+    Each variable in BC can hold up to 256bits so we need 4 
+    variables to save the key
+    the variable sawd is the one defined in d4.2
+*/
+export interface PublishRequestInputInterface {
+  sAwd: string;
+  VerifKeyPart1: string;
+  VerifKeyPart2: string;
+  VerifKeyPart3: string;
+  VerifKeyPart4: string;
+  //i think i should remove this one veriEth
+}
+
+export interface PublishAckInputInterface {
+  sPrf: string;
+  eI: string;
+}
+
+export interface PublishFailInputInterface {
+  sPrf: string;
 }
 
 const deployContract = async (): Promise<DeployContractInterface> => {
@@ -127,7 +154,7 @@ const publishProof = async (inputProof: PublishProofInputInterface)
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
-  //Call award function
+  //Call proof function
   let conInstancePr = new Contract(
     inputProof.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
   );
@@ -153,8 +180,135 @@ const publishProof = async (inputProof: PublishProofInputInterface)
   return { transactionHash: receipt.transactionHash };
 }
 
+//* Holder-Verifier Service
+const publishRequest = async (inputRequest: PublishRequestInputInterface)
+  : Promise<PublishAwardOutputInterface> => {
+  //If we use local Ganache local blockchain
+  let myaccount = provider.getSigner(0);
+  console.log(myaccount);
+  // pass a provider when initiating a contract for read only queries
+  let conInstance = new Contract(
+    smartContractHolderVerifierService, CERTIFICATE_ABI, provider
+  );
+  let contract_owner = await conInstance.getOwner();
+  console.log(contract_owner);
+  //Call request function
+  let conInstanceReq = new Contract(
+    smartContractHolderVerifierService, CERTIFICATE_ABI, myaccount
+  );
+  //estimateGas
+  let gasPrice = utils.parseUnits('10', "gwei").toNumber();
+  let gas = await conInstanceReq.estimateGas.request(
+    inputRequest.sAwd,
+    inputRequest.VerifKeyPart1,
+    inputRequest.VerifKeyPart2,
+    inputRequest.VerifKeyPart3,
+    inputRequest.VerifKeyPart4
+  );
+  console.log(gasPrice);
+  let options = {
+    gasLimit: gas, // Raise the gas limit to a much higher amount
+    gasPrice: gasPrice,
+    from: myaccount._address
+    //from: myaccount.address //gia infura
+  }
+  let tx = await conInstanceReq.proof(
+    inputRequest.sAwd,
+    inputRequest.VerifKeyPart1,
+    inputRequest.VerifKeyPart2,
+    inputRequest.VerifKeyPart3,
+    inputRequest.VerifKeyPart4,
+    options
+  );
+  // wait for the transaction to be mined
+  const receipt = await tx.wait();
+  console.log(receipt);
+  return { transactionHash: receipt.transactionHash };
+}
+
+const publishAck = async (inputAck: PublishAckInputInterface)
+  : Promise<PublishAwardOutputInterface> => {
+  //If we use local Ganache local blockchain
+  let myaccount = provider.getSigner(0);
+  console.log(myaccount);
+  // pass a provider when initiating a contract for read only queries
+  let conInstance = new Contract(
+    smartContractHolderVerifierService, CERTIFICATE_ABI, provider
+  );
+  let contract_owner = await conInstance.getOwner();
+  console.log(contract_owner);
+  //Call ack function
+  let conInstanceAck = new Contract(
+    smartContractHolderVerifierService, CERTIFICATE_ABI, myaccount
+  );
+  //estimateGas
+  let gasPrice = utils.parseUnits('10', "gwei").toNumber();
+  let gas = await conInstanceAck.estimateGas.ack(
+    inputAck.sPrf,
+    inputAck.eI
+  );
+  console.log(gasPrice);
+  let options = {
+    gasLimit: gas, // Raise the gas limit to a much higher amount
+    gasPrice: gasPrice,
+    //from we should specify verifiers ethereum key
+    from: myaccount._address
+    //from: myaccount.address //gia infura
+  }
+  let tx = await conInstanceAck.ack(
+    inputAck.sPrf,
+    inputAck.eI,
+    options
+  );
+  // wait for the transaction to be mined
+  const receipt = await tx.wait();
+  console.log(receipt);
+  return { transactionHash: receipt.transactionHash };
+}
+
+const publishFail = async (inputFail: PublishFailInputInterface)
+  : Promise<PublishAwardOutputInterface> => {
+  //If we use local Ganache local blockchain
+  let myaccount = provider.getSigner(0);
+  console.log(myaccount);
+  // pass a provider when initiating a contract for read only queries
+  let conInstance = new Contract(
+    smartContractHolderVerifierService, CERTIFICATE_ABI, provider
+  );
+  let contract_owner = await conInstance.getOwner();
+  console.log(contract_owner);
+  //Call fail function
+  let conInstanceFail = new Contract(
+    smartContractHolderVerifierService, CERTIFICATE_ABI, myaccount
+  );
+  //estimateGas
+  let gasPrice = utils.parseUnits('10', "gwei").toNumber();
+  let gas = await conInstanceFail.estimateGas.fail(
+    inputFail.sPrf
+  );
+  console.log(gasPrice);
+  let options = {
+    gasLimit: gas, // Raise the gas limit to a much higher amount
+    gasPrice: gasPrice,
+    //from we should specify verifiers ethereum key
+    from: myaccount._address
+    //from: myaccount.address //gia infura
+  }
+  let tx = await conInstanceFail.fail(
+    inputFail.sPrf,
+    options
+  );
+  // wait for the transaction to be mined
+  const receipt = await tx.wait();
+  console.log(receipt);
+  return { transactionHash: receipt.transactionHash };
+}
+
 export {
   deployContract,
   publishProof,
-  publishAward
+  publishAward,
+  publishRequest,
+  publishAck,
+  publishFail
 }
