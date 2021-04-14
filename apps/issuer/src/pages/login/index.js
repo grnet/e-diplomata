@@ -1,27 +1,27 @@
-import React, { useCallback } from 'react';
-import { makeStyles } from '@material-ui/core';
-import Header, { HeaderTitle } from '@digigov/ui/app/Header';
-import PageTitle, { PageTitleHeading } from '@digigov/ui/app/PageTitle';
-import Button from '@digigov/ui/core/Button';
-import ServiceBadge from '@digigov/ui/core/ServiceBadge';
-import GovGRFooter from '@digigov/ui/govgr/Footer';
-import GovGRLogo from '@digigov/ui/govgr/Logo';
+import React, { useCallback } from "react";
+import { makeStyles } from "@material-ui/core";
+import Header, { HeaderTitle } from "@digigov/ui/app/Header";
+import PageTitle, { PageTitleHeading } from "@digigov/ui/app/PageTitle";
+import Button from "@digigov/ui/core/Button";
+import ServiceBadge from "@digigov/ui/core/ServiceBadge";
+import GovGRFooter from "@digigov/ui/govgr/Footer";
+import GovGRLogo from "@digigov/ui/govgr/Logo";
 import BasicLayout, {
   Bottom,
   Content,
   Main,
   Top,
-} from '@digigov/ui/layouts/Basic';
-import Paragraph from '@digigov/ui/typography/Paragraph';
-import useAuth from '@digigov/auth';
+} from "@digigov/ui/layouts/Basic";
+import Paragraph from "@digigov/ui/typography/Paragraph";
+import useAuth from "@digigov/auth";
 
 const useStyles = makeStyles(
   {
-    top: { minHeight: '75px' },
+    top: { minHeight: "75px" },
     main: {},
     side: {},
   },
-  { name: 'MuiSite' }
+  { name: "MuiSite" }
 );
 
 export default function Index() {
@@ -29,7 +29,8 @@ export default function Index() {
   const auth = useAuth();
   const demoLogin = useCallback(() => {
     window.setTimeout(() => {
-      window.location.href = auth.config.loginURL + '?username=test';
+      window.localStorage.setItem("login-next", "/diplomas");
+      window.location.href = auth.config.loginURL + "?username=test";
     }, 1);
   }, [auth.config.loginURL]);
 
@@ -53,7 +54,7 @@ export default function Index() {
           {!auth.authenticated ? (
             <Button onClick={demoLogin}>Login</Button>
           ) : (
-            <Button onClick={() => auth.logout('/')}>Logout</Button>
+            <Button onClick={() => auth.logout("/")}>Logout</Button>
           )}
         </Main>
       </Content>
