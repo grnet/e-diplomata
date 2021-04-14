@@ -44,7 +44,7 @@ export default function Index() {
             <PageTitleHeading>Service name</PageTitleHeading>
           </PageTitle>
           <Paragraph>Welcome text</Paragraph>
-          <CallToActionButton href="/login">Enter here</CallToActionButton>
+          <CallToActionButton href="/login?next=/diplomas">Enter here</CallToActionButton>
         </Main>
       </Content>
       <Bottom>
