@@ -9,6 +9,7 @@ dependencies:
   '@digigov/ui': 0.4.1_9927b3c065f6acb466335db19dbdd22b
   '@material-ui/core': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
   '@material-ui/icons': 4.11.2_0d762b53e6ef0e32f5c62d92bee63937
+  '@material-ui/lab': 4.0.0-alpha.57_0d762b53e6ef0e32f5c62d92bee63937
   '@rush-temp/blockchain': file:projects/blockchain.tgz
   '@rush-temp/issuer': file:projects/issuer.tgz
   '@rush-temp/issuer-server': file:projects/issuer-server.tgz
@@ -18,6 +19,7 @@ dependencies:
   ganache-cli: 6.12.2
   husky: 6.0.0
   i18next: 20.2.1
+  lodash: 4.17.21
   next: 10.0.9_react-dom@16.14.0+react@16.14.0
   react: 16.14.0
   react-dom: 16.14.0_react@16.14.0
@@ -3470,6 +3472,30 @@ packages:
         optional: true
     resolution:
       integrity: sha512-fQNsKX2TxBmqIGJCSi3tGTO/gZ+eJgWmMJkgDiOfyNaunNaxcklJQFaFogYcFl0qFuaEz1qaXYXboa/bUXVSOQ==
+  /@material-ui/lab/4.0.0-alpha.57_0d762b53e6ef0e32f5c62d92bee63937:
+    dependencies:
+      '@babel/runtime': 7.13.10
+      '@material-ui/core': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
+      '@material-ui/utils': 4.11.2_react-dom@16.14.0+react@16.14.0
+      '@types/react': 16.9.56
+      clsx: 1.1.1
+      prop-types: 15.7.2
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
+      react-is: 17.0.2
+    dev: false
+    engines:
+      node: '>=8.0.0'
+    peerDependencies:
+      '@material-ui/core': ^4.9.10
+      '@types/react': ^16.8.6 || ^17.0.0
+      react: ^16.8.0 || ^17.0.0
+      react-dom: ^16.8.0 || ^17.0.0
+    peerDependenciesMeta:
+      '@types/react':
+        optional: true
+    resolution:
+      integrity: sha512-qo/IuIQOmEKtzmRD2E4Aa6DB4A87kmY6h0uYhjUmrrgmEAgbbw9etXpWPVXuRK6AGIQCjFzV6WO2i21m1R4FCw==
   /@material-ui/styles/4.11.3_9f48369ed4321469d5d721870f4dbdbc:
     dependencies:
       '@babel/runtime': 7.13.10
@@ -15672,10 +15698,12 @@ packages:
       '@digigov/ui': 0.4.1_9927b3c065f6acb466335db19dbdd22b
       '@material-ui/core': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
       '@material-ui/icons': 4.11.2_0d762b53e6ef0e32f5c62d92bee63937
+      '@material-ui/lab': 4.0.0-alpha.57_0d762b53e6ef0e32f5c62d92bee63937
       '@types/node': 14.14.9
       '@types/react': 16.9.56
       clsx: 1.1.1
       i18next: 20.2.1
+      lodash: 4.17.21
       next: 10.0.9_b958e7dd147f90c3340abf309afb59c9
       react: 16.14.0
       react-dom: 16.14.0_react@16.14.0
@@ -15684,7 +15712,7 @@ packages:
     dev: false
     name: '@rush-temp/issuer'
     resolution:
-      integrity: sha512-Pr4O2WGvUfgKGzSHv1Z8/ZK12lAIE/M57vvLY/hc0+dvRW6vjkakqa98DDg8wsteI8uQtd7W5EbnEJPrM5jxiQ==
+      integrity: sha512-jynbLgILyhyJVMXpmdihq+Y7uXLmMDcg4F1yGxbT2YnlnbCevFN6gZXx2/P1Mzq86h1n5hrYc+CeeD4eH9jQ+w==
       tarball: file:projects/issuer.tgz
     version: 0.0.0
 registry: ''
@@ -15699,6 +15727,7 @@ specifiers:
   '@digigov/ui': 0.4.1
   '@material-ui/core': 4.11.3
   '@material-ui/icons': 4.11.2
+  '@material-ui/lab': ~4.0.0-alpha.57
   '@rush-temp/blockchain': file:./projects/blockchain.tgz
   '@rush-temp/issuer': file:./projects/issuer.tgz
   '@rush-temp/issuer-server': file:./projects/issuer-server.tgz
@@ -15708,6 +15737,7 @@ specifiers:
   ganache-cli: ~6.12.2
   husky: ^6.0.0
   i18next: ~20.2.1
+  lodash: ~4.17.21
   next: 10.0.9
   react: 16.14.0
   react-dom: 16.14.0
