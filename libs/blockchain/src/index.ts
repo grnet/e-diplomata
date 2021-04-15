@@ -2,13 +2,13 @@ import { ethers } from "ethers";
 import {
   Bytecode,
   CERTIFICATE_ABI,
-  CERTIFICATE_ADDRESS
+//  CERTIFICATE_ADDRESS
 } from "./contracts/Certificv2";
 
 const { Contract, utils, ContractFactory } = ethers;
 //gia ganache topika
 const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
-const smartContractHolderVerifierService = CERTIFICATE_ADDRESS;
+//const smartContractHolderVerifierService = CERTIFICATE_ADDRESS;
 /*
 //gia INFURA
 const network = "ropsten";
@@ -62,6 +62,7 @@ export interface PublishAwardOutputInterface {
     the variable sawd is the one defined in d4.2
 */
 export interface PublishRequestInputInterface {
+  contractAddressUsedByIssuer: string;
   sAwd: string;
   VerifKeyPart1: string;
   VerifKeyPart2: string;
@@ -71,11 +72,13 @@ export interface PublishRequestInputInterface {
 }
 
 export interface PublishAckInputInterface {
+  contractAddressUsedByIssuer: string;
   sPrf: string;
   eI: string;
 }
 
 export interface PublishFailInputInterface {
+  contractAddressUsedByIssuer: string;
   sPrf: string;
 }
 
@@ -141,7 +144,7 @@ const publishAward = async (inputAward: PublishAwardInputInterface)
 }
 
 const publishProof = async (inputProof: PublishProofInputInterface)
-  : Promise<PublishAwardOutputInterface | string> => {
+  : Promise<PublishAwardOutputInterface> => {
   /*Important!!! To be implemented - We should check if cAdd is correct.
     Maybe the Service has stored this address after deployment
     so it is not necessary for the Issuer to submit it
@@ -188,13 +191,13 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
   console.log(myaccount);
   // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
-    smartContractHolderVerifierService, CERTIFICATE_ABI, provider
+    inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
   //Call request function
   let conInstanceReq = new Contract(
-    smartContractHolderVerifierService, CERTIFICATE_ABI, myaccount
+    inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', "gwei").toNumber();
@@ -212,7 +215,7 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
     from: myaccount._address
     //from: myaccount.address //gia infura
   }
-  let tx = await conInstanceReq.proof(
+  let tx = await conInstanceReq.request(
     inputRequest.sAwd,
     inputRequest.VerifKeyPart1,
     inputRequest.VerifKeyPart2,
@@ -233,13 +236,13 @@ const publishAck = async (inputAck: PublishAckInputInterface)
   console.log(myaccount);
   // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
-    smartContractHolderVerifierService, CERTIFICATE_ABI, provider
+    inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
   //Call ack function
   let conInstanceAck = new Contract(
-    smartContractHolderVerifierService, CERTIFICATE_ABI, myaccount
+    inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', "gwei").toNumber();
@@ -273,13 +276,13 @@ const publishFail = async (inputFail: PublishFailInputInterface)
   console.log(myaccount);
   // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
-    smartContractHolderVerifierService, CERTIFICATE_ABI, provider
+    inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
   //Call fail function
   let conInstanceFail = new Contract(
-    smartContractHolderVerifierService, CERTIFICATE_ABI, myaccount
+    inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', "gwei").toNumber();
