@@ -35,3 +35,16 @@ Publish an acknowledgement to Ethereum blockchain that the Verifier has received
 **publishFail**
 
 Publish an acknowledgement to Ethereum blockchain that the Verifier has failed to receive and verify the certificate. The function executes the method fail of the smart contract and executes a transaction with the Blockchain. The input parameter sPrf holds a value that indicates that an Ethereum address has signed and published a transaction to the blockchain. This transaction was produced when a publishProof function was executed. So sPrf is a transaction hash. After the transcaction is mined, the function returns the transaction hash.
+
+## Running the tests
+
+To run the tests you need a live blockchain network where the transactions will be published. To create one with ganache-cli open a terminal and execute the following commands:
+
+```
+cd ..\..\servers\issuer-server\
+rushx ganache
+```
+Now that the blockchain network is set you can run the tests. Open a new terminal and execute the following commands:
+```
+rushx test
+```
