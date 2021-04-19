@@ -42,7 +42,7 @@
 ]; */
 
 export const valuePool = {
-  degree: ["enginner", "architec"],
+  degree: ["engineer", "architec"],
   typeOfDegree: ["programmer", "architec"],
   school: ["immi", "architectoniki"],
   institution: ["tuc", "assoe"],
@@ -121,7 +121,7 @@ export default async function handler(req, res) {
               return false;
             }
           } else {
-            if (req.query[key]) {
+            if (req.query[key] !== null) {
               return item[key] !== req.query[key];
             } else {
               return false;
