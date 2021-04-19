@@ -1,15 +1,15 @@
 export const datasets = {
   degree: [
-    { label: "Μηχανικος", value: "engineer" },
-    { label: "Αρχιτεκτονας", value: "architec" },
+    { label: "Μηχανικός", value: "engineer" },
+    { label: "Αρχιτέκτονας", value: "architec" },
   ],
   typeOfDegree: [
-    { label: "Προγραμματιστης", value: "programmer" },
-    { label: "Αρχιτεκτονας", value: "architec" },
+    { label: "Προγραμματιστής", value: "programmer" },
+    { label: "Αρχιτέκτονας", value: "architec" },
   ],
   school: [
     { label: "ΗΜΜΥ", value: "immi" },
-    { label: "Αρχιτεκτονικής", value: "architectoniki" },
+    { label: "Αρχιτεκτονική", value: "architectoniki" },
   ],
   institution: [
     { label: "TUC", value: "tuc" },
