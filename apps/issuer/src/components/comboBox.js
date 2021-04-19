@@ -1,4 +1,5 @@
-import React from "react";
+import React, { useEffect } from "react";
+/* import React from "react"; */
 import PropTypes from "prop-types";
 import { makeStyles } from "@material-ui/core/styles";
 import TextField from "@material-ui/core/TextField";
@@ -34,21 +35,25 @@ ComboBox.defaultProps = {
 
 // checks for equality
 function checkSelected(option, value) {
-  return (option.value || null) === (value.value || null);
+  return (option.value || null) === (value || null);
 }
 
 // define component
 export default function ComboBox(props) {
   const classes = useStyles();
+  const [value, setValue] = React.useState();
 
-  const changeValue = React.useCallback(
-    (e, value) => {
-      if (props.onChange) {
-        props.onChange(value);
+  function changeValue(e, value) {
+    console.log("props value is ");
+    if (props.onChange) {
+      if (value === null) {
+        props.onChange({ value: props.value }, props.options, true);
+      } else {
+        setValue(value);
+        props.onChange(value, props.options, false);
       }
-    },
-    [props.onChange]
-  );
+    }
+  }
 
   return (
     <div>
