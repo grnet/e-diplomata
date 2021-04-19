@@ -125,7 +125,7 @@ export default function Diplomas() {
             <Grid item xs={12} md={10} sm={12}>
               <Title size="lg">Διπλώματα</Title>
             </Grid>
-            <Grid item md={6} sm={12} xs={12} style={{ marginBottom: "2vh" }}>
+            <Grid item md={5} sm={12} xs={12} style={{ marginBottom: "2vh" }}>
               <SearchBar
                 onChange={handleInput}
                 value={searchForm.search}
@@ -144,7 +144,7 @@ export default function Diplomas() {
                 <Grid item xs={12}>
                   {datasets && (
                     <ComboBox
-                      value={searchForm.degree}
+                      /* value={searchForm.degree} */
                       options={datasets.degree}
                       onChange={handleChange}
                       variant="standard"
@@ -157,7 +157,7 @@ export default function Diplomas() {
                 <Grid item xs={12}>
                   {datasets && (
                     <ComboBox
-                      value={searchForm.typeOfDegree}
+                      /* value={searchForm.typeOfDegree} */
                       options={datasets.typeOfDegree}
                       onChange={handleChange}
                       variant="standard"
@@ -170,7 +170,7 @@ export default function Diplomas() {
                 <Grid item xs={12}>
                   {datasets && (
                     <ComboBox
-                      value={searchForm.school}
+                      /* value={searchForm.school} */
                       options={datasets.school}
                       onChange={handleChange}
                       variant="standard"
@@ -183,7 +183,7 @@ export default function Diplomas() {
                 <Grid item xs={12}>
                   {datasets && (
                     <ComboBox
-                      value={searchForm.institution}
+                      /* value={searchForm.institution} */
                       options={datasets.institution}
                       onChange={handleChange}
                       variant="standard"

@@ -41,7 +41,7 @@ function checkSelected(option, value) {
 // define component
 export default function ComboBox(props) {
   const classes = useStyles();
-  const [value, setValue] = React.useState();
+  /* const [value, setValue] = React.useState(); */
 
   function changeValue(e, value) {
     console.log("props value is ");
@@ -49,7 +49,7 @@ export default function ComboBox(props) {
       if (value === null) {
         props.onChange({ value: props.value }, props.options, true);
       } else {
-        setValue(value);
+        /* setValue(value); */
         props.onChange(value, props.options, false);
       }
     }
@@ -59,7 +59,7 @@ export default function ComboBox(props) {
     <div>
       <Autocomplete
         className={classes.formControl}
-        value={props.value}
+        /* value={props.value} */
         autoComplete={props.autoComplete}
         onChange={changeValue}
         options={props.options}
