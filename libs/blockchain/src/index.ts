@@ -1,17 +1,16 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 import {
   Bytecode,
-  CERTIFICATE_ABI,
-//  CERTIFICATE_ADDRESS
-} from "./contracts/Certificv2";
+  CERTIFICATE_ABI
+} from './contracts/Certificv2';
 
 const { Contract, utils, ContractFactory } = ethers;
 //gia ganache topika
 const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
-//const smartContractHolderVerifierService = CERTIFICATE_ADDRESS;
+
 /*
 //gia INFURA
-const network = "ropsten";
+const network = 'ropsten';
 const provider = ethers.getDefaultProvider(network, {
     infura: `https://ropsten.infura.io/v3/${process.env.INFURA_ID}`,
     // Or if using a project secret:
@@ -86,9 +85,8 @@ const deployContract = async (): Promise<DeployContractInterface> => {
   //If we use local Ganache local blockchain
   let myaccount = provider.getSigner(0);
 
-  console.log(myaccount);
   // let gas = utils.hexlify(6721975);
-  // let gasPrice = utils.parseUnits('10' , "gwei").toNumber();
+  // let gasPrice = utils.parseUnits('10' , 'gwei').toNumber();
   let newContract = new ContractFactory(CERTIFICATE_ABI, Bytecode, myaccount);
   const contract = await newContract.deploy();
   console.log('contract address', contract.address);
@@ -108,7 +106,6 @@ const publishAward = async (inputAward: PublishAwardInputInterface)
   : Promise<PublishAwardOutputInterface> => {
   //If we use local Ganache local blockchain
   let myaccount = provider.getSigner(0);
-  console.log(myaccount);
   // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
     inputAward.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
@@ -120,12 +117,11 @@ const publishAward = async (inputAward: PublishAwardInputInterface)
     inputAward.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
   );
   //estimateGas
-  let gasPrice = utils.parseUnits('10', "gwei").toNumber();
+  let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
   let gas = await conInstanceAw.estimateGas.award(
     inputAward.hashOfAwardFirstPart,
     inputAward.hashOfAwardSecondPart
   );
-  console.log(gasPrice);
   let options = {
     gasLimit: gas, // Raise the gas limit to a much higher amount
     gasPrice: gasPrice,
@@ -139,7 +135,6 @@ const publishAward = async (inputAward: PublishAwardInputInterface)
   );
   // wait for the transaction to be mined
   const receipt = await tx.wait();
-  console.log(receipt);
   return { transactionHash: receipt.transactionHash };
 }
 
@@ -162,11 +157,10 @@ const publishProof = async (inputProof: PublishProofInputInterface)
     inputProof.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
   );
   //estimateGas
-  let gasPrice = utils.parseUnits('10', "gwei").toNumber();
+  let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
   let gas = await conInstancePr.estimateGas.proof(
     inputProof.sReq, inputProof.c, inputProof.c2, inputProof.nirenc, inputProof.ev
   );
-  console.log(gas);
   let options = {
     gasLimit: gas, // Raise the gas limit to a much higher amount
     gasPrice: gasPrice,
@@ -179,7 +173,6 @@ const publishProof = async (inputProof: PublishProofInputInterface)
   );
   // wait for the transaction to be mined
   const receipt = await tx.wait();
-  console.log(receipt);
   return { transactionHash: receipt.transactionHash };
 }
 
@@ -188,7 +181,6 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
   : Promise<PublishAwardOutputInterface> => {
   //If we use local Ganache local blockchain
   let myaccount = provider.getSigner(0);
-  console.log(myaccount);
   // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
     inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
@@ -200,7 +192,7 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
     inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
   );
   //estimateGas
-  let gasPrice = utils.parseUnits('10', "gwei").toNumber();
+  let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
   let gas = await conInstanceReq.estimateGas.request(
     inputRequest.sAwd,
     inputRequest.VerifKeyPart1,
@@ -208,7 +200,6 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
     inputRequest.VerifKeyPart3,
     inputRequest.VerifKeyPart4
   );
-  console.log(gasPrice);
   let options = {
     gasLimit: gas, // Raise the gas limit to a much higher amount
     gasPrice: gasPrice,
@@ -225,7 +216,6 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
   );
   // wait for the transaction to be mined
   const receipt = await tx.wait();
-  console.log(receipt);
   return { transactionHash: receipt.transactionHash };
 }
 
@@ -233,7 +223,6 @@ const publishAck = async (inputAck: PublishAckInputInterface)
   : Promise<PublishAwardOutputInterface> => {
   //If we use local Ganache local blockchain
   let myaccount = provider.getSigner(0);
-  console.log(myaccount);
   // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
     inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
@@ -245,12 +234,11 @@ const publishAck = async (inputAck: PublishAckInputInterface)
     inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
   );
   //estimateGas
-  let gasPrice = utils.parseUnits('10', "gwei").toNumber();
+  let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
   let gas = await conInstanceAck.estimateGas.ack(
     inputAck.sPrf,
     inputAck.eI
   );
-  console.log(gasPrice);
   let options = {
     gasLimit: gas, // Raise the gas limit to a much higher amount
     gasPrice: gasPrice,
@@ -265,7 +253,6 @@ const publishAck = async (inputAck: PublishAckInputInterface)
   );
   // wait for the transaction to be mined
   const receipt = await tx.wait();
-  console.log(receipt);
   return { transactionHash: receipt.transactionHash };
 }
 
@@ -273,7 +260,6 @@ const publishFail = async (inputFail: PublishFailInputInterface)
   : Promise<PublishAwardOutputInterface> => {
   //If we use local Ganache local blockchain
   let myaccount = provider.getSigner(0);
-  console.log(myaccount);
   // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
     inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
@@ -285,11 +271,10 @@ const publishFail = async (inputFail: PublishFailInputInterface)
     inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
   );
   //estimateGas
-  let gasPrice = utils.parseUnits('10', "gwei").toNumber();
+  let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
   let gas = await conInstanceFail.estimateGas.fail(
     inputFail.sPrf
   );
-  console.log(gasPrice);
   let options = {
     gasLimit: gas, // Raise the gas limit to a much higher amount
     gasPrice: gasPrice,
@@ -303,7 +288,6 @@ const publishFail = async (inputFail: PublishFailInputInterface)
   );
   // wait for the transaction to be mined
   const receipt = await tx.wait();
-  console.log(receipt);
   return { transactionHash: receipt.transactionHash };
 }
 

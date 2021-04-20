@@ -41,10 +41,11 @@ Publish an acknowledgement to Ethereum blockchain that the Verifier has failed t
 To run the tests you need a live blockchain network where the transactions will be published. To create one with ganache-cli open a terminal and execute the following commands:
 
 ```
-cd ..\..\servers\issuer-server\
+cd servers/issuer-server/
 rushx ganache
 ```
 Now that the blockchain network is set you can run the tests. Open a new terminal and execute the following commands:
 ```
+cd libs/blockchain/
 rushx test
 ```
