@@ -5,10 +5,10 @@ import Input from "@material-ui/core/Input";
 import Paper from "@material-ui/core/Paper";
 import ClearIcon from "@material-ui/icons/Clear";
 import SearchIcon from "@material-ui/icons/Search";
-import withStyles from "@material-ui/core/styles/withStyles";
+import { makeStyles } from "@material-ui/core/styles";
 import classNames from "classnames";
 
-const styles = (theme) => ({
+const useStyles = makeStyles((theme) => ({
   root: {
     height: theme.spacing(6),
     display: "flex",
@@ -44,7 +44,7 @@ const styles = (theme) => ({
     margin: "auto 16px",
     width: `calc(100% - ${theme.spacing(6 + 4)}px)`, // 6 button + 4 margin
   },
-});
+}));
 
 /**
  * Material design search bar
@@ -68,7 +68,7 @@ const SearchBar = React.forwardRef(
   ) => {
     const inputRef = React.useRef();
     const [value, setValue] = React.useState(inputProps.value);
-
+    classes = useStyles();
     React.useEffect(() => {
       setValue(inputProps.value);
     }, [inputProps.value]);
@@ -222,4 +222,4 @@ SearchBar.propTypes = {
   value: PropTypes.string,
 };
 
-export default withStyles(styles)(SearchBar);
+export default SearchBar;
