@@ -5,7 +5,7 @@ import Button from "@digigov/ui/core/Button";
 import { Main } from "@digigov/ui/layouts/Basic";
 import Paragraph from "@digigov/ui/typography/Paragraph";
 import useAuth from "@digigov/auth";
-import GenericTemplate from "src/components/genericTemplate";
+import IssuerLayout from "src/components/IssuerLayout";
 
 const useStyles = makeStyles(
   {
@@ -26,7 +26,7 @@ export default function Index() {
   }, [auth.config.loginURL]);
 
   return (
-    <GenericTemplate>
+    <IssuerLayout>
       <Main className={styles.main}>
         <PageTitle>
           <PageTitleHeading>Login Page</PageTitleHeading>
@@ -38,6 +38,6 @@ export default function Index() {
           <Button onClick={() => auth.logout("/")}>Logout</Button>
         )}
       </Main>
-    </GenericTemplate>
+    </IssuerLayout>
   );
 }
