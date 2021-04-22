@@ -11,36 +11,62 @@ import Paragraph from "@digigov/ui/typography/Paragraph";
 import { Title, NormalText } from "@digigov/ui/typography";
 import ComboBox from "issuer/components/comboBox";
 import Grid from "@material-ui/core/Grid";
-/* import Pagination from "@material-ui/lab/Pagination"; */
 import { useRouter } from "next/router";
 import { useResourceMany } from "@digigov/ui/api";
-import SearchBar from "issuer/components/searchBar";
+import SearchBar from "issuer/components/SearchBar";
 import { debounce } from "lodash";
-import DiplomaItem from "src/components/diplomaItem";
-import GenericTemplate from "src/components/genericTemplate";
+import Pagination from "@material-ui/lab/Pagination";
+import IssuerLayout from "issuer/components/IssuerLayout";
+import DiplomaItem from "issuer/components/DiplomaItem";
 
-const useStyles = makeStyles(
-  {
-    top: { minHeight: "75px" },
-    main: {},
-    side: {},
+const useStyles = makeStyles((theme) => ({
+  top: { minHeight: "75px" },
+  main: {},
+  box: {
+    padding: theme.spacing(4),
   },
-  { name: "MuiSite" }
-);
+  alignLeft: {
+    margin: "auto",
+    textAlign: "left",
+  },
+  alignRight: {
+    margin: "auto",
+    textAlign: "right",
+  },
+  banner: {
+    marginBottom: theme.spacing(6),
+  },
+  toolkitBanner: {
+    backgroundColor: theme.palette.grey["800"],
+  },
+  caption: {
+    color: theme.palette.common.white,
+  },
+  image: {
+    display: "block",
+    width: "50%",
+    margin: `${theme.spacing(4)}px auto`,
+  },
+  page: {
+    "& > *": {
+      marginTop: theme.spacing(2),
+    },
+  },
+}));
 
 export default function Diplomas() {
   const router = useRouter();
   const [diplomas, setDiplomas] = useState([]);
-  /* const [dataset, setDataset] = useState(); */
   const [searchForm, setSearchForm] = useState({
     limit: 10,
+    offset: 1,
   });
 
   const styles = useStyles();
   const { data: datasets } = useResource("datasets");
   const { data, fetch, ...rest } = useResourceMany("diplomas", searchForm);
-  console.log(data);
-
+  console.log(rest);
+  console.log(diplomas.length);
   const delayedSearch = useCallback(
     debounce(
       (value) =>
@@ -53,6 +79,19 @@ export default function Diplomas() {
   async function handleInput(value) {
     console.log(value);
     await delayedSearch(value);
+  }
+
+  async function handlePageChange(event, value) {
+    if (searchForm.offset !== value) {
+      await setSearchForm((prevState) => ({
+        ...prevState,
+        offset: value,
+      }));
+    }
+  }
+
+  function getPageTotal() {
+    return Math.ceil(rest.meta.total);
   }
 
   function handleChange({ value }, options, removeBoxItem) {
@@ -87,16 +126,32 @@ export default function Diplomas() {
       }
     } else {
       if (options === datasets.degree) {
-        setSearchForm((searchForm) => ({ ...searchForm, degree: value }));
+        setSearchForm((searchForm) => ({
+          ...searchForm,
+          degree: value,
+          offset: 1,
+        }));
       }
       if (options === datasets.typeOfDegree) {
-        setSearchForm((searchForm) => ({ ...searchForm, typeOfDegree: value }));
+        setSearchForm((searchForm) => ({
+          ...searchForm,
+          typeOfDegree: value,
+          offset: 1,
+        }));
       }
       if (options === datasets.school) {
-        setSearchForm((searchForm) => ({ ...searchForm, school: value }));
+        setSearchForm((searchForm) => ({
+          ...searchForm,
+          school: value,
+          offset: 1,
+        }));
       }
       if (options === datasets.institution) {
-        setSearchForm((searchForm) => ({ ...searchForm, institution: value }));
+        setSearchForm((searchForm) => ({
+          ...searchForm,
+          institution: value,
+          offset: 1,
+        }));
       }
     }
   }
@@ -104,10 +159,6 @@ export default function Diplomas() {
   useEffect(() => {
     setDiplomas(data);
   }, [data]);
-
-  /* useEffect(() => {
-    setSearchForm(searchForm);
-  }, [searchForm]); */
 
   useEffect(() => {
     fetch();
@@ -118,7 +169,7 @@ export default function Diplomas() {
   };
 
   return (
-    <GenericTemplate>
+    <IssuerLayout>
       <Main xs={12} md={12} className={styles.main}>
         <Grid container direction="column">
           <PageTitle>
@@ -144,7 +195,6 @@ export default function Diplomas() {
                 <Grid item xs={12}>
                   {datasets && (
                     <ComboBox
-                      /* value={searchForm.degree} */
                       options={datasets.degree}
                       onChange={handleChange}
                       variant="standard"
@@ -157,7 +207,6 @@ export default function Diplomas() {
                 <Grid item xs={12}>
                   {datasets && (
                     <ComboBox
-                      /* value={searchForm.typeOfDegree} */
                       options={datasets.typeOfDegree}
                       onChange={handleChange}
                       variant="standard"
@@ -170,7 +219,6 @@ export default function Diplomas() {
                 <Grid item xs={12}>
                   {datasets && (
                     <ComboBox
-                      /* value={searchForm.school} */
                       options={datasets.school}
                       onChange={handleChange}
                       variant="standard"
@@ -183,7 +231,6 @@ export default function Diplomas() {
                 <Grid item xs={12}>
                   {datasets && (
                     <ComboBox
-                      /* value={searchForm.institution} */
                       options={datasets.institution}
                       onChange={handleChange}
                       variant="standard"
@@ -212,19 +259,19 @@ export default function Diplomas() {
                       </div>
                     ))}
                 </List>
-                {/* <Pagination
-                        className={styles.page}
-                        count={getPageTotal()}
-                        color="primary"
-                        size="large"
-                        page={page.noPage}
-                        onChange={handlePageChange}
-                      /> */}
+                <Pagination
+                  className={styles.page}
+                  count={getPageTotal()}
+                  color="primary"
+                  size="large"
+                  page={searchForm.offset}
+                  onChange={handlePageChange}
+                />
               </Grid>
             </Grid>
           </Grid>
         </Grid>
       </Main>
-    </GenericTemplate>
+    </IssuerLayout>
   );
 }
