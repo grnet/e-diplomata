@@ -15,7 +15,7 @@ import {
   SummaryListItemValue,
   SummaryListItemAction,
 } from "@digigov/ui/core/SummaryList";
-import GenericTemplate from "src/components/genericTemplate";
+import IssuerLayout from "src/components/IssuerLayout";
 
 const useStyles = makeStyles(
   {
@@ -35,9 +35,8 @@ export default function Diploma() {
   useEffect(() => {
     setDiploma(data);
   }, [data]);
-  /* debugger; */
   return (
-    <GenericTemplate>
+    <IssuerLayout>
       <Main className={styles.main}>
         <PageTitle>
           <PageTitleHeading>Προβολή τίτλου</PageTitleHeading>
@@ -48,7 +47,6 @@ export default function Diploma() {
             <SummaryListItem>
               <SummaryListItemKey>Τίτλος Σπουδών</SummaryListItemKey>
               <SummaryListItemValue>{diploma.degree}</SummaryListItemValue>
-              {/* <SummaryListItemAction> Αλλαγή</SummaryListItemAction> */}
             </SummaryListItem>
             <SummaryListItem>
               <SummaryListItemKey>Είδος Τίτλου Σπουδών</SummaryListItemKey>
@@ -80,6 +78,6 @@ export default function Diploma() {
         )}
         <CallToActionButton href="/diplomas">Πίσω</CallToActionButton>
       </Main>
-    </GenericTemplate>
+    </IssuerLayout>
   );
 }
