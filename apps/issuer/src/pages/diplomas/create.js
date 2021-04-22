@@ -8,7 +8,7 @@ import Paragraph from "@digigov/ui/typography/Paragraph";
 import useAuth from "@digigov/auth";
 import FormBuilder, { Field } from "@digigov/form";
 import { useResourceAction } from "@digigov/ui/api";
-import GenericTemplate from "src/components/genericTemplate";
+import IssuerLayout from "src/components/IssuerLayout";
 
 export const fields = [
   {
@@ -119,9 +119,8 @@ export default function CreateDiploma() {
       fetch();
     }
   }, [formData]);
-  /* debugger; */
   return (
-    <GenericTemplate>
+    <IssuerLayout>
       <Main className={styles.main}>
         <PageTitle>
           <PageTitleHeading>Create New Title</PageTitleHeading>
@@ -142,6 +141,6 @@ export default function CreateDiploma() {
           </Button>
         </FormBuilder>
       </Main>
-    </GenericTemplate>
+    </IssuerLayout>
   );
 }
