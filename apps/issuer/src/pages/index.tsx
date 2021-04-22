@@ -3,29 +3,19 @@ import  { Main } from '@digigov/ui/layouts/Basic';
 import Paragraph from '@digigov/ui/typography/Paragraph';
 import PageTitle, {PageTitleHeading} from '@digigov/ui/app/PageTitle';
 import CallToActionButton from '@digigov/ui/core/Button/CallToAction';
-import GenericTemplate from 'src/components/genericTemplate';
+import IssuerLayout from 'src/components/IssuerLayout';
 
-/* const useStyles = makeStyles(
-  {
-    main: {},
-    side: {
-      
-    },
-  },
-  {name: 'MuiSite'}
-); */
 
 export default function Index() {
-  /* const styles = useStyles(); */
   return (
-    <GenericTemplate>
+    <IssuerLayout>
       <Main >
           <PageTitle>
-            <PageTitleHeading>Service name</PageTitleHeading>
+            <PageTitleHeading>Ediplomas issuer service</PageTitleHeading>
           </PageTitle>
-          <Paragraph>Welcome text</Paragraph>
+          <Paragraph>You can issue diploma in the blockchain</Paragraph>
           <CallToActionButton href="/login?next=/diplomas">Enter here</CallToActionButton>
         </Main>
-    </GenericTemplate>
+    </IssuerLayout>
   );
 }
