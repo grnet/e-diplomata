@@ -55,7 +55,6 @@ const SearchBar = React.forwardRef(
     {
       cancelOnEscape,
       className,
-      classes,
       closeIcon,
       disabled,
       onCancelSearch,
@@ -68,7 +67,7 @@ const SearchBar = React.forwardRef(
   ) => {
     const inputRef = React.useRef();
     const [value, setValue] = React.useState(inputProps.value);
-    classes = useStyles();
+    const classes = useStyles();
     React.useEffect(() => {
       setValue(inputProps.value);
     }, [inputProps.value]);
