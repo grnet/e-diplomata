@@ -5,36 +5,26 @@ import {
 } from './contracts/Certificv2';
 
 const { Contract, utils, ContractFactory } = ethers;
-//gia ganache topika
-const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
-
-/*
-//gia INFURA
-const network = 'ropsten';
-const provider = ethers.getDefaultProvider(network, {
-    infura: `https://ropsten.infura.io/v3/${process.env.INFURA_ID}`,
-    // Or if using a project secret:
-    // infura: {
-    //   projectId: YOUR_INFURA_PROJECT_ID,
-    //   projectSecret: YOUR_INFURA_PROJECT_SECRET,
-    // },
-});
-//const provider = new ethers.providers.InfuraProvider('ropsten');
-const mysigner = new ethers.Wallet(`${process.env.ServiceIssuerPrivateKey}`);
-const myaccount = mysigner.connect(provider);
-*/
 
 // deployContract
-export interface DeployContractInterface {
+export interface DeployContractInputInterface {
+  accountIssuer: ethers.Wallet | ethers.providers.JsonRpcSigner ;
+}
+export interface DeployContractOutputInterface {
   contractAddress: string;
   tranHash: string;
 }
+
 // publishAward
 export interface PublishAwardInputInterface {
   hashOfAwardFirstPart: string;
   hashOfAwardSecondPart: string;
   contractAddressUsedByIssuer: string;
+  provider: ethers.providers.Provider | ethers.providers.JsonRpcProvider;
+  accountIssuer: ethers.Wallet | ethers.providers.JsonRpcSigner;
+  addressIssuer: string;
 }
+
 /* publishProof
    the names of the variables are the same as the ones used in the protocol
    and are defined in d4.2
@@ -46,7 +36,11 @@ export interface PublishProofInputInterface {
   c2: string;
   nirenc: string;
   ev: string;
+  provider: ethers.providers.Provider | ethers.providers.JsonRpcProvider;
+  accountIssuer: ethers.Wallet | ethers.providers.JsonRpcSigner;
+  addressIssuer: string;
 }
+
 // publishAward and publishProof
 export interface PublishAwardOutputInterface {
   transactionHash: string;
@@ -67,27 +61,30 @@ export interface PublishRequestInputInterface {
   VerifKeyPart2: string;
   VerifKeyPart3: string;
   VerifKeyPart4: string;
-  //i think i should remove this one veriEth
+  provider: ethers.providers.Provider | ethers.providers.JsonRpcProvider;
+  accountHolder: ethers.Wallet | ethers.providers.JsonRpcSigner;
+  addressHolder: string;
 }
 
 export interface PublishAckInputInterface {
   contractAddressUsedByIssuer: string;
   sPrf: string;
   eI: string;
+  provider: ethers.providers.Provider | ethers.providers.JsonRpcProvider;
+  accountVerifier: ethers.Wallet | ethers.providers.JsonRpcSigner;
+  addressVerifier: string;
 }
 
 export interface PublishFailInputInterface {
   contractAddressUsedByIssuer: string;
   sPrf: string;
+  provider: ethers.providers.Provider | ethers.providers.JsonRpcProvider;
+  accountVerifier: ethers.Wallet | ethers.providers.JsonRpcSigner;
+  addressVerifier: string;
 }
 
-const deployContract = async (): Promise<DeployContractInterface> => {
-  //If we use local Ganache local blockchain
-  let myaccount = provider.getSigner(0);
-
-  // let gas = utils.hexlify(6721975);
-  // let gasPrice = utils.parseUnits('10' , 'gwei').toNumber();
-  let newContract = new ContractFactory(CERTIFICATE_ABI, Bytecode, myaccount);
+const deployContract = async (inputDeploy : DeployContractInputInterface) : Promise<DeployContractOutputInterface> => {
+  let newContract = new ContractFactory(CERTIFICATE_ABI, Bytecode, inputDeploy.accountIssuer);
   const contract = await newContract.deploy();
   console.log('contract address', contract.address);
   /* wait for contract creation transaction to be mined
@@ -104,17 +101,15 @@ const deployContract = async (): Promise<DeployContractInterface> => {
 
 const publishAward = async (inputAward: PublishAwardInputInterface)
   : Promise<PublishAwardOutputInterface> => {
-  //If we use local Ganache local blockchain
-  let myaccount = provider.getSigner(0);
   // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
-    inputAward.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
+    inputAward.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAward.provider
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
   //Call award function
   let conInstanceAw = new Contract(
-    inputAward.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
+    inputAward.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAward.accountIssuer
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
@@ -122,11 +117,10 @@ const publishAward = async (inputAward: PublishAwardInputInterface)
     inputAward.hashOfAwardFirstPart,
     inputAward.hashOfAwardSecondPart
   );
-  let options = {
-    gasLimit: gas, // Raise the gas limit to a much higher amount
+  const options = {
+    gasLimit: gas, 
     gasPrice: gasPrice,
-    from: myaccount._address
-    //from: myaccount.address //gia infura
+    from: inputAward.addressIssuer
   }
   let tx = await conInstanceAw.award(
     inputAward.hashOfAwardFirstPart,
@@ -144,17 +138,14 @@ const publishProof = async (inputProof: PublishProofInputInterface)
     Maybe the Service has stored this address after deployment
     so it is not necessary for the Issuer to submit it
   */
-  //If we use local Ganache local blockchain
-  let myaccount = provider.getSigner(0);
-  // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
-    inputProof.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
+    inputProof.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputProof.provider
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
   //Call proof function
   let conInstancePr = new Contract(
-    inputProof.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
+    inputProof.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputProof.accountIssuer
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
@@ -162,10 +153,9 @@ const publishProof = async (inputProof: PublishProofInputInterface)
     inputProof.sReq, inputProof.c, inputProof.c2, inputProof.nirenc, inputProof.ev
   );
   let options = {
-    gasLimit: gas, // Raise the gas limit to a much higher amount
+    gasLimit: gas, 
     gasPrice: gasPrice,
-    from: myaccount._address
-    //from: myaccount.address
+    from: inputProof.addressIssuer
   }
   let tx = await conInstancePr.proof(
     inputProof.sReq, inputProof.c, inputProof.c2, inputProof.nirenc, inputProof.ev,
@@ -179,17 +169,14 @@ const publishProof = async (inputProof: PublishProofInputInterface)
 //* Holder-Verifier Service
 const publishRequest = async (inputRequest: PublishRequestInputInterface)
   : Promise<PublishAwardOutputInterface> => {
-  //If we use local Ganache local blockchain
-  let myaccount = provider.getSigner(0);
-  // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
-    inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
+    inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputRequest.provider
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
   //Call request function
   let conInstanceReq = new Contract(
-    inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
+    inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputRequest.accountHolder
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
@@ -201,10 +188,9 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
     inputRequest.VerifKeyPart4
   );
   let options = {
-    gasLimit: gas, // Raise the gas limit to a much higher amount
+    gasLimit: gas, 
     gasPrice: gasPrice,
-    from: myaccount._address
-    //from: myaccount.address //gia infura
+    from: inputRequest.addressHolder
   }
   let tx = await conInstanceReq.request(
     inputRequest.sAwd,
@@ -221,17 +207,14 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
 
 const publishAck = async (inputAck: PublishAckInputInterface)
   : Promise<PublishAwardOutputInterface> => {
-  //If we use local Ganache local blockchain
-  let myaccount = provider.getSigner(0);
-  // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
-    inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
+    inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAck.provider
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
   //Call ack function
   let conInstanceAck = new Contract(
-    inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
+    inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAck.accountVerifier
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
@@ -240,11 +223,10 @@ const publishAck = async (inputAck: PublishAckInputInterface)
     inputAck.eI
   );
   let options = {
-    gasLimit: gas, // Raise the gas limit to a much higher amount
+    gasLimit: gas, 
     gasPrice: gasPrice,
     //from we should specify verifiers ethereum key
-    from: myaccount._address
-    //from: myaccount.address //gia infura
+    from: inputAck.addressVerifier
   }
   let tx = await conInstanceAck.ack(
     inputAck.sPrf,
@@ -258,17 +240,14 @@ const publishAck = async (inputAck: PublishAckInputInterface)
 
 const publishFail = async (inputFail: PublishFailInputInterface)
   : Promise<PublishAwardOutputInterface> => {
-  //If we use local Ganache local blockchain
-  let myaccount = provider.getSigner(0);
-  // pass a provider when initiating a contract for read only queries
   let conInstance = new Contract(
-    inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, provider
+    inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputFail.provider
   );
   let contract_owner = await conInstance.getOwner();
   console.log(contract_owner);
   //Call fail function
   let conInstanceFail = new Contract(
-    inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, myaccount
+    inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputFail.accountVerifier
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
@@ -276,11 +255,10 @@ const publishFail = async (inputFail: PublishFailInputInterface)
     inputFail.sPrf
   );
   let options = {
-    gasLimit: gas, // Raise the gas limit to a much higher amount
+    gasLimit: gas,
     gasPrice: gasPrice,
     //from we should specify verifiers ethereum key
-    from: myaccount._address
-    //from: myaccount.address //gia infura
+    from: inputFail.addressVerifier
   }
   let tx = await conInstanceFail.fail(
     inputFail.sPrf,
