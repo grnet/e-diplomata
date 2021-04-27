@@ -52,6 +52,9 @@ const useStyles = makeStyles((theme) => ({
       marginTop: theme.spacing(2),
     },
   },
+  title: {
+    marginTop: "-9px",
+  },
 }));
 
 export default function Diplomas() {
@@ -65,19 +68,16 @@ export default function Diplomas() {
   const styles = useStyles();
   const { data: datasets } = useResource("datasets");
   const { data, fetch, ...rest } = useResourceMany("diplomas", searchForm);
-  console.log(rest);
-  console.log(diplomas.length);
   const delayedSearch = useCallback(
     debounce(
       (value) =>
         setSearchForm((searchForm) => ({ ...searchForm, search: value })),
-      1500
+      1200
     ),
     []
   );
 
-  async function handleInput(value) {
-    console.log(value);
+  async function handleSearch(value) {
     await delayedSearch(value);
   }
 
@@ -91,7 +91,7 @@ export default function Diplomas() {
   }
 
   function getPageTotal() {
-    return Math.ceil(rest.meta.total);
+    return Math.ceil(rest.totalPages);
   }
 
   function handleChange({ value }, options, removeBoxItem) {
@@ -101,6 +101,7 @@ export default function Diplomas() {
         setSearchForm((searchForm) => ({
           ...searchForm,
           ...deleteKeySearchForm,
+          offset: 1,
         }));
       }
       if (options === datasets.typeOfDegree) {
@@ -108,6 +109,7 @@ export default function Diplomas() {
         setSearchForm((searchForm) => ({
           ...searchForm,
           ...deleteKeySearchForm,
+          offset: 1,
         }));
       }
       if (options === datasets.school) {
@@ -115,6 +117,7 @@ export default function Diplomas() {
         setSearchForm((searchForm) => ({
           ...searchForm,
           ...deleteKeySearchForm,
+          offset: 1,
         }));
       }
       if (options === datasets.institution) {
@@ -122,6 +125,7 @@ export default function Diplomas() {
         setSearchForm((searchForm) => ({
           ...searchForm,
           ...deleteKeySearchForm,
+          offset: 1,
         }));
       }
     } else {
@@ -178,18 +182,21 @@ export default function Diplomas() {
             </Grid>
             <Grid item md={5} sm={12} xs={12} style={{ marginBottom: "2vh" }}>
               <SearchBar
-                onChange={handleInput}
+                onChange={handleSearch}
                 value={searchForm.search}
                 placeholder="Αναζητήστε εδώ..."
                 style={{ maxWidth: 450 }}
+                onCancelSearch={handleSearch}
               />
             </Grid>
           </PageTitle>
           <Grid item xs={12}>
             <Grid container direction="row">
-              <Grid item xl={4} lg={4} md={4} sm={8} xs={12}>
-                <Title size="md">Φίλτρα αναζήτησης</Title>
+              <Grid item xl={4} lg={4} md={4} sm={12} xs={12}>
                 <Grid item>
+                  <Title className={styles.title} size="md">
+                    Φίλτρα αναζήτησης
+                  </Title>
                   <NormalText variant="body1">Τίτλος σπουδών</NormalText>
                 </Grid>
                 <Grid item xs={12}>
@@ -238,18 +245,25 @@ export default function Diplomas() {
                   )}
                 </Grid>
               </Grid>
-              <Grid item xl={7} lg={7} md={7}>
-                <Grid container direction={"column"} spacing={2}>
-                  <Grid item xs={12} style={{ textAlign: "right" }}>
-                    <Button onClick={createDeploma}>
-                      Δημιουργία αιτήματος
-                    </Button>
-                  </Grid>
-
-                  <Grid item xs={12} style={{ textAlign: "center" }}>
-                    <Title size="md">Τίτλοι Σπουδών</Title>
-                  </Grid>
+              <Grid item xl={7} lg={7} md={7} sm={12} xs={12}>
+                {/* <Grid container direction={"column"} spacing={2}> */}
+                {/*  <Grid container> */}
+                <Grid item xs={6} style={{ textAlign: "left" }}>
+                  <NormalText>
+                    <b>{rest.total}</b> διαθέσιμα δεδομένα
+                  </NormalText>
                 </Grid>
+                {/* <Grid item xs={6} style={{ textAlign: "right" }}>
+                      <Button onClick={createDeploma}>
+                        Δημιουργία αιτήματος
+                      </Button>
+                    </Grid> */}
+                {/* </Grid> */}
+
+                <Grid item xs={12} style={{ textAlign: "center" }}>
+                  <Title size="md">Τίτλοι Σπουδών</Title>
+                </Grid>
+                {/*  </Grid> */}
                 <List>
                   {diplomas &&
                     diplomas.map((row, index) => (
