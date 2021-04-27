@@ -20,6 +20,7 @@ dependencies:
   husky: 6.0.0
   i18next: 20.2.1
   lodash: 4.17.21
+  nedb: 1.8.0
   next: 10.0.9_react-dom@16.14.0+react@16.14.0
   react: 16.14.0
   react-dom: 16.14.0_react@16.14.0
@@ -5081,6 +5082,10 @@ packages:
     optional: true
     resolution:
       integrity: sha512-z/WhQ5FPySLdvREByI2vZiTWwCnF0moMJ1hK9YQwDTHKh6I7/uSckMetoRGb5UBZPC1z0jlw+n/XCgjeH7y1AQ==
+  /async/0.2.10:
+    dev: false
+    resolution:
+      integrity: sha1-trvgsGdLnXGXCMo43owjfLUmw9E=
   /asynckit/0.4.0:
     dev: false
     resolution:
@@ -5543,6 +5548,12 @@ packages:
       node: '>=8'
     resolution:
       integrity: sha512-jDctJ/IVQbZoJykoeHbhXpOlNBqGNcwXJKJog42E5HDPUwQTSdjCHdihjj0DlnheQ7blbT6dHOafNAiS8ooQKA==
+  /binary-search-tree/0.2.5:
+    dependencies:
+      underscore: 1.4.4
+    dev: false
+    resolution:
+      integrity: sha1-fbs7IQ/coIJFDa0jNMMErzm9x4Q=
   /bindings/1.5.0:
     dependencies:
       file-uri-to-path: 1.0.0
@@ -10751,6 +10762,12 @@ packages:
       node: '>= 0.8.0'
     resolution:
       integrity: sha512-+bT2uH4E5LGE7h/n3evcS/sQlJXCpIp6ym8OWJ5eV6+67Dsql/LaaT7qJBAt2rzfoa/5QBGBhxDix1dMt2kQKQ==
+  /lie/3.1.1:
+    dependencies:
+      immediate: 3.0.6
+    dev: false
+    resolution:
+      integrity: sha1-mkNrLMd0bKWd56QfpGmz77dr2H4=
   /lie/3.3.0:
     dependencies:
       immediate: 3.0.6
@@ -10820,6 +10837,12 @@ packages:
       node: '>=8.9.0'
     resolution:
       integrity: sha512-rP4F0h2RaWSvPEkD7BLDFQnvSf+nK+wr3ESUjNTyAGobqrijmW92zc+SO6d4p4B1wh7+B/Jg1mkQe5NYUEHtHQ==
+  /localforage/1.9.0:
+    dependencies:
+      lie: 3.1.1
+    dev: false
+    resolution:
+      integrity: sha512-rR1oyNrKulpe+VM9cYmcFn6tsHuokyVHFaCM3+osEmxaHTbEk8oQu6eGDfS6DQLWi/N67XRmB8ECG37OES368g==
   /locate-path/2.0.0:
     dependencies:
       p-locate: 2.0.0
@@ -11343,6 +11366,16 @@ packages:
     hasBin: true
     resolution:
       integrity: sha512-+Mc8UaAebFzgV+KpI5n7DasuuQCHA89dmwm7JXw3TV43ukfNQ9DnBH3Mdb2g/I4Fdxc26pwimBWvjIw0UAILSQ==
+  /nedb/1.8.0:
+    dependencies:
+      async: 0.2.10
+      binary-search-tree: 0.2.5
+      localforage: 1.9.0
+      mkdirp: 0.5.5
+      underscore: 1.4.4
+    dev: false
+    resolution:
+      integrity: sha1-DjUCzYLABNU1WkPJ5VV3vXvZHYg=
   /negotiator/0.6.2:
     dev: false
     engines:
@@ -14871,6 +14904,10 @@ packages:
     dev: false
     resolution:
       integrity: sha512-tZU/3NqK3dA5gpE1KtyiJUrEB0lxnGkMFHptJ7q6ewdZ8s12QrODwNbhIJStmJkd1QDXa1NRA8aF2A1zk/Ypyw==
+  /underscore/1.4.4:
+    dev: false
+    resolution:
+      integrity: sha1-YaajIBBiKvoHljvzJSA88SI51gQ=
   /unherit/1.1.3:
     dependencies:
       inherits: 2.0.4
@@ -15704,6 +15741,7 @@ packages:
       clsx: 1.1.1
       i18next: 20.2.1
       lodash: 4.17.21
+      nedb: 1.8.0
       next: 10.0.9_b958e7dd147f90c3340abf309afb59c9
       react: 16.14.0
       react-dom: 16.14.0_react@16.14.0
@@ -15712,7 +15750,7 @@ packages:
     dev: false
     name: '@rush-temp/issuer'
     resolution:
-      integrity: sha512-jynbLgILyhyJVMXpmdihq+Y7uXLmMDcg4F1yGxbT2YnlnbCevFN6gZXx2/P1Mzq86h1n5hrYc+CeeD4eH9jQ+w==
+      integrity: sha512-7LD1ICyOy/N5S5RC84hj0Xd3frQ2te6dPEcPQSKr08nxq+m/qMJ5zwmb72mjhAvDjfTkWP7VgRmQqCOSb+fMNA==
       tarball: file:projects/issuer.tgz
     version: 0.0.0
 registry: ''
@@ -15738,6 +15776,7 @@ specifiers:
   husky: ^6.0.0
   i18next: ~20.2.1
   lodash: ~4.17.21
+  nedb: ~1.8.0
   next: 10.0.9
   react: 16.14.0
   react-dom: 16.14.0
