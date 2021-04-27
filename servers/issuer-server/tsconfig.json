@@ -1,7 +1,7 @@
 {
   "extends": "@digigov/cli-build/tsconfig.base",
   "include": [
-    "pages"
+    "src"
   ],
   "exclude": [
     "node_modules",
@@ -14,6 +14,12 @@
     "esModuleInterop": true,
     "resolveJsonModule": true,
     "isolatedModules": true,
-    "jsx": "preserve"
+    "jsx": "preserve",
+    "baseUrl":".",
+    "paths": {
+      "issuer-server/*":[
+        "./src/*"
+      ]
+    }
   }
 }
