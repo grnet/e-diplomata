@@ -104,7 +104,7 @@ const SearchBar = React.forwardRef(
     const handleCancel = React.useCallback(() => {
       setValue("");
       if (onCancelSearch) {
-        onCancelSearch();
+        onCancelSearch("");
       }
     }, [onCancelSearch]);
 
