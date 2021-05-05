@@ -5,11 +5,17 @@ import {
 } from './contracts/Certificv2';
 
 const { Contract, utils, ContractFactory } = ethers;
+export type ProviderConfig = {
+  provider: ethers.providers.Provider | ethers.providers.JsonRpcProvider;
+  account: ethers.Wallet | ethers.providers.JsonRpcSigner;
+  address: string;
+}
 
 // deployContract
 export interface DeployContractInputInterface {
-  accountIssuer: ethers.Wallet | ethers.providers.JsonRpcSigner ;
+  accountIssuer: ProviderConfig["account"];
 }
+
 export interface DeployContractOutputInterface {
   contractAddress: string;
   tranHash: string;
@@ -20,9 +26,9 @@ export interface PublishAwardInputInterface {
   hashOfAwardFirstPart: string;
   hashOfAwardSecondPart: string;
   contractAddressUsedByIssuer: string;
-  provider: ethers.providers.Provider | ethers.providers.JsonRpcProvider;
-  accountIssuer: ethers.Wallet | ethers.providers.JsonRpcSigner;
-  addressIssuer: string;
+  provider: ProviderConfig["provider"];
+  accountIssuer: ProviderConfig["account"];
+  addressIssuer: ProviderConfig["address"];
 }
 
 /* publishProof
@@ -36,9 +42,9 @@ export interface PublishProofInputInterface {
   c2: string;
   nirenc: string;
   ev: string;
-  provider: ethers.providers.Provider | ethers.providers.JsonRpcProvider;
-  accountIssuer: ethers.Wallet | ethers.providers.JsonRpcSigner;
-  addressIssuer: string;
+  provider: ProviderConfig["provider"];
+  accountIssuer: ProviderConfig["account"];
+  addressIssuer: ProviderConfig["address"];
 }
 
 // publishAward and publishProof
@@ -61,26 +67,26 @@ export interface PublishRequestInputInterface {
   VerifKeyPart2: string;
   VerifKeyPart3: string;
   VerifKeyPart4: string;
-  provider: ethers.providers.Provider | ethers.providers.JsonRpcProvider;
-  accountHolder: ethers.Wallet | ethers.providers.JsonRpcSigner;
-  addressHolder: string;
+  provider: ProviderConfig["provider"];
+  accountHolder: ProviderConfig["account"];
+  addressHolder: ProviderConfig["address"];
 }
 
 export interface PublishAckInputInterface {
   contractAddressUsedByIssuer: string;
   sPrf: string;
   eI: string;
-  provider: ethers.providers.Provider | ethers.providers.JsonRpcProvider;
-  accountVerifier: ethers.Wallet | ethers.providers.JsonRpcSigner;
-  addressVerifier: string;
+  provider: ProviderConfig["provider"];
+  accountVerifier: ProviderConfig["account"];
+  addressVerifier: ProviderConfig["address"];
 }
 
 export interface PublishFailInputInterface {
   contractAddressUsedByIssuer: string;
   sPrf: string;
-  provider: ethers.providers.Provider | ethers.providers.JsonRpcProvider;
-  accountVerifier: ethers.Wallet | ethers.providers.JsonRpcSigner;
-  addressVerifier: string;
+  provider: ProviderConfig["provider"];
+  accountVerifier: ProviderConfig["account"];
+  addressVerifier: ProviderConfig["address"];
 }
 
 const deployContract = async (inputDeploy : DeployContractInputInterface) : Promise<DeployContractOutputInterface> => {
