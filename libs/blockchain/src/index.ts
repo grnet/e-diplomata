@@ -19,6 +19,7 @@ export interface DeployContractInputInterface {
 export interface DeployContractOutputInterface {
   contractAddress: string;
   tranHash: string;
+  error: string;
 }
 
 // publishAward
@@ -50,6 +51,7 @@ export interface PublishProofInputInterface {
 // publishAward and publishProof
 export interface PublishAwardOutputInterface {
   transactionHash: string;
+  error: string;
 }
 
 /* Holder-Verifier-Service
@@ -90,19 +92,28 @@ export interface PublishFailInputInterface {
 }
 
 const deployContract = async (inputDeploy : DeployContractInputInterface) : Promise<DeployContractOutputInterface> => {
-  let newContract = new ContractFactory(CERTIFICATE_ABI, Bytecode, inputDeploy.accountIssuer);
-  const contract = await newContract.deploy();
-  console.log('contract address', contract.address);
-  /* wait for contract creation transaction to be mined
-     Important
-     what if we have an error? How much time should we await if not mined?
-     maybe use try catch..
-  */
-  let receipt = await contract.deployTransaction.wait();
-  return {
-    contractAddress: receipt.contractAddress,
-    tranHash: receipt.transactionHash
-  };
+  try {
+    let newContract = new ContractFactory(CERTIFICATE_ABI, Bytecode, inputDeploy.accountIssuer);
+    const contract = await newContract.deploy();
+    /* wait for contract creation transaction to be mined
+      Important
+      what if we have an error? How much time should we await if not mined?
+      maybe use try catch..
+    */
+    let receipt = await contract.deployTransaction.wait();
+    return {
+      contractAddress: receipt.contractAddress,
+      tranHash: receipt.transactionHash,
+      error: ''
+    };
+  }
+  catch(err){
+    return {
+      contractAddress: '',
+      tranHash: '',
+      error: err.error.message
+    };
+  }
 }
 
 const publishAward = async (inputAward: PublishAwardInputInterface)
@@ -119,10 +130,19 @@ const publishAward = async (inputAward: PublishAwardInputInterface)
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
-  let gas = await conInstanceAw.estimateGas.award(
-    inputAward.hashOfAwardFirstPart,
-    inputAward.hashOfAwardSecondPart
-  );
+  let gas;
+  try{
+      gas = await conInstanceAw.estimateGas.award(
+      inputAward.hashOfAwardFirstPart,
+      inputAward.hashOfAwardSecondPart
+    );
+  }
+  catch(err){
+    return { 
+      transactionHash: '',
+      error: err.error.message
+    };
+  }
   const options = {
     gasLimit: gas, 
     gasPrice: gasPrice,
@@ -135,7 +155,10 @@ const publishAward = async (inputAward: PublishAwardInputInterface)
   );
   // wait for the transaction to be mined
   const receipt = await tx.wait();
-  return { transactionHash: receipt.transactionHash };
+  return { 
+    transactionHash: receipt.transactionHash,
+    error: ''
+  };
 }
 
 const publishProof = async (inputProof: PublishProofInputInterface)
@@ -155,9 +178,18 @@ const publishProof = async (inputProof: PublishProofInputInterface)
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
-  let gas = await conInstancePr.estimateGas.proof(
-    inputProof.sReq, inputProof.c, inputProof.c2, inputProof.nirenc, inputProof.ev
-  );
+  let gas;
+  try{
+    gas = await conInstancePr.estimateGas.proof(
+      inputProof.sReq, inputProof.c, inputProof.c2, inputProof.nirenc, inputProof.ev
+    );
+  }
+  catch(err){
+    return { 
+      transactionHash: '',
+      error: err.error.message
+    };
+  }
   let options = {
     gasLimit: gas, 
     gasPrice: gasPrice,
@@ -169,7 +201,10 @@ const publishProof = async (inputProof: PublishProofInputInterface)
   );
   // wait for the transaction to be mined
   const receipt = await tx.wait();
-  return { transactionHash: receipt.transactionHash };
+  return { 
+    transactionHash: receipt.transactionHash,
+    error: ''
+  };
 }
 
 //* Holder-Verifier Service
@@ -186,13 +221,22 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
-  let gas = await conInstanceReq.estimateGas.request(
-    inputRequest.sAwd,
-    inputRequest.VerifKeyPart1,
-    inputRequest.VerifKeyPart2,
-    inputRequest.VerifKeyPart3,
-    inputRequest.VerifKeyPart4
-  );
+  let gas;
+  try {
+    gas= await conInstanceReq.estimateGas.request(
+      inputRequest.sAwd,
+      inputRequest.VerifKeyPart1,
+      inputRequest.VerifKeyPart2,
+      inputRequest.VerifKeyPart3,
+      inputRequest.VerifKeyPart4
+    );
+  }
+  catch(err){
+    return { 
+      transactionHash: '',
+      error: err.error.message
+    };
+  }
   let options = {
     gasLimit: gas, 
     gasPrice: gasPrice,
@@ -208,7 +252,10 @@ const publishRequest = async (inputRequest: PublishRequestInputInterface)
   );
   // wait for the transaction to be mined
   const receipt = await tx.wait();
-  return { transactionHash: receipt.transactionHash };
+  return { 
+    transactionHash: receipt.transactionHash,
+    error: ''
+  };
 }
 
 const publishAck = async (inputAck: PublishAckInputInterface)
@@ -224,10 +271,19 @@ const publishAck = async (inputAck: PublishAckInputInterface)
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
-  let gas = await conInstanceAck.estimateGas.ack(
-    inputAck.sPrf,
-    inputAck.eI
-  );
+  let gas; 
+  try {
+    gas= await conInstanceAck.estimateGas.ack(
+      inputAck.sPrf,
+      inputAck.eI
+    );
+  }
+  catch(err){
+    return { 
+      transactionHash: '',
+      error: err.error.message
+    };
+  }
   let options = {
     gasLimit: gas, 
     gasPrice: gasPrice,
@@ -241,7 +297,10 @@ const publishAck = async (inputAck: PublishAckInputInterface)
   );
   // wait for the transaction to be mined
   const receipt = await tx.wait();
-  return { transactionHash: receipt.transactionHash };
+  return { 
+    transactionHash: receipt.transactionHash,
+    error: ''
+  };
 }
 
 const publishFail = async (inputFail: PublishFailInputInterface)
@@ -257,9 +316,18 @@ const publishFail = async (inputFail: PublishFailInputInterface)
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
-  let gas = await conInstanceFail.estimateGas.fail(
-    inputFail.sPrf
-  );
+  let gas; 
+  try{
+    gas= await conInstanceFail.estimateGas.fail(
+      inputFail.sPrf
+    );
+  }
+  catch(err){
+    return { 
+      transactionHash: '',
+      error: err.error.message
+    };
+  }
   let options = {
     gasLimit: gas,
     gasPrice: gasPrice,
@@ -272,7 +340,10 @@ const publishFail = async (inputFail: PublishFailInputInterface)
   );
   // wait for the transaction to be mined
   const receipt = await tx.wait();
-  return { transactionHash: receipt.transactionHash };
+  return { 
+    transactionHash: receipt.transactionHash,
+    error: ''
+  };
 }
 
 export {
