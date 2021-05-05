@@ -9,7 +9,7 @@ import {
 import { eventsABI } from '../src/eventsABI';
 /*Uncomment one of the following depending on the provider*/
 //gia ganache topika
-import { provider, account, address } from '../src/Ganache';
+import { provider, account, address, accountNotIssuer, addressNotIssuer } from '../src/Ganache';
 //gia INFURA
 //import { provider, myaccount, myaddress } from '../src/Infura';
 
@@ -46,6 +46,18 @@ describe('testing functions in index.ts ', () => {
     expect(decodedLogs[0].events[0].value).toBe(dummyHash);
   });
 
+  it('should fail to publish an award because an account different than Issuer is used', async () => {
+    const transcactionHashAward = await publishAward({
+      hashOfAwardFirstPart: dummyHash,
+      hashOfAwardSecondPart: dummyHash, 
+      contractAddressUsedByIssuer: contractAddress,
+      provider: provider,
+      accountIssuer: accountNotIssuer,
+      addressIssuer: addressNotIssuer
+    });
+    expect(transcactionHashAward.error).toBe('VM Exception while processing transaction: revert Caller is not owner');
+  });
+
   it('should publish a proof and then check that the correct data where published', async () => {
     const transactionHashProof = await publishProof({
       contractAddressUsedByIssuer: contractAddress,
@@ -65,6 +77,25 @@ describe('testing functions in index.ts ', () => {
     const receipt = await provider.getTransactionReceipt(transactionHashProof.transactionHash);
     const decodedLogs = abiDecoder.decodeLogs(receipt.logs);
     expect(decodedLogs[0].events[0].value).toBe(dummyTxHash);
+  });
+
+  it('should fail to publish a proof because an account different than Issuer is used', async () => {
+    const transactionHashProof = await publishProof({
+      contractAddressUsedByIssuer: contractAddress,
+      /* for test use a random transactionHash */
+      sReq: dummyTxHash,
+      c: dummyHash,
+      c2: dummyHash,
+      nirenc: dummyHash,
+      ev: dummyHash,
+      provider: provider,
+      accountIssuer: accountNotIssuer,
+      addressIssuer: addressNotIssuer
+    });
+    /*search the Blockchain to find the transaction receipt.
+      the search is done using the transactionHash of a transaction
+    */
+      expect(transactionHashProof.error).toBe('VM Exception while processing transaction: revert Caller is not owner');
   });
 
   it('should publish a request and then check that the correct data where published', async () => {
