@@ -99,9 +99,10 @@ def step_four(curve, issuer_key, verifier_key, c_r, nirenc,
     s_ack = sign(verifier_key, payload)
     return s_ack
 
+
 if __name__ == '__main__':
+
     curve = gen_curve('P-384')
-    test_encdec(curve)
 
     # Setup keys
 
