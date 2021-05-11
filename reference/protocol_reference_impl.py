@@ -19,6 +19,17 @@ def hash_into_integer(bytes_seq, endianness='big'):
     return int.from_bytes(SHA384.new(bytes_seq).digest(), endianness)
 
 
+def random_factor(curve):
+    """
+    Plays the same role as random exponent
+    in numerical ElGamal cryptosystems
+    """
+    return Integer.random_range(
+        min_inclusive=1,
+        max_exclusive=curve.order
+    )
+
+
 # class KeyGenerator(object):
 #
 #     def __init__(self, curve):
@@ -36,6 +47,19 @@ def keygen(curve):
         'ecc': ECC.generate(curve=curve.desc),
         'nacl': PrivateKey.generate(),
     }
+
+
+# class Signer(object):
+#     pass
+#
+# class Holder(object):
+#     pass
+#
+# class Issuer(object):
+#     pass
+#
+# class Verifier(object):
+#     pass
 
 
 def ecc_point_to_bytes(ecc_point):
@@ -56,29 +80,25 @@ def sign(key, payload):
     hc = SHA384.new(payload)
     signature = signer.sign(hc)
     return signature
-
-def enc(curve, pub, m):
+    
+def encrypt(curve, pub, m):
     pk1 = curve.G
     pk2 = pub
-    order = curve.order
-    r = Integer.random_range(min_inclusive=1,
-                             max_exclusive=curve.order)
+    r = random_factor(curve)
     a = r * pk1
     b = m * pk1 + r * pk2
     return (a, b, r)
 
-def dec(priv, c, table):
+def decrypt(priv, c, table):
     a, b = c
     v = b + (priv.d * (-a))
     return table[(str(v.x), str(v.y))]
 
-def renc(curve, pub, c):
+def reencrypt(curve, pub, c):
     pk1 = curve.G
     pk2 = pub
     c1, c2 = c
-    order = curve.order
-    r = Integer.random_range(min_inclusive=1,
-                             max_exclusive=curve.order)
+    r = random_factor(curve)
     a = r * pk1 + c1
     b = c2 + r * pk2
     return (a, b, r)
@@ -92,8 +112,7 @@ def drenc(c, decryptor):
 def chaum_pedersen(curve, key, a, b):
     pub = ecc_pub_key(key)
     priv = int(key.d)
-    r = Integer.random_range(min_inclusive=1,
-                             max_exclusive=curve.order)
+    r = random_factor(curve);
     u = a * r
     v = curve.G * r
     to_hash = f'{pub.xy} {a.xy} {b.xy} {u.xy} {v.xy}'.encode('utf-8')
@@ -144,18 +163,19 @@ def test_encdec(curve):
     import random
     ps = random.sample(range(1000), 100)
     for i in range(100):
-        c1, c2, r = enc(curve, pub, ps[i])
-        c1_r, c2_r, r_r = renc(curve, pub, (c1, c2))
-        assert(dec(ecc_key, (c1, c2), table) == ps[i])
-        assert(dec(ecc_key, (c1_r, c2_r), table) == ps[i])
+        c1, c2, r = encrypt(curve, pub, ps[i])
+        c1_r, c2_r, r_r = reencrypt(curve, pub, (c1, c2))
+        assert(decrypt(ecc_key, (c1, c2), table) == ps[i])
+        assert(decrypt(ecc_key, (c1_r, c2_r), table) == ps[i])
 
 def step_one(curve, issuer_key, t):
     # order = curve.order       # Maybe use in payload?
     h = hash_into_integer(t)
-    c1, c2, r = enc(curve, ecc_pub_key(issuer_key), h)
+    c1, c2, r = encrypt(curve, ecc_pub_key(issuer_key), h)
     payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
     s_awd = sign(issuer_key, payload)
-    return (c1, c2, s_awd, r)
+    commitment = (c1, c2)
+    return s_awd, commitment, r
 
 def step_two(curve, holder_key, verifier_key, s_awd):
     payload = (f'REQUEST s_awd={s_awd} '
@@ -163,11 +183,11 @@ def step_two(curve, holder_key, verifier_key, s_awd):
     s_req = sign(holder_key, payload)
     return s_req
 
-def step_three(curve, issuer_key, pub_verifier_key, r, c, s_req, issuer_box):
+def step_three(curve, issuer_key, pub_verifier_key, r, commitment, s_req, issuer_box):
     c1, c2 = c
     pub = ecc_pub_key(issuer_key)
     # re-encrypt c
-    c1_r, c2_r, r_r = renc(curve, pub, c)
+    c1_r, c2_r, r_r = reencrypt(curve, pub, c)
     c_r = (c1_r, c2_r)
     # create NIRENC
     proof_c1 = c1, c1_r, *chaum_pedersen(curve, issuer_key, c1, c1_r)
@@ -267,9 +287,13 @@ if __name__ == '__main__':
 
     issuer_box = Box(issuer_nacl_key, verifier_nacl_key.public_key)
     verifier_box = Box(verifier_nacl_key, issuer_nacl_key.public_key)
-    print('step_one')
-    c1, c2, s_awd, r = step_one(curve, issuer_key, m)
+
+    print('step 1')
+    s_awd, c, r = step_one(curve, issuer_key, m)
+    c1, c2 = c
     print('c1:', c1.xy, 'c2:', c2.xy, 's_awd:', s_awd, 'r:', r)
+    print()
+
     print('step_two')
     s_req  = step_two(curve, holder_key, verifier_key, s_awd)
     print('s_req:', s_req)
