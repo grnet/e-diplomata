@@ -80,33 +80,62 @@ def sign(key, payload):
     hc = SHA384.new(payload)
     signature = signer.sign(hc)
     return signature
-    
-def encrypt(curve, pub, m):
-    pk1 = curve.G
-    pk2 = pub
-    r = random_factor(curve)
-    a = r * pk1
-    b = m * pk1 + r * pk2
-    return (a, b, r)
 
-def decrypt(priv, c, table):
-    a, b = c
-    v = b + (priv.d * (-a))
+# ElGamal encryption/decryption
+
+def set_cipher(alpha, beta):
+    cipher = {
+        'alpha': alpha,
+        'beta': beta
+    }
+    return cipher
+
+def extract_cipher(cipher):
+    alpha = cipher['alpha']
+    beta = cipher['beta']
+    return alpha, beta
+
+def encrypt(curve, public, m):
+    """
+    ElGamal encryption
+    """
+    g = curve.G
+    r = random_factor(curve)
+    cipher = set_cipher(
+        r * g,
+        m * g + r * public,
+    )
+    return cipher, r
+
+def decrypt(key, cipher, table):
+    """
+    ElGamal decryption
+    """
+    a, b = extract_cipher(cipher)
+    v = b + (key.d * (-a))
     return table[(str(v.x), str(v.y))]
 
-def reencrypt(curve, pub, c):
-    pk1 = curve.G
-    pk2 = pub
-    c1, c2 = c
+def reencrypt(curve, public, cipher):
+    """
+    ElGamal re-encryption
+    """
+    g = curve.G
     r = random_factor(curve)
-    a = r * pk1 + c1
-    b = c2 + r * pk2
-    return (a, b, r)
+    c1, c2 = extract_cipher(cipher)
+    cipher = set_cipher(
+        r * g + c1,
+        c2 + r * public,
+    )
+    return cipher, r
 
-def drenc(c, decryptor):
-    _, c2 = c
+def drenc(cipher, decryptor):
+    """
+    ElGamal decryption with decryptor
+    """
+    _, c2 = extract_cipher(cipher)
     m = c2 + (-decryptor)
     return m
+
 
 # This is taken from https://github.com/kantuni/ZKP
 def chaum_pedersen(curve, key, a, b):
@@ -163,15 +192,16 @@ def test_encdec(curve):
     import random
     ps = random.sample(range(1000), 100)
     for i in range(100):
-        c1, c2, r = encrypt(curve, pub, ps[i])
-        c1_r, c2_r, r_r = reencrypt(curve, pub, (c1, c2))
-        assert(decrypt(ecc_key, (c1, c2), table) == ps[i])
-        assert(decrypt(ecc_key, (c1_r, c2_r), table) == ps[i])
+        cipher, r = encrypt(curve, pub, ps[i])
+        cipher_r, r_r = reencrypt(curve, pub, cipher)
+        assert(decrypt(ecc_key, cipher, table) == ps[i])
+        assert(decrypt(ecc_key, cipher_r, table) == ps[i])
 
 def step_one(curve, issuer_key, t):
     # order = curve.order       # Maybe use in payload?
     h = hash_into_integer(t)
-    c1, c2, r = encrypt(curve, ecc_pub_key(issuer_key), h)
+    cipher, r = encrypt(curve, ecc_pub_key(issuer_key), h)
+    c1, c2 = extract_cipher(cipher)
     payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
     s_awd = sign(issuer_key, payload)
     commitment = (c1, c2)
@@ -187,7 +217,9 @@ def step_three(curve, issuer_key, pub_verifier_key, r, commitment, s_req, issuer
     c1, c2 = c
     pub = ecc_pub_key(issuer_key)
     # re-encrypt c
-    c1_r, c2_r, r_r = reencrypt(curve, pub, c)
+    cipher = set_cipher(c1, c2)
+    cipher_r, r_r = reencrypt(curve, pub, cipher)
+    c1_r, c2_r = extract_cipher(cipher_r)
     c_r = (c1_r, c2_r)
     # create NIRENC
     proof_c1 = c1, c1_r, *chaum_pedersen(curve, issuer_key, c1, c1_r)
@@ -225,7 +257,9 @@ def step_four(curve, issuer_key, verifier_key, c_r, nirenc,
         return s_ack
     decryptor = ECC.EccPoint(x_affine, y_affine, curve=curve.desc)
     # decrypt the re-encryption using the decryptor
-    dec_m = drenc(c_r, decryptor)
+    c1, c2 = c_r
+    cipher_r = set_cipher(c1, c2)
+    dec_m = drenc(cipher_r, decryptor)
     # check that the decrypted hash is the same with the hash of the original
     # document, as an ECC point
     h = hash_into_integer(m)
