@@ -1,6 +1,8 @@
-import db from "issuer-server/lib/db";
+import database from "issuer-server/lib/db";
+
 
 export default async function handler(req, res) {
+  const db =database();
   let response = null;
   if (req.method === "POST") {
     // Process a POST request
