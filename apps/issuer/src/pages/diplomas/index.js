@@ -13,11 +13,11 @@ import ComboBox from "issuer/components/comboBox";
 import Grid from "@material-ui/core/Grid";
 import { useRouter } from "next/router";
 import { useResourceMany } from "@digigov/ui/api";
-import SearchBar from "issuer/components/SearchBar";
+import SearchBar from "issuer/components/searchBar";
 import { debounce } from "lodash";
 import Pagination from "@material-ui/lab/Pagination";
 import IssuerLayout from "issuer/components/IssuerLayout";
-import DiplomaItem from "issuer/components/DiplomaItem";
+import DiplomaItem from "issuer/components/diplomaItem";
 
 const useStyles = makeStyles((theme) => ({
   top: { minHeight: "75px" },
@@ -246,24 +246,14 @@ export default function Diplomas() {
                 </Grid>
               </Grid>
               <Grid item xl={7} lg={7} md={7} sm={12} xs={12}>
-                {/* <Grid container direction={"column"} spacing={2}> */}
-                {/*  <Grid container> */}
                 <Grid item xs={6} style={{ textAlign: "left" }}>
                   <NormalText>
                     <b>{rest.total}</b> διαθέσιμα δεδομένα
                   </NormalText>
                 </Grid>
-                {/* <Grid item xs={6} style={{ textAlign: "right" }}>
-                      <Button onClick={createDeploma}>
-                        Δημιουργία αιτήματος
-                      </Button>
-                    </Grid> */}
-                {/* </Grid> */}
-
                 <Grid item xs={12} style={{ textAlign: "center" }}>
                   <Title size="md">Τίτλοι Σπουδών</Title>
                 </Grid>
-                {/*  </Grid> */}
                 <List>
                   {diplomas &&
                     diplomas.map((row, index) => (
