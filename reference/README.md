@@ -5,5 +5,5 @@ pip install -r requirements.txt
 ```
 
 ```commandline
-python3 protocol_reference_impl.py
+python3 demo.py
 ```
