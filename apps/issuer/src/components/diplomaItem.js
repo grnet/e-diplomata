@@ -4,7 +4,7 @@ import ListItem from "@material-ui/core/ListItem";
 import ListItemText from "@material-ui/core/ListItemText";
 
 export default function DiplomaItem(props) {
-  const url = `/diplomas/${props.id}`;
+  const url = `/diplomas/${props._id}`;
   return (
     <Link href={url}>
       <ListItem button alignItems="flex-start">
