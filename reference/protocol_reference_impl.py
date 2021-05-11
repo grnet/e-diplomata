@@ -75,11 +75,6 @@ def gen_curve(curve_name):
 def ecc_pub_key(ecc_key):
     return ecc_key.pointQ
 
-def sign(key, payload):
-    signer = DSS.new(key, 'fips-186-3')
-    hc = SHA384.new(payload)
-    signature = signer.sign(hc)
-    return signature
 
 # ElGamal encryption/decryption
 
@@ -135,6 +130,20 @@ def drenc(cipher, decryptor):
     _, c2 = extract_cipher(cipher)
     m = c2 + (-decryptor)
     return m
+
+
+# Commitments and signatures
+
+def commit(curve, public, t):
+    ht = hash_into_integer(t)                   # H(t)
+    commitment, r = encrypt(curve, public, ht)  # (r * g, H(t) * g + r * I), r
+    return commitment, r
+
+def sign(key, payload):
+    signer = DSS.new(key, 'fips-186-3')
+    hc = SHA384.new(payload)
+    signature = signer.sign(hc)
+    return signature
 
 
 # This is taken from https://github.com/kantuni/ZKP
@@ -199,9 +208,8 @@ def test_encdec(curve):
 
 def step_one(curve, issuer_key, t):
     # order = curve.order       # Maybe use in payload?
-    h = hash_into_integer(t)
-    cipher, r = encrypt(curve, ecc_pub_key(issuer_key), h)
-    c1, c2 = extract_cipher(cipher)
+    commitment, r = commit(curve, ecc_pub_key(issuer_key), t)
+    c1, c2 = extract_cipher(commitment)                         # TODO
     payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
     s_awd = sign(issuer_key, payload)
     commitment = (c1, c2)
