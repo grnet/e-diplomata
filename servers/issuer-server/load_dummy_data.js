@@ -5,13 +5,12 @@ const valuePool = {
   typeOfDegree: ["programmer", "architec"],
   school: ["immi", "architectoniki"],
   institution: ["tuc", "assoe"],
-  status: ["approved", "pending"],
+  status: ["unawarded"],
   userName: ["giannis", "giorgos", "panagiotis"],
   year: ["2005", "2006", "2007"],
 };
-const diplomas = new Array(100).fill({}).map((item, index) => {
+const diplomas = new Array(11).fill({}).map((item, index) => {
   return {
-    id: `${index}`,
     degree:
       valuePool.degree[Math.floor(Math.random() * valuePool.degree.length)],
     typeOfDegree:
@@ -33,6 +32,8 @@ const diplomas = new Array(100).fill({}).map((item, index) => {
 });
 
 const database = new Datastore("diplomas.db");
+/* database.persistence.compactDatafile();
+database.persistence.setAutocompactionInterval( 500); */
 database.loadDatabase(function (error) {
   if (error) {
     console.log(
