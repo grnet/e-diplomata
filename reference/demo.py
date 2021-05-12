@@ -70,6 +70,21 @@ class Issuer(Party):
         enc_decryptor = box.encrypt(str(decryptor.xy).encode('utf-8'))  # TODO
         return decryptor, enc_decryptor
 
+    def generate_niddh(self, r1, r2, verifier):
+        # TODO
+        g = self.curve.G
+        g_r = g * r1
+        g_r_r = g * r2
+        u, v, s, d = self.generate_chaum_pedersen_proof(g_r, g_r_r)
+        niddh = serialize_chaum_pedersen(g_r, g_r_r, u, v, s, d)
+
+        # TODO
+        box = Box(self.key['nacl'], verifier.key['nacl'].public_key)
+        enc_niddh = box.encrypt(json.dumps(niddh).encode('utf-8'))
+
+        return niddh, enc_niddh
+
+
 
 class Verifier(Party):
 
@@ -109,17 +124,8 @@ def step_three(curve, issuer, r, commitment, s_req, verifier):
     # Create and encrypt decryptor
     decryptor, enc_decryptor = issuer.create_decryptor(r, r_r, verifier)
 
-    # create and encrypt NIDDH of decryptor
-    g = curve.G
-    g_r = g * r
-    g_r_r = g * r_r
-    u, v, s, d = chaum_pedersen(curve, issuer.key['ecc'], g_r, g_r_r)
-    niddh = serialize_chaum_pedersen(g_r, g_r_r, u, v, s, d)
-
-    # Verifier appears implicitly here
-    # TODO: Transfer box inside issuer methods using it
-    issuer_box = Box(issuer.key['nacl'], verifier.key['nacl'].public_key)
-    enc_niddh = issuer_box.encrypt(json.dumps(niddh).encode('utf-8'))
+    # Create and encrypt NIDDH of the above decryptor addressed to VERIFIER
+    niddh, enc_niddh = issuer.generate_niddh(r, r_r, verifier)
 
     nirenc_str = (serialize_chaum_pedersen(*proof_c1),
                   serialize_chaum_pedersen(*proof_c2))
@@ -164,6 +170,7 @@ def step_four(curve, issuer, verifier, c_r, nirenc,
         return s_ack
     # check the NIDDH proof
     # TODO: Transfer box inside verifier methods using it
+
     verifier_box = Box(verifier.key['nacl'], issuer.key['nacl'].public_key)
     dec_niddh = verifier_box.decrypt(enc_niddh)
     check_proof_r_r = verifier.verify_chaum_pedersen_proof(issuer, a, b, u, v, s, d)
@@ -171,6 +178,7 @@ def step_four(curve, issuer, verifier, c_r, nirenc,
         payload = f'FAIL {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
         return s_ack
+
     payload = f'ACK {s_prf}'.encode('utf-8')
     s_ack = verifier.sign(payload)
     return s_ack
