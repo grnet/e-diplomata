@@ -38,7 +38,6 @@ class Party(object):
         )
 
 
-
 class Holder(Party):
 
     def __init__(self, curve):
@@ -79,6 +78,13 @@ class Issuer(Party):
             set_cipher(*commitment),
         )
 
+    def create_decryptor(self, r1, r2, verifier):
+        box = Box(self.key['nacl'], verifier.key['nacl'].public_key)
+        r_tilde = r1 + r2
+        decryptor = ecc_pub_key(self.key['ecc']) * r_tilde              # TODO
+        enc_decryptor = box.encrypt(str(decryptor.xy).encode('utf-8'))  # TODO
+        return decryptor, enc_decryptor
+
 
 class Verifier(Party):
 
@@ -88,10 +94,11 @@ class Verifier(Party):
 
 def step_three(curve, issuer, r, commitment, s_req, verifier):
 
-    # TODO: Transfer box inside issuer methods usign it
+    # TODO: Transfer box inside issuer methods using it
     issuer_box = Box(issuer.key['nacl'], verifier.key['nacl'].public_key)
 
     c1, c2 = commitment
+
     # re-encrypt c
     cipher_r, r_r = issuer.reencrypt_commitment(commitment)
     c1_r, c2_r = extract_cipher(cipher_r)
@@ -101,17 +108,13 @@ def step_three(curve, issuer, r, commitment, s_req, verifier):
 
     proof_c1 = c1, c1_r, *issuer.generate_chaum_pedersen_proof(c1, c1_r)
     proof_c2 = c2, c2_r, *issuer.generate_chaum_pedersen_proof(c2, c2_r)
-
     nirenc = (proof_c1, proof_c2)
-    nirenc_str = (serialize_chaum_pedersen(*proof_c1),
-                  serialize_chaum_pedersen(*proof_c2))
 
-    # create and encrypt decryptor
-    g = curve.G
-    r_tilde = r + r_r
-    decryptor = ecc_pub_key(issuer.key['ecc']) * r_tilde
-    enc_decryptor = issuer_box.encrypt(str(decryptor.xy).encode('utf-8'))
+    # Create and encrypt decryptor
+    decryptor, enc_decryptor = issuer.create_decryptor(r, r_r, verifier)
+
     # create and encrypt NIDDH of decryptor
+    g = curve.G
     g_r = g * r
     g_r_r = g * r_r
     u, v, s, d = chaum_pedersen(curve, issuer.key['ecc'], g_r, g_r_r)
@@ -120,6 +123,8 @@ def step_three(curve, issuer, r, commitment, s_req, verifier):
     # Verifier appears implicitly here
     enc_niddh = issuer_box.encrypt(json.dumps(niddh).encode('utf-8'))
 
+    nirenc_str = (serialize_chaum_pedersen(*proof_c1),
+                  serialize_chaum_pedersen(*proof_c2))
     payload = (f'PROOF s_req={s_req} c_r=({c_r[0].xy, c_r[1].xy}) '
                f'{nirenc_str} {enc_decryptor} '
                f'{enc_niddh}'.encode('utf-8'))
@@ -129,7 +134,7 @@ def step_three(curve, issuer, r, commitment, s_req, verifier):
 def step_four(curve, issuer, verifier, c_r, nirenc,
               enc_decryptor, enc_niddh, m):
 
-    # TODO: Transfer box inside verifier methods usign it
+    # TODO: Transfer box inside verifier methods using it
     verifier_box = Box(verifier.key['nacl'], issuer.key['nacl'].public_key)
 
     # get the decryptor
