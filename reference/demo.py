@@ -1,19 +1,5 @@
 from lib import *
 
-# class KeyManager(object):
-#
-#     def __init__(self, curve):
-#         self.curve = curve
-#
-#     def generate(self):
-#         return {
-#             'ecc': ECC.generate(curve=self.curve.desc),
-#             'nacl': PrivateKey.generate(),
-#         }
-
-
-class Signer(object):
-    pass
 
 class Party(object):
 
@@ -48,7 +34,6 @@ class Holder(Party):
         payload = (f'REQUEST s_awd={s_awd} ver_pub={ver_pub}').encode('utf-8')
         s_req = self.sign(payload)
         return s_req
-
 
 
 class Issuer(Party):
@@ -91,11 +76,22 @@ class Verifier(Party):
     def __init__(self, curve):
         super().__init__(curve)
 
+    def retrieve_decryptor(self, issuer, enc_decryptor):
+        box = Box(self.key['nacl'], issuer.key['nacl'].public_key)
+        dec_decryptor = box.decrypt(enc_decryptor).decode('utf-8')
+        extract_coords = re.match(r'^\D*(\d+)\D+(\d+)\D*$', dec_decryptor)
+        x_affine = int(extract_coords.group(1))
+        y_affine = int(extract_coords.group(2))
+        # TODO
+        if not extract_coords:
+            payload = f'FAIL {s_prf}'.encode('utf-8')
+            s_ack = verifier.sign(payload)
+            return s_ack
+        decryptor = ECC.EccPoint(x_affine, y_affine, curve=curve.desc)
+        return decryptor
+
 
 def step_three(curve, issuer, r, commitment, s_req, verifier):
-
-    # TODO: Transfer box inside issuer methods using it
-    issuer_box = Box(issuer.key['nacl'], verifier.key['nacl'].public_key)
 
     c1, c2 = commitment
 
@@ -121,6 +117,8 @@ def step_three(curve, issuer, r, commitment, s_req, verifier):
     niddh = serialize_chaum_pedersen(g_r, g_r_r, u, v, s, d)
 
     # Verifier appears implicitly here
+    # TODO: Transfer box inside issuer methods using it
+    issuer_box = Box(issuer.key['nacl'], verifier.key['nacl'].public_key)
     enc_niddh = issuer_box.encrypt(json.dumps(niddh).encode('utf-8'))
 
     nirenc_str = (serialize_chaum_pedersen(*proof_c1),
@@ -134,19 +132,9 @@ def step_three(curve, issuer, r, commitment, s_req, verifier):
 def step_four(curve, issuer, verifier, c_r, nirenc,
               enc_decryptor, enc_niddh, m):
 
-    # TODO: Transfer box inside verifier methods using it
-    verifier_box = Box(verifier.key['nacl'], issuer.key['nacl'].public_key)
+    # Retrieve decryptor created by ISSUER for VERIFIER
+    decryptor = verifier.retrieve_decryptor(issuer, enc_decryptor)
 
-    # get the decryptor
-    dec_decryptor = verifier_box.decrypt(enc_decryptor).decode('utf-8')
-    extract_coords = re.match(r'^\D*(\d+)\D+(\d+)\D*$', dec_decryptor)
-    x_affine = int(extract_coords.group(1))
-    y_affine = int(extract_coords.group(2))
-    if not extract_coords:
-        payload = f'FAIL {s_prf}'.encode('utf-8')
-        s_ack = verifier.sign(payload)
-        return s_ack
-    decryptor = ECC.EccPoint(x_affine, y_affine, curve=curve.desc)
     # decrypt the re-encryption using the decryptor
     c1, c2 = c_r
     cipher_r = set_cipher(c1, c2)
@@ -175,6 +163,8 @@ def step_four(curve, issuer, verifier, c_r, nirenc,
         s_ack = verifier.sign(payload)
         return s_ack
     # check the NIDDH proof
+    # TODO: Transfer box inside verifier methods using it
+    verifier_box = Box(verifier.key['nacl'], issuer.key['nacl'].public_key)
     dec_niddh = verifier_box.decrypt(enc_niddh)
     check_proof_r_r = verifier.verify_chaum_pedersen_proof(issuer, a, b, u, v, s, d)
     if not check_proof_r_r:
