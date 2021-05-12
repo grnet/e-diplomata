@@ -27,6 +27,14 @@ class Holder(Party):
     def __init__(self, curve):
         super().__init__(curve)
 
+    def publish_request(self, verifier, s_awd):
+        ver_pub = ecc_pub_key(verifier.key['ecc'])  # TODO
+        payload = (f'REQUEST s_awd={s_awd} ver_pub={ver_pub}').encode('utf-8')
+        s_req = sign(self.key['ecc'], payload)
+        return s_req
+
+
+
 class Issuer(Party):
 
     def __init__(self, curve):
@@ -51,11 +59,11 @@ class Verifier(Party):
         super().__init__(curve)
 
 
-def step_two(curve, holder_key, verifier_key, s_awd):
-    payload = (f'REQUEST s_awd={s_awd} '
-               'ver_pub={ecc_pub_key(verifier_key).xy}').encode('utf-8')
-    s_req = sign(holder_key, payload)
-    return s_req
+# def step_two(curve, holder_key, verifier_key, s_awd):
+#     payload = (f'REQUEST s_awd={s_awd} '
+#                'ver_pub={ecc_pub_key(verifier_key).xy}').encode('utf-8')
+#     s_req = sign(holder_key, payload)
+#     return s_req
 
 def step_three(curve, issuer_key, pub_verifier_key, r, commitment, s_req, issuer_box):
     c1, c2 = c
@@ -170,12 +178,16 @@ if __name__ == '__main__':
 
     print('step 1')
     s_awd, c, r = issuer.publish_award(m)
+    # ISSUER stores privately r used for encryption and sends s_awd to the HOLDER
     c1, c2 = c
     print('c1:', c1.xy, 'c2:', c2.xy, 's_awd:', s_awd, 'r:', r)
     print()
 
     print('step_two')
-    s_req  = step_two(curve, holder_key, verifier_key, s_awd)
+    s_req  = holder.publish_request(verifier, s_awd)
+    # The request signature can be verified by the ISSUER in order to identify
+    # the HOLDER and ensure that this is the true holder of the qualification 
+    # committed to at s_awd
     print('s_req:', s_req)
     print('step_three')
     s_prf, c_r, nirenc, enc_decryptor, enc_niddh = step_three(
