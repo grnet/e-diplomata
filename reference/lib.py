@@ -107,9 +107,8 @@ def chaum_pedersen(curve, key, a, b):
     u = a * r
     v = curve.G * r
     to_hash = f'{pub} {a} {b} {u} {v}'.encode('utf-8')
-    h = hash_into_integer(to_hash)
-    # import pdb; pdb.set_trace()
-    s = (r + h * priv) % curve.order
+    h = hash_into_integer(to_hash)                      # challenge
+    s = (r + h * priv) % curve.order                    # response
     d = a * priv
     return u, v, s, d
 

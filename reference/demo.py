@@ -59,6 +59,16 @@ class Issuer(Party):
         commitment = (c1, c2)
         return s_awd, commitment, r
 
+    def reencrypt_commitment(self, commitment):
+        """
+        input: (c1, c2)
+        """
+        return reencrypt(
+            self.curve, 
+            ecc_pub_key(self.key['ecc']), 
+            set_cipher(*commitment),
+        )
+
 
 class Verifier(Party):
 
@@ -67,11 +77,9 @@ class Verifier(Party):
 
 
 def step_three(curve, issuer, r, commitment, s_req, issuer_box):
-    c1, c2 = c
-    pub = ecc_pub_key(issuer.key['ecc'])
+    c1, c2 = commitment
     # re-encrypt c
-    cipher = set_cipher(c1, c2)
-    cipher_r, r_r = reencrypt(curve, pub, cipher)
+    cipher_r, r_r = issuer.reencrypt_commitment(commitment)
     c1_r, c2_r = extract_cipher(cipher_r)
     c_r = (c1_r, c2_r)
     # create NIRENC
@@ -83,7 +91,7 @@ def step_three(curve, issuer, r, commitment, s_req, issuer_box):
     # create and encrypt decryptor
     g = curve.G
     r_tilde = r + r_r
-    decryptor = pub * r_tilde
+    decryptor = ecc_pub_key(issuer.key['ecc']) * r_tilde
     enc_decryptor = issuer_box.encrypt(str(decryptor.xy).encode('utf-8'))
     # create and encrypt NIDDH of decryptor
     g_r = g * r
