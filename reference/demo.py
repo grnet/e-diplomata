@@ -27,6 +27,16 @@ class Party(object):
         signature = signer.sign(hc)
         return signature
 
+    def generate_chaum_pedersen_proof(self, a, b):
+        return chaum_pedersen(self.curve, self.key['ecc'], a, b)
+
+    def verify_chaum_pedersen_proof(self, issuer, a, b, u, v, s, d):
+        return chaum_pedersen_verify(
+            self.curve,
+            ecc_pub_key(issuer.key['ecc']),
+            a, b, u, v, s, d
+        )
+
 
 
 class Holder(Party):
@@ -64,8 +74,8 @@ class Issuer(Party):
         input: (c1, c2)
         """
         return reencrypt(
-            self.curve, 
-            ecc_pub_key(self.key['ecc']), 
+            self.curve,
+            ecc_pub_key(self.key['ecc']),
             set_cipher(*commitment),
         )
 
@@ -86,12 +96,16 @@ def step_three(curve, issuer, r, commitment, s_req, verifier):
     cipher_r, r_r = issuer.reencrypt_commitment(commitment)
     c1_r, c2_r = extract_cipher(cipher_r)
     c_r = (c1_r, c2_r)
+
     # create NIRENC
-    proof_c1 = c1, c1_r, *chaum_pedersen(curve, issuer.key['ecc'], c1, c1_r)
-    proof_c2 = c2, c2_r, *chaum_pedersen(curve, issuer.key['ecc'], c2, c2_r)
+
+    proof_c1 = c1, c1_r, *issuer.generate_chaum_pedersen_proof(c1, c1_r)
+    proof_c2 = c2, c2_r, *issuer.generate_chaum_pedersen_proof(c2, c2_r)
+
     nirenc = (proof_c1, proof_c2)
     nirenc_str = (serialize_chaum_pedersen(*proof_c1),
                   serialize_chaum_pedersen(*proof_c2))
+
     # create and encrypt decryptor
     g = curve.G
     r_tilde = r + r_r
@@ -144,23 +158,20 @@ def step_four(curve, issuer, verifier, c_r, nirenc,
     # check the NIRENC proof
     proof_c1, proof_c2 = nirenc
     a, b, u, v, s, d = proof_c1
-    pub = ecc_pub_key(issuer.key['ecc'])    
-    check_proof_c1 = chaum_pedersen_verify(curve, pub, a, b, u, v, s, d)
+    check_proof_c1 = verifier.verify_chaum_pedersen_proof(issuer, a, b, u, v, s, d)
     if not check_proof_c1:
         payload = f'FAIL {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
         return s_ack
     a, b, u, v, s, d = proof_c2
-    check_proof_c2 = chaum_pedersen_verify(curve, pub, a, b, u, v, s, d)
+    check_proof_c2 = verifier.verify_chaum_pedersen_proof(issuer, a, b, u, v, s, d)
     if not check_proof_c2:
         payload = f'FAIL {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
         return s_ack
     # check the NIDDH proof
     dec_niddh = verifier_box.decrypt(enc_niddh)
-    a, b, u, v, s, d = deserialize_chaum_pedersen(curve, json.loads(dec_niddh))
-    check_proof_r_r = chaum_pedersen_verify(curve, pub, a, b, u, v, s, d)
-    assert(check_proof_r_r)
+    check_proof_r_r = verifier.verify_chaum_pedersen_proof(issuer, a, b, u, v, s, d)
     if not check_proof_r_r:
         payload = f'FAIL {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
