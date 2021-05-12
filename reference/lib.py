@@ -17,7 +17,6 @@ def hash_into_integer(bytes_seq, endianness='big'):
     """
     return int.from_bytes(SHA384.new(bytes_seq).digest(), endianness)
 
-
 def random_factor(curve):
     """
     Plays the same role as random exponent
@@ -28,37 +27,11 @@ def random_factor(curve):
         max_exclusive=curve.order
     )
 
-
-# class KeyGenerator(object):
-# 
-#     def __init__(self, curve):
-#         self.curve = curve
-# 
-#     def generate(self):
-#         key = {
-#             'ecc': ECC.generate(curve=self.curve.desc),
-#             'nacl': PrivateKey.generate(),
-#         }
-#         return key
-
 def keygen(curve):
     return {
         'ecc': ECC.generate(curve=curve.desc),
         'nacl': PrivateKey.generate(),
     }
-
-
-# class Signer(object):
-#     pass
-# 
-# class Holder(object):
-#     pass
-# 
-# class Issuer(object):
-#     pass
-# 
-# class Verifier(object):
-#     pass
 
 
 def ecc_point_to_bytes(ecc_point):
@@ -90,9 +63,6 @@ def extract_cipher(cipher):
     return alpha, beta
     
 def encrypt(curve, public, m):
-    """
-    ElGamal encryption
-    """
     g = curve.G
     r = random_factor(curve)
     cipher = set_cipher(
@@ -102,17 +72,11 @@ def encrypt(curve, public, m):
     return cipher, r
 
 def decrypt(key, cipher, table):
-    """
-    ElGamal decryption
-    """
     a, b = extract_cipher(cipher)
     v = b + (key.d * (-a))
     return table[(str(v.x), str(v.y))]
 
 def reencrypt(curve, public, cipher):    
-    """
-    ElGamal re-encryption
-    """
     g = curve.G
     r = random_factor(curve)
     c1, c2 = extract_cipher(cipher)
@@ -123,9 +87,6 @@ def reencrypt(curve, public, cipher):
     return cipher, r
 
 def drenc(cipher, decryptor):
-    """
-    ElGamal decryption with decryptor
-    """
     _, c2 = extract_cipher(cipher)
     m = c2 + (-decryptor)
     return m

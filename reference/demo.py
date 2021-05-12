@@ -1,5 +1,42 @@
 from lib import *        
 
+# class KeyManager(object):
+# 
+#     def __init__(self, curve):
+#         self.curve = curve
+# 
+#     def generate(self):
+#         return {
+#             'ecc': ECC.generate(curve=self.curve.desc),
+#             'nacl': PrivateKey.generate(),
+#         }
+
+
+class Signer(object):
+    pass
+
+class Party(object):
+
+    def __init__(self, curve):
+        self.key = keygen(curve)
+
+
+class Holder(Party):
+
+    def __init__(self, curve):
+        super().__init__(curve)
+
+class Issuer(Party):
+
+    def __init__(self, curve):
+        super().__init__(curve)
+
+class Verifier(Party):
+
+    def __init__(self, curve):
+        super().__init__(curve)
+
+
 def step_one(curve, issuer_key, t):
     # order = curve.order       # Maybe use in payload?
     commitment, r = commit(curve, ecc_pub_key(issuer_key), t)
@@ -106,17 +143,18 @@ if __name__ == '__main__':
 
     # Setup keys
 
-    aux = keygen(curve)
-    issuer_key = aux['ecc']
-    issuer_nacl_key = aux['nacl']
+    holder = Holder(curve)
+    issuer = Issuer(curve)
+    verifier = Verifier(curve)
 
-    aux = keygen(curve)
-    holder_key = aux['ecc']
-    _ = aux['nacl']
+    issuer_key = issuer.key['ecc']
+    issuer_nacl_key = issuer.key['nacl']
 
-    aux = keygen(curve)
-    verifier_key = aux['ecc']
-    verifier_nacl_key = aux['nacl']
+    holder_key = holder.key['ecc']
+    _ = holder.key['nacl']
+
+    verifier_key = verifier.key['ecc']
+    verifier_nacl_key = verifier.key['nacl']
 
     #
 
