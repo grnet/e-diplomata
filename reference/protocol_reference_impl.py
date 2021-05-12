@@ -2,6 +2,7 @@ from Cryptodome.PublicKey import ECC
 from Cryptodome.Signature import DSS
 from Cryptodome.Hash import SHA384
 
+from Cryptodome.PublicKey.ECC import EccPoint
 from Cryptodome.Math.Numbers import Integer
 
 import nacl.utils
@@ -72,7 +73,7 @@ def chaum_pedersen(curve, key, a, b):
                              max_exclusive=curve.order)    
     u = a * r
     v = curve.G * r
-    to_hash = f'{pub} {a} {b} {u} {v}'.encode('utf-8')
+    to_hash = f'{pub.xy} {a.xy} {b.xy} {u.xy} {v.xy}'.encode('utf-8')
     h = int.from_bytes(SHA384.new(to_hash).digest(), 'big')
     s = (r + h * priv) % curve.order
     d = a * priv
@@ -88,8 +89,18 @@ def serialize_chaum_pedersen(a, b, u, v, s, d):
         'd': [ int (z) for z in d.xy ]
     }
 
+def deserialize_chaum_pedersen(curve, proof):
+    a = EccPoint(*proof['a'], curve=curve.desc)
+    b = EccPoint(*proof['b'], curve=curve.desc)
+    u = EccPoint(*proof['u'], curve=curve.desc)
+    v = EccPoint(*proof['v'], curve=curve.desc)
+    s = Integer(proof['s'])
+    d = EccPoint(*proof['d'], curve=curve.desc)
+    return a, b, u, v, s, d
+
+
 def chaum_pedersen_verify(curve, pub, a, b, u, v, s, d):
-    to_hash = f'{pub} {a} {b} {u} {v}'.encode('utf-8')
+    to_hash = f'{pub.xy} {a.xy} {b.xy} {u.xy} {v.xy}'.encode('utf-8')
     h = int.from_bytes(SHA384.new(to_hash).digest(), 'big')
     g = curve.G
     return (a * s == u + d * h) and (g * s == v + pub * h)
@@ -197,7 +208,9 @@ def step_four(curve, issuer_key, verifier_key, c_r, nirenc,
         return s_ack
     # check the NIDDH proof
     dec_niddh = verifier_box.decrypt(enc_niddh)
+    a, b, u, v, s, d = deserialize_chaum_pedersen(curve, json.loads(dec_niddh))
     check_proof_r_r = chaum_pedersen_verify(curve, pub, a, b, u, v, s, d)    
+    assert(check_proof_r_r)
     if not check_proof_r_r:
         payload = f'FAIL {s_prf}'.encode('utf-8')
         s_ack = sign(verifier_key, payload)
