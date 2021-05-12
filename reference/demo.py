@@ -35,20 +35,21 @@ class Issuer(Party):
     def commit_to_document(self, document):
         return commit(self.curve, ecc_pub_key(self.key['ecc']), document)
 
+    def publish_award(self, t):
+        # order = self.curve.order       # Maybe use in payload?
+        commitment, r = self.commit_to_document(t)
+        c1, c2 = extract_cipher(commitment)                         # TODO
+        payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
+        s_awd = sign(self.key['ecc'], payload)
+        commitment = (c1, c2)
+        return s_awd, commitment, r
+
+
 class Verifier(Party):
 
     def __init__(self, curve):
         super().__init__(curve)
 
-
-def step_one(issuer, t):
-    # order = curve.order       # Maybe use in payload?
-    commitment, r = issuer.commit_to_document(t)
-    c1, c2 = extract_cipher(commitment)                         # TODO
-    payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
-    s_awd = sign(issuer_key, payload)
-    commitment = (c1, c2)
-    return s_awd, commitment, r
 
 def step_two(curve, holder_key, verifier_key, s_awd):
     payload = (f'REQUEST s_awd={s_awd} '
@@ -168,7 +169,7 @@ if __name__ == '__main__':
     verifier_box = Box(verifier_nacl_key, issuer_nacl_key.public_key)
 
     print('step 1')
-    s_awd, c, r = step_one(issuer, m)
+    s_awd, c, r = issuer.publish_award(m)
     c1, c2 = c
     print('c1:', c1.xy, 'c2:', c2.xy, 's_awd:', s_awd, 'r:', r)
     print()
