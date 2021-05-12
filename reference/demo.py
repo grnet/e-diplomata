@@ -18,7 +18,8 @@ class Signer(object):
 class Party(object):
 
     def __init__(self, curve):
-        self.key = keygen(curve)
+        self.curve = curve
+        self.key = keygen(self.curve)
 
 
 class Holder(Party):
@@ -31,15 +32,18 @@ class Issuer(Party):
     def __init__(self, curve):
         super().__init__(curve)
 
+    def commit_to_document(self, document):
+        return commit(self.curve, ecc_pub_key(self.key['ecc']), document)
+
 class Verifier(Party):
 
     def __init__(self, curve):
         super().__init__(curve)
 
 
-def step_one(curve, issuer_key, t):
+def step_one(issuer, t):
     # order = curve.order       # Maybe use in payload?
-    commitment, r = commit(curve, ecc_pub_key(issuer_key), t)
+    commitment, r = issuer.commit_to_document(t)
     c1, c2 = extract_cipher(commitment)                         # TODO
     payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
     s_awd = sign(issuer_key, payload)
@@ -164,7 +168,7 @@ if __name__ == '__main__':
     verifier_box = Box(verifier_nacl_key, issuer_nacl_key.public_key)
 
     print('step 1')
-    s_awd, c, r = step_one(curve, issuer_key, m)
+    s_awd, c, r = step_one(issuer, m)
     c1, c2 = c
     print('c1:', c1.xy, 'c2:', c2.xy, 's_awd:', s_awd, 'r:', r)
     print()
