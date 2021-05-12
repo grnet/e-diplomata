@@ -1,10 +1,10 @@
-from lib import *        
+from lib import *
 
 # class KeyManager(object):
-# 
+#
 #     def __init__(self, curve):
 #         self.curve = curve
-# 
+#
 #     def generate(self):
 #         return {
 #             'ecc': ECC.generate(curve=self.curve.desc),
@@ -21,6 +21,13 @@ class Party(object):
         self.curve = curve
         self.key = keygen(self.curve)
 
+    def sign(self, payload):
+        signer = DSS.new(self.key['ecc'], 'fips-186-3')
+        hc = SHA384.new(payload)
+        signature = signer.sign(hc)
+        return signature
+
+
 
 class Holder(Party):
 
@@ -30,7 +37,7 @@ class Holder(Party):
     def publish_request(self, verifier, s_awd):
         ver_pub = ecc_pub_key(verifier.key['ecc'])  # TODO
         payload = (f'REQUEST s_awd={s_awd} ver_pub={ver_pub}').encode('utf-8')
-        s_req = sign(self.key['ecc'], payload)
+        s_req = self.sign(payload)
         return s_req
 
 
@@ -48,7 +55,7 @@ class Issuer(Party):
         commitment, r = self.commit_to_document(t)
         c1, c2 = extract_cipher(commitment)                         # TODO
         payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
-        s_awd = sign(self.key['ecc'], payload)
+        s_awd = self.sign(payload)
         commitment = (c1, c2)
         return s_awd, commitment, r
 
@@ -58,12 +65,6 @@ class Verifier(Party):
     def __init__(self, curve):
         super().__init__(curve)
 
-
-# def step_two(curve, holder_key, verifier_key, s_awd):
-#     payload = (f'REQUEST s_awd={s_awd} '
-#                'ver_pub={ecc_pub_key(verifier_key).xy}').encode('utf-8')
-#     s_req = sign(holder_key, payload)
-#     return s_req
 
 def step_three(curve, issuer_key, pub_verifier_key, r, commitment, s_req, issuer_box):
     c1, c2 = c
@@ -93,7 +94,7 @@ def step_three(curve, issuer_key, pub_verifier_key, r, commitment, s_req, issuer
     payload = (f'PROOF s_req={s_req} c_r=({c_r[0].xy, c_r[1].xy}) '
                f'{nirenc_str} {enc_decryptor} '
                f'{enc_niddh}'.encode('utf-8'))
-    s_prf = sign(issuer_key, payload)
+    s_prf = issuer.sign(payload)
     return (s_prf, c_r, nirenc, enc_decryptor, enc_niddh)
 
 def step_four(curve, issuer_key, verifier_key, c_r, nirenc,
@@ -105,7 +106,7 @@ def step_four(curve, issuer_key, verifier_key, c_r, nirenc,
     y_affine = int(extract_coords.group(2))
     if not extract_coords:
         payload = f'FAIL {s_prf}'.encode('utf-8')
-        s_ack = sign(verifier_key, payload)
+        s_ack = verifier.sign(payload)
         return s_ack
     decryptor = ECC.EccPoint(x_affine, y_affine, curve=curve.desc)
     # decrypt the re-encryption using the decryptor
@@ -119,7 +120,7 @@ def step_four(curve, issuer_key, verifier_key, c_r, nirenc,
     h_ecc_point = g * h
     if dec_m != h_ecc_point:
         payload = f'NACK {s_prf}'.encode('utf-8')
-        s_ack = sign(verifier_key, payload)
+        s_ack = verifier.sign(payload)
         return s_ack
     # check the NIRENC proof
     proof_c1, proof_c2 = nirenc
@@ -128,13 +129,13 @@ def step_four(curve, issuer_key, verifier_key, c_r, nirenc,
     check_proof_c1 = chaum_pedersen_verify(curve, pub, a, b, u, v, s, d)
     if not check_proof_c1:
         payload = f'FAIL {s_prf}'.encode('utf-8')
-        s_ack = sign(verifier_key, payload)
+        s_ack = verifier.sign(payload)
         return s_ack
     a, b, u, v, s, d = proof_c2
     check_proof_c2 = chaum_pedersen_verify(curve, pub, a, b, u, v, s, d)
     if not check_proof_c2:
         payload = f'FAIL {s_prf}'.encode('utf-8')
-        s_ack = sign(verifier_key, payload)
+        s_ack = verifier.sign(payload)
         return s_ack
     # check the NIDDH proof
     dec_niddh = verifier_box.decrypt(enc_niddh)
@@ -143,10 +144,10 @@ def step_four(curve, issuer_key, verifier_key, c_r, nirenc,
     assert(check_proof_r_r)
     if not check_proof_r_r:
         payload = f'FAIL {s_prf}'.encode('utf-8')
-        s_ack = sign(verifier_key, payload)
+        s_ack = verifier.sign(payload)
         return s_ack
     payload = f'ACK {s_prf}'.encode('utf-8')
-    s_ack = sign(verifier_key, payload)
+    s_ack = verifier.sign(payload)
     return s_ack
 
 
@@ -186,7 +187,7 @@ if __name__ == '__main__':
     print('step_two')
     s_req  = holder.publish_request(verifier, s_awd)
     # The request signature can be verified by the ISSUER in order to identify
-    # the HOLDER and ensure that this is the true holder of the qualification 
+    # the HOLDER and ensure that this is the true holder of the qualification
     # committed to at s_awd
     print('s_req:', s_req)
     print('step_three')

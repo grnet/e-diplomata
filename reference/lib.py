@@ -99,13 +99,6 @@ def commit(curve, public, t):
     commitment, r = encrypt(curve, public, ht)  # (r * g, H(t) * g + r * I), r
     return commitment, r
 
-def sign(key, payload):
-    signer = DSS.new(key, 'fips-186-3')
-    hc = SHA384.new(payload)
-    signature = signer.sign(hc)
-    return signature
-
-
 # This is taken from https://github.com/kantuni/ZKP
 def chaum_pedersen(curve, key, a, b):
     pub = ecc_pub_key(key)
