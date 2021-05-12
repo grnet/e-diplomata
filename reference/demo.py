@@ -76,7 +76,11 @@ class Verifier(Party):
         super().__init__(curve)
 
 
-def step_three(curve, issuer, r, commitment, s_req, issuer_box):
+def step_three(curve, issuer, r, commitment, s_req, verifier):
+
+    # TODO: Transfer box inside issuer methods usign it
+    issuer_box = Box(issuer.key['nacl'], verifier.key['nacl'].public_key)
+
     c1, c2 = commitment
     # re-encrypt c
     cipher_r, r_r = issuer.reencrypt_commitment(commitment)
@@ -109,7 +113,11 @@ def step_three(curve, issuer, r, commitment, s_req, issuer_box):
     return (s_prf, c_r, nirenc, enc_decryptor, enc_niddh)
 
 def step_four(curve, issuer, verifier, c_r, nirenc,
-              enc_decryptor, enc_niddh, verifier_box, m):
+              enc_decryptor, enc_niddh, m):
+
+    # TODO: Transfer box inside verifier methods usign it
+    verifier_box = Box(verifier.key['nacl'], issuer.key['nacl'].public_key)
+
     # get the decryptor
     dec_decryptor = verifier_box.decrypt(enc_decryptor).decode('utf-8')
     extract_coords = re.match(r'^\D*(\d+)\D+(\d+)\D*$', dec_decryptor)
@@ -172,10 +180,6 @@ if __name__ == '__main__':
     issuer = Issuer(curve)
     verifier = Verifier(curve)
 
-    # TODO: Transfer boxes inside methods
-    issuer_box = Box(issuer.key['nacl'], verifier.key['nacl'].public_key)
-    verifier_box = Box(verifier.key['nacl'], issuer.key['nacl'].public_key)
-
     m = "This is a message to be encrypted".encode('utf-8')
 
     print('step 1')
@@ -193,9 +197,9 @@ if __name__ == '__main__':
     print('s_req:', s_req)
     print('step_three')
     s_prf, c_r, nirenc, enc_decryptor, enc_niddh = step_three(
-        curve, issuer, r, (c1, c2), s_req, issuer_box)
+        curve, issuer, r, (c1, c2), s_req, verifier)
     print('s_prf:', s_prf)
     print('step_four')
     s_ack = step_four(curve, issuer, verifier, c_r, nirenc,
-                      enc_decryptor, enc_niddh, verifier_box, m)
+                      enc_decryptor, enc_niddh, m)
     print('s_ack:', s_ack)
