@@ -56,7 +56,7 @@ class Issuer(Party):
     def reencrypt_commitment(self, commitment):
         """
         input: (c1, c2)
-        outout: (c1_r, c2_r)
+        outout: (c1_r, c2_r), r_r
         """
         # TODO: Simplify conversions
         cipher_r, r_r = reencrypt(
@@ -109,6 +109,9 @@ class Issuer(Party):
 
         return niddh, enc_niddh
 
+    def publish_proof(issuer, r, c, s_req, verifier):
+        pass
+
 
 
 class Verifier(Party):
@@ -122,7 +125,7 @@ class Verifier(Party):
         extract_coords = re.match(r'^\D*(\d+)\D+(\d+)\D*$', dec_decryptor)
         x_affine = int(extract_coords.group(1))
         y_affine = int(extract_coords.group(2))
-        # TODO
+        # TODO: Raise exception for caller?
         if not extract_coords:
             payload = f'FAIL {s_prf}'.encode('utf-8')
             s_ack = verifier.sign(payload)
@@ -131,27 +134,27 @@ class Verifier(Party):
         return decryptor
 
 
-def step_three(curve, issuer, r, c, s_req, verifier):
+def step_three(issuer, r, c, s_req, verifier):
 
-    # re-encrypt commitmentn
+    # Re-encrypt commitment
     c_r, r_r = issuer.reencrypt_commitment(c)
-
-    # create NIRENC
-    nirenc, nirenc_str, enc_nirenc = issuer.generate_nirenc(c, c_r)
 
     # Create and encrypt decryptor
     decryptor, enc_decryptor = issuer.create_decryptor(r, r_r, verifier)
 
+    # create NIRENC
+    nirenc, nirenc_str, enc_nirenc = issuer.generate_nirenc(c, c_r)
+
     # Create and encrypt NIDDH of the above decryptor addressed to VERIFIER
     niddh, enc_niddh = issuer.generate_niddh(r, r_r, verifier)
 
+    # Create PROOF tag
     payload = (f'PROOF s_req={s_req} c_r=({c_r[0].xy, c_r[1].xy}) '
                f'{nirenc_str} {enc_decryptor} '
                f'{enc_niddh}'.encode('utf-8'))
     s_prf = issuer.sign(payload)
 
-    # TODO: Maybe encrypt nirenc as enc_nirenc before giving it out?
-
+    # TODO: Give enc_nirenc out instead of nirenc itself
     return (s_prf, c_r, nirenc, enc_decryptor, enc_niddh)
 
 def step_four(curve, issuer, verifier, c_r, nirenc,
@@ -216,23 +219,27 @@ if __name__ == '__main__':
 
     m = "This is a message to be encrypted".encode('utf-8')
 
+    print()
     print('step 1')
     s_awd, c, r = issuer.publish_award(m)
     # ISSUER stores privately r used for encryption and sends s_awd to the HOLDER
     print('c1:', c[0].xy, 'c2:', c[1].xy, 's_awd:', s_awd, 'r:', r)
-    print()
 
-    print('step_two')
+    print()
+    print('step 2')
     s_req  = holder.publish_request(verifier, s_awd)
     # The request signature can be verified by the ISSUER in order to identify
     # the HOLDER and ensure that this is the true holder of the qualification
     # committed to at s_awd
     print('s_req:', s_req)
-    print('step_three')
-    s_prf, c_r, nirenc, enc_decryptor, enc_niddh = step_three(
-        curve, issuer, r, c, s_req, verifier)
+
+    print()
+    print('step 3')
+    s_prf, c_r, nirenc, enc_decryptor, enc_niddh = step_three(issuer, r, c, s_req, verifier)
     print('s_prf:', s_prf)
-    print('step_four')
+
+    print()
+    print('step 4')
     s_ack = step_four(curve, issuer, verifier, c_r, nirenc,
                       enc_decryptor, enc_niddh, m)
     print('s_ack:', s_ack)
