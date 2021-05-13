@@ -31,9 +31,7 @@ class Party(object):
 
     def encrypt(self, content, receiver_pub):
         """
-        Intended for encrypting content which can be decrypted solely by the
-        receiver's private key, without use of decryptors
-        (currently a wrapper around box.encrypt)
+        Encrypt using common secret (currently a wrapper around box.encrypt)
 
         content: bytes
         """
@@ -43,9 +41,7 @@ class Party(object):
 
     def decrypt(self, cipher, sender_pub):
         """
-        Reverses Party.encrypt; intended for content can be decrypted solely
-        by the receiver's private key, without use of decryptors
-        (currently a wrapper around box.decrypt)
+        Decrypt using common secret (currently a wrapper around box.decrypt)
 
         return: bytes
         """
@@ -119,25 +115,16 @@ class Issuer(Party):
         return decryptor, enc_decryptor
 
     def generate_nirenc(self, c, c_r, verifier_pub):
-        # TODO
         c1, c2 = c
         c1_r, c2_r = c_r
         proof_c1 = c1, c1_r, *self.generate_chaum_pedersen_proof(c1, c1_r)
         proof_c2 = c2, c2_r, *self.generate_chaum_pedersen_proof(c2, c2_r)
-        nirenc = proof_c1, proof_c2
 
-        # TODO
-        nirenc_str = json.dumps({
-            'proof_c1': serialize_chaum_pedersen(*proof_c1),
-            'proof_c2': serialize_chaum_pedersen(*proof_c2),
-        })
-
-        enc_nirenc = self.encrypt(
-            json.dumps(nirenc_str).encode('utf-8'),
-            verifier_pub
-        )
-
-        return nirenc, nirenc_str, enc_nirenc
+        nirenc = {
+            'proof_c1': proof_c1,
+            'proof_c2': proof_c2,
+        }
+        return nirenc
 
 
     def generate_niddh(self, r1, r2, verifier_pub):
@@ -152,7 +139,6 @@ class Issuer(Party):
             json.dumps(niddh).encode('utf-8'),
             verifier_pub
         )
-
         return niddh, enc_niddh
 
     def publish_proof(self, r, c, s_req, verifier_pub):
@@ -163,19 +149,22 @@ class Issuer(Party):
         decryptor, enc_decryptor = self.create_decryptor(r, r_r, verifier_pub)
 
         # create NIRENC
-        nirenc, nirenc_str, enc_nirenc = self.generate_nirenc(c, c_r,
-                verifier_pub)
+        nirenc = self.generate_nirenc(c, c_r, verifier_pub)
 
         # Create and encrypt NIDDH of the above decryptor addressed to VERIFIER
         niddh, enc_niddh = self.generate_niddh(r, r_r, verifier_pub)
 
         # Create PROOF tag
+        # TODO: Define and use serialize_nirenc
+        nirenc_str = json.dumps({
+            'proof_c1': serialize_chaum_pedersen(*nirenc['proof_c1']),
+            'proof_c2': serialize_chaum_pedersen(*nirenc['proof_c2']),
+        })
         payload = (f'PROOF s_req={s_req} c_r=({c_r[0].xy, c_r[1].xy}) '
                    f'{nirenc_str} {enc_decryptor} '
                    f'{enc_niddh}'.encode('utf-8'))
         s_prf = self.sign(payload)
 
-        # TODO: Give enc_nirenc out instead of nirenc itself
         return (s_prf, c_r, nirenc, enc_decryptor, enc_niddh)
 
 
@@ -235,7 +224,9 @@ def step_four(issuer_pub, verifier, c_r, nirenc,
         return s_ack
 
     # Verify NIRENC proof
-    proof_c1, proof_c2 = nirenc
+    # proof_c1, proof_c2 = nirenc
+    proof_c1 = nirenc['proof_c1']
+    proof_c2 = nirenc['proof_c2']
 
     a, b, u, v, s, d = proof_c1
     check_proof_c1 = verifier.verify_chaum_pedersen_proof(issuer_pub, a, b, u, v, s, d)
@@ -255,6 +246,7 @@ def step_four(issuer_pub, verifier, c_r, nirenc,
 
     # Verify NIDDH proof
     dec_niddh = verifier.decrypt(enc_niddh, issuer_pub)
+    a, b, u, v, s, d = deserialize_chaum_pedersen(curve, json.loads(dec_niddh))
     check_proof_r_r = verifier.verify_chaum_pedersen_proof(issuer_pub, a, b, u, v, s, d)
     assert check_proof_r_r
     if not check_proof_r_r:

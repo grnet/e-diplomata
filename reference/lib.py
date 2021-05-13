@@ -2,6 +2,7 @@ from Cryptodome.PublicKey import ECC
 from Cryptodome.Signature import DSS
 from Cryptodome.Hash import SHA384
 
+from Cryptodome.PublicKey.ECC import EccPoint
 from Cryptodome.Math.Numbers import Integer
 
 import nacl.utils
@@ -99,7 +100,7 @@ def chaum_pedersen(curve, key, a, b):
     r = random_factor(curve);
     u = a * r
     v = curve.G * r
-    to_hash = f'{pub} {a} {b} {u} {v}'.encode('utf-8')
+    to_hash = f'{pub.xy} {a.xy} {b.xy} {u.xy} {v.xy}'.encode('utf-8')
     h = hash_into_integer(to_hash)                      # challenge
     s = (r + h * priv) % curve.order                    # response
     d = a * priv
@@ -115,8 +116,17 @@ def serialize_chaum_pedersen(a, b, u, v, s, d):
         'd': [ int (z) for z in d.xy ]
     }
 
+def deserialize_chaum_pedersen(curve, proof):
+    a = EccPoint(*proof['a'], curve=curve.desc)
+    b = EccPoint(*proof['b'], curve=curve.desc)
+    u = EccPoint(*proof['u'], curve=curve.desc)
+    v = EccPoint(*proof['v'], curve=curve.desc)
+    s = Integer(proof['s'])
+    d = EccPoint(*proof['d'], curve=curve.desc)
+    return a, b, u, v, s, d
+
 def chaum_pedersen_verify(curve, pub, a, b, u, v, s, d):
-    to_hash = f'{pub} {a} {b} {u} {v}'.encode('utf-8')
+    to_hash = f'{pub.xy} {a.xy} {b.xy} {u.xy} {v.xy}'.encode('utf-8')
     h = hash_into_integer(to_hash)
     g = curve.G
     return (a * s == u + d * h) and (g * s == v + pub * h)
