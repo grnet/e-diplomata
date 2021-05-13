@@ -109,8 +109,27 @@ class Issuer(Party):
 
         return niddh, enc_niddh
 
-    def publish_proof(issuer, r, c, s_req, verifier):
-        pass
+    def publish_proof(self, r, c, s_req, verifier):
+        # Re-encrypt commitment
+        c_r, r_r = self.reencrypt_commitment(c)
+
+        # Create and encrypt decryptor
+        decryptor, enc_decryptor = self.create_decryptor(r, r_r, verifier)
+
+        # create NIRENC
+        nirenc, nirenc_str, enc_nirenc = self.generate_nirenc(c, c_r)
+
+        # Create and encrypt NIDDH of the above decryptor addressed to VERIFIER
+        niddh, enc_niddh = self.generate_niddh(r, r_r, verifier)
+
+        # Create PROOF tag
+        payload = (f'PROOF s_req={s_req} c_r=({c_r[0].xy, c_r[1].xy}) '
+                   f'{nirenc_str} {enc_decryptor} '
+                   f'{enc_niddh}'.encode('utf-8'))
+        s_prf = self.sign(payload)
+
+        # TODO: Give enc_nirenc out instead of nirenc itself
+        return (s_prf, c_r, nirenc, enc_decryptor, enc_niddh)
 
 
 
@@ -133,29 +152,6 @@ class Verifier(Party):
         decryptor = ECC.EccPoint(x_affine, y_affine, curve=curve.desc)
         return decryptor
 
-
-def step_three(issuer, r, c, s_req, verifier):
-
-    # Re-encrypt commitment
-    c_r, r_r = issuer.reencrypt_commitment(c)
-
-    # Create and encrypt decryptor
-    decryptor, enc_decryptor = issuer.create_decryptor(r, r_r, verifier)
-
-    # create NIRENC
-    nirenc, nirenc_str, enc_nirenc = issuer.generate_nirenc(c, c_r)
-
-    # Create and encrypt NIDDH of the above decryptor addressed to VERIFIER
-    niddh, enc_niddh = issuer.generate_niddh(r, r_r, verifier)
-
-    # Create PROOF tag
-    payload = (f'PROOF s_req={s_req} c_r=({c_r[0].xy, c_r[1].xy}) '
-               f'{nirenc_str} {enc_decryptor} '
-               f'{enc_niddh}'.encode('utf-8'))
-    s_prf = issuer.sign(payload)
-
-    # TODO: Give enc_nirenc out instead of nirenc itself
-    return (s_prf, c_r, nirenc, enc_decryptor, enc_niddh)
 
 def step_four(curve, issuer, verifier, c_r, nirenc,
               enc_decryptor, enc_niddh, m):
@@ -235,7 +231,7 @@ if __name__ == '__main__':
 
     print()
     print('step 3')
-    s_prf, c_r, nirenc, enc_decryptor, enc_niddh = step_three(issuer, r, c, s_req, verifier)
+    s_prf, c_r, nirenc, enc_decryptor, enc_niddh = issuer.publish_proof(r, c, s_req, verifier)
     print('s_prf:', s_prf)
 
     print()
