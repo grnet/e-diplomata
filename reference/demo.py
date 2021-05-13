@@ -26,6 +26,33 @@ class Party(object):
         signature = self.signer.sign(hc)
         return signature
 
+    def verify_signature(self, s):
+        pass
+
+    def encrypt(self, content, receiver_pub):
+        """
+        Intended for encrypting content which can be decrypted solely by the
+        receiver's private key, without use of decryptors
+        (currently a wrapper around box.encrypt)
+
+        content: bytes
+        """
+        box = Box(self.key['nacl'], receiver_pub['nacl'])
+        cipher = box.encrypt(content)
+        return cipher
+
+    def decrypt(self, cipher, sender_pub):
+        """
+        Reverses Party.encrypt; intended for content can be decrypted solely
+        by the receiver's private key, without use of decryptors
+        (currently a wrapper around box.decrypt)
+
+        return: bytes
+        """
+        box = Box(self.key['nacl'], sender_pub['nacl'])
+        content = box.decrypt(cipher)
+        return content
+
     def generate_chaum_pedersen_proof(self, a, b):
         return chaum_pedersen(self.curve, self.key['ecc'], a, b)
 
@@ -81,10 +108,14 @@ class Issuer(Party):
         return (c1_r, c2_r), r_r
 
     def create_decryptor(self, r1, r2, verifier_pub):
-        box = Box(self.key['nacl'], verifier_pub['nacl'])
         r_tilde = r1 + r2
         decryptor = ecc_pub_key(self.key['ecc']) * r_tilde              # TODO
-        enc_decryptor = box.encrypt(str(decryptor.xy).encode('utf-8'))  # TODO
+
+        enc_decryptor = self.encrypt(
+            str(decryptor.xy).encode('utf-8'),
+            verifier_pub
+        )
+
         return decryptor, enc_decryptor
 
     def generate_nirenc(self, c, c_r, verifier_pub):
@@ -101,9 +132,10 @@ class Issuer(Party):
             'proof_c2': serialize_chaum_pedersen(*proof_c2),
         })
 
-        # TODO
-        box = Box(self.key['nacl'], verifier_pub['nacl'])
-        enc_nirenc = box.encrypt(json.dumps(nirenc_str).encode('utf-8'))
+        enc_nirenc = self.encrypt(
+            json.dumps(nirenc_str).encode('utf-8'),
+            verifier_pub
+        )
 
         return nirenc, nirenc_str, enc_nirenc
 
@@ -116,9 +148,10 @@ class Issuer(Party):
         u, v, s, d = self.generate_chaum_pedersen_proof(g_r, g_r_r)
         niddh = serialize_chaum_pedersen(g_r, g_r_r, u, v, s, d)
 
-        # TODO
-        box = Box(self.key['nacl'], verifier_pub['nacl'])
-        enc_niddh = box.encrypt(json.dumps(niddh).encode('utf-8'))
+        enc_niddh = self.encrypt(
+            json.dumps(niddh).encode('utf-8'),
+            verifier_pub
+        )
 
         return niddh, enc_niddh
 
@@ -153,8 +186,8 @@ class Verifier(Party):
         super().__init__(curve)
 
     def retrieve_decryptor(self, issuer_pub, enc_decryptor):
-        box = Box(self.key['nacl'], issuer_pub['nacl'])
-        dec_decryptor = box.decrypt(enc_decryptor).decode('utf-8')
+        dec_decryptor = self.decrypt(enc_decryptor, issuer_pub).decode('utf-8')
+
         extract_coords = re.match(r'^\D*(\d+)\D+(\d+)\D*$', dec_decryptor)
         x_affine = int(extract_coords.group(1))
         y_affine = int(extract_coords.group(2))
@@ -213,7 +246,7 @@ def step_four(issuer_pub, verifier, c_r, nirenc,
         return s_ack
 
     a, b, u, v, s, d = proof_c2
-    check_proof_c2 = verifier.verify_chaum_pedersen_proof(issuer_pub, a, b, u, v, s, d)    
+    check_proof_c2 = verifier.verify_chaum_pedersen_proof(issuer_pub, a, b, u, v, s, d)
     assert check_proof_c2
     if not check_proof_c2:
         payload = f'FAIL {s_prf}'.encode('utf-8')
@@ -221,8 +254,7 @@ def step_four(issuer_pub, verifier, c_r, nirenc,
         return s_ack
 
     # Verify NIDDH proof
-    verifier_box = Box(verifier.key['nacl'], issuer_pub['nacl'])
-    dec_niddh = verifier_box.decrypt(enc_niddh)
+    dec_niddh = verifier.decrypt(enc_niddh, issuer_pub)
     check_proof_r_r = verifier.verify_chaum_pedersen_proof(issuer_pub, a, b, u, v, s, d)
     assert check_proof_r_r
     if not check_proof_r_r:
