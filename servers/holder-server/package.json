@@ -1,0 +1,32 @@
+{
+  "name": "holder-server",
+  "version": "0.2.7",
+  "private": true,
+  "scripts": {
+    "dev": "digigov app dev -p 4001",
+    "build": "digigov app build",
+    "start": "digigov app start",
+    "lint": "digigov lint",
+    "ganache": "node ganache.js",
+    "load_dummy_data":"node load_dummy_data.js"
+  },
+  "dependencies": {
+    "react": "16.14.0",
+    "react-dom": "16.14.0",
+    "next": "10.0.9",
+    "@diplomas/blockchain": "~0.1.0",
+    "ganache-cli": "~6.12.2",
+    "ethers": "~5.1.0",
+    "nedb": "~1.8.0"
+  },
+  "devDependencies": {
+    "@digigov/cli": "0.5.3-beta-1",
+    "@digigov/cli-lint": "0.3.1-beta-1",
+    "@digigov/cli-app": "0.3.3-beta-1",
+    "@digigov/cli-build": "0.3.4-beta-1",
+    "@digigov/cli-test": "0.3.1-beta-1",
+    "typescript": "4.2.3",
+    "@types/node": "14.14.9",
+    "@types/react": "16.9.56"
+  }
+}
