@@ -27,13 +27,6 @@ def random_factor(curve):
         max_exclusive=curve.order
     )
 
-def keygen(curve):
-    return {
-        'ecc': ECC.generate(curve=curve.desc),
-        'nacl': PrivateKey.generate(),
-    }
-
-
 def ecc_point_to_bytes(ecc_point):
     return ecc_point.x.to_bytes(), ecc_point.y.to_bytes()
 
