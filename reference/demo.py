@@ -169,17 +169,21 @@ def step_four(curve, issuer, verifier, c_r, nirenc,
     # VERIFIER decrypts the re-encrypted commitment
     dec_m = verifier.decrypt_commitment(c_r, decryptor)
 
-    # check that the decrypted hash is the same with the hash of the original
+    # Check that the decrypted hash is the same with the hash of the original
     # document, as an ECC point
     h = hash_into_integer(m)
     g = curve.G
     h_ecc_point = g * h
-    if dec_m != h_ecc_point:
+    check_m_content = dec_m == h_ecc_point
+    assert check_m_content
+    if not check_m_content:
         payload = f'NACK {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
         return s_ack
-    # check the NIRENC proof
+
+    # Verify NIRENC proof
     proof_c1, proof_c2 = nirenc
+
     a, b, u, v, s, d = proof_c1
     check_proof_c1 = verifier.verify_chaum_pedersen_proof(issuer, a, b, u, v, s, d)
     assert check_proof_c1
@@ -187,6 +191,7 @@ def step_four(curve, issuer, verifier, c_r, nirenc,
         payload = f'FAIL {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
         return s_ack
+
     a, b, u, v, s, d = proof_c2
     check_proof_c2 = verifier.verify_chaum_pedersen_proof(issuer, a, b, u, v, s, d)
     assert check_proof_c2
@@ -194,8 +199,8 @@ def step_four(curve, issuer, verifier, c_r, nirenc,
         payload = f'FAIL {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
         return s_ack
-    # check the NIDDH proof
-    # TODO: Transfer box inside verifier methods using it
+
+    # Verify NIDDH proof
     verifier_box = Box(verifier.key['nacl'], issuer.key['nacl'].public_key)
     dec_niddh = verifier_box.decrypt(enc_niddh)
     check_proof_r_r = verifier.verify_chaum_pedersen_proof(issuer, a, b, u, v, s, d)
@@ -203,7 +208,9 @@ def step_four(curve, issuer, verifier, c_r, nirenc,
     if not check_proof_r_r:
         payload = f'FAIL {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
-        return s_ack
+        return s_ack    
+
+    # All checks succeded, acknowledge proof
     payload = f'ACK {s_prf}'.encode('utf-8')
     s_ack = verifier.sign(payload)
     return s_ack
