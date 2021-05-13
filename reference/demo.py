@@ -70,6 +70,27 @@ class Issuer(Party):
         enc_decryptor = box.encrypt(str(decryptor.xy).encode('utf-8'))  # TODO
         return decryptor, enc_decryptor
 
+    def generate_nirenc(self, c, c_r):
+        # TODO
+        c1, c2 = c
+        c1_r, c2_r = c_r
+        proof_c1 = c1, c1_r, *self.generate_chaum_pedersen_proof(c1, c1_r)
+        proof_c2 = c2, c2_r, *self.generate_chaum_pedersen_proof(c2, c2_r)
+        nirenc = proof_c1, proof_c2
+
+        # TODO
+        nirenc_str = json.dumps({
+            'proof_c1': serialize_chaum_pedersen(*proof_c1),
+            'proof_c2': serialize_chaum_pedersen(*proof_c2),
+        })
+
+        # TODO
+        box = Box(self.key['nacl'], verifier.key['nacl'].public_key)
+        enc_nirenc = box.encrypt(json.dumps(nirenc_str).encode('utf-8'))
+
+        return nirenc, nirenc_str, enc_nirenc
+
+
     def generate_niddh(self, r1, r2, verifier):
         # TODO
         g = self.curve.G
@@ -108,18 +129,13 @@ class Verifier(Party):
 
 def step_three(curve, issuer, r, commitment, s_req, verifier):
 
-    c1, c2 = commitment
-
     # re-encrypt c
     cipher_r, r_r = issuer.reencrypt_commitment(commitment)
     c1_r, c2_r = extract_cipher(cipher_r)
     c_r = (c1_r, c2_r)
 
     # create NIRENC
-
-    proof_c1 = c1, c1_r, *issuer.generate_chaum_pedersen_proof(c1, c1_r)
-    proof_c2 = c2, c2_r, *issuer.generate_chaum_pedersen_proof(c2, c2_r)
-    nirenc = (proof_c1, proof_c2)
+    nirenc, nirenc_str, enc_nirenc = issuer.generate_nirenc(commitment, c_r)
 
     # Create and encrypt decryptor
     decryptor, enc_decryptor = issuer.create_decryptor(r, r_r, verifier)
@@ -127,12 +143,13 @@ def step_three(curve, issuer, r, commitment, s_req, verifier):
     # Create and encrypt NIDDH of the above decryptor addressed to VERIFIER
     niddh, enc_niddh = issuer.generate_niddh(r, r_r, verifier)
 
-    nirenc_str = (serialize_chaum_pedersen(*proof_c1),
-                  serialize_chaum_pedersen(*proof_c2))
     payload = (f'PROOF s_req={s_req} c_r=({c_r[0].xy, c_r[1].xy}) '
                f'{nirenc_str} {enc_decryptor} '
                f'{enc_niddh}'.encode('utf-8'))
     s_prf = issuer.sign(payload)
+
+    # TODO: Maybe encrypt nirenc as enc_nirenc before giving it out?
+
     return (s_prf, c_r, nirenc, enc_decryptor, enc_niddh)
 
 def step_four(curve, issuer, verifier, c_r, nirenc,
@@ -158,27 +175,28 @@ def step_four(curve, issuer, verifier, c_r, nirenc,
     proof_c1, proof_c2 = nirenc
     a, b, u, v, s, d = proof_c1
     check_proof_c1 = verifier.verify_chaum_pedersen_proof(issuer, a, b, u, v, s, d)
+    assert check_proof_c1
     if not check_proof_c1:
         payload = f'FAIL {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
         return s_ack
     a, b, u, v, s, d = proof_c2
     check_proof_c2 = verifier.verify_chaum_pedersen_proof(issuer, a, b, u, v, s, d)
+    assert check_proof_c2
     if not check_proof_c2:
         payload = f'FAIL {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
         return s_ack
     # check the NIDDH proof
     # TODO: Transfer box inside verifier methods using it
-
     verifier_box = Box(verifier.key['nacl'], issuer.key['nacl'].public_key)
     dec_niddh = verifier_box.decrypt(enc_niddh)
     check_proof_r_r = verifier.verify_chaum_pedersen_proof(issuer, a, b, u, v, s, d)
+    assert check_proof_r_r
     if not check_proof_r_r:
         payload = f'FAIL {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
         return s_ack
-
     payload = f'ACK {s_prf}'.encode('utf-8')
     s_ack = verifier.sign(payload)
     return s_ack
