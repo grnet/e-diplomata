@@ -56,12 +56,16 @@ class Issuer(Party):
     def reencrypt_commitment(self, commitment):
         """
         input: (c1, c2)
+        outout: (c1_r, c2_r)
         """
-        return reencrypt(
+        # TODO: Simplify conversions
+        cipher_r, r_r = reencrypt(
             self.curve,
             ecc_pub_key(self.key['ecc']),
             set_cipher(*commitment),
         )
+        c1_r, c2_r = extract_cipher(cipher_r)
+        return (c1_r, c2_r), r_r
 
     def create_decryptor(self, r1, r2, verifier):
         box = Box(self.key['nacl'], verifier.key['nacl'].public_key)
@@ -127,15 +131,13 @@ class Verifier(Party):
         return decryptor
 
 
-def step_three(curve, issuer, r, commitment, s_req, verifier):
+def step_three(curve, issuer, r, c, s_req, verifier):
 
-    # re-encrypt c
-    cipher_r, r_r = issuer.reencrypt_commitment(commitment)
-    c1_r, c2_r = extract_cipher(cipher_r)
-    c_r = (c1_r, c2_r)
+    # re-encrypt commitmentn
+    c_r, r_r = issuer.reencrypt_commitment(c)
 
     # create NIRENC
-    nirenc, nirenc_str, enc_nirenc = issuer.generate_nirenc(commitment, c_r)
+    nirenc, nirenc_str, enc_nirenc = issuer.generate_nirenc(c, c_r)
 
     # Create and encrypt decryptor
     decryptor, enc_decryptor = issuer.create_decryptor(r, r_r, verifier)
@@ -217,8 +219,7 @@ if __name__ == '__main__':
     print('step 1')
     s_awd, c, r = issuer.publish_award(m)
     # ISSUER stores privately r used for encryption and sends s_awd to the HOLDER
-    c1, c2 = c
-    print('c1:', c1.xy, 'c2:', c2.xy, 's_awd:', s_awd, 'r:', r)
+    print('c1:', c[0].xy, 'c2:', c[1].xy, 's_awd:', s_awd, 'r:', r)
     print()
 
     print('step_two')
@@ -229,7 +230,7 @@ if __name__ == '__main__':
     print('s_req:', s_req)
     print('step_three')
     s_prf, c_r, nirenc, enc_decryptor, enc_niddh = step_three(
-        curve, issuer, r, (c1, c2), s_req, verifier)
+        curve, issuer, r, c, s_req, verifier)
     print('s_prf:', s_prf)
     print('step_four')
     s_ack = step_four(curve, issuer, verifier, c_r, nirenc,
