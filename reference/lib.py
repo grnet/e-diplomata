@@ -86,50 +86,63 @@ def drenc(cipher, decryptor):
     return m
 
 
-# Commitments and signatures
+# Commitments
 
 def commit(curve, public, t):
     ht = hash_into_integer(t)                   # H(t)
     commitment, r = encrypt(curve, public, ht)  # (r * g, H(t) * g + r * I), r
     return commitment, r
 
-# This is taken from https://github.com/kantuni/ZKP
-def chaum_pedersen(curve, key, a, b):
-    pub = ecc_pub_key(key)
-    priv = int(key.d)
-    r = random_factor(curve);
-    u = a * r
-    v = curve.G * r
-    to_hash = f'{pub.xy} {a.xy} {b.xy} {u.xy} {v.xy}'.encode('utf-8')
-    h = hash_into_integer(to_hash)                      # challenge
-    s = (r + h * priv) % curve.order                    # response
-    d = a * priv
-    return u, v, s, d
+# Chaum-Pedersen
 
-def serialize_chaum_pedersen(a, b, u, v, s, d):
+def fiat_shamir(*points):
+    to_hash = ' '.join(map(lambda p: f'{p.xy}', points))
+    output = hash_into_integer(to_hash.encode('utf-8'))
+    return output
+
+def chaum_pedersen(curve, ddh, z, *extras):
+    """
+    """
+    g = curve.G
+    r = random_factor(curve);
+
+    u, v, w = ddh
+
+    u_comm = r * u                                   # u commitment
+    v_comm = r * g                                   # g commitment
+
+    c = fiat_shamir(u, v, w, u_comm, v_comm, *extras)   # challenge
+
+    s = (r + c * z) % curve.order                    # response
+    d = z * u
+    return u_comm, v_comm, s, d
+
+def serialize_chaum_pedersen(u, v, u_comm, v_comm, s, d):
     return {
-        'a': [ int (z) for z in a.xy ],
-        'b': [ int (z) for z in b.xy ],
-        'u': [ int (z) for z in u.xy ],
-        'v': [ int (z) for z in v.xy ],
+        'u': [ int (_) for _ in u.xy ],
+        'v': [ int (_) for _ in v.xy ],
+        'u_comm': [ int (_) for _ in u_comm.xy ],
+        'v_comm': [ int (_) for _ in v_comm.xy ],
         's': int(s),        
-        'd': [ int (z) for z in d.xy ]
+        'd': [ int (_) for _ in d.xy ]
     }
 
 def deserialize_chaum_pedersen(curve, proof):
-    a = EccPoint(*proof['a'], curve=curve.desc)
-    b = EccPoint(*proof['b'], curve=curve.desc)
     u = EccPoint(*proof['u'], curve=curve.desc)
     v = EccPoint(*proof['v'], curve=curve.desc)
+    u_comm = EccPoint(*proof['u_comm'], curve=curve.desc)
+    v_comm = EccPoint(*proof['v_comm'], curve=curve.desc)
     s = Integer(proof['s'])
     d = EccPoint(*proof['d'], curve=curve.desc)
-    return a, b, u, v, s, d
+    return u, v, u_comm, v_comm, s, d
 
-def chaum_pedersen_verify(curve, pub, a, b, u, v, s, d):
-    to_hash = f'{pub.xy} {a.xy} {b.xy} {u.xy} {v.xy}'.encode('utf-8')
-    h = hash_into_integer(to_hash)
+def chaum_pedersen_verify(curve, ddh,
+        u_comm, v_comm, s, d, *extras):
     g = curve.G
-    return (a * s == u + d * h) and (g * s == v + pub * h)
+    u, v, w = ddh
+    c = fiat_shamir(u, v, w, u_comm, v_comm,  *extras)   # challenge
+    return (s * u == u_comm + c * d) and \
+           (s * g == v_comm + c * v)
     
 def make_table(g, n):
     table = {}
