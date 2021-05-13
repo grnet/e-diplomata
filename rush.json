@@ -400,6 +400,16 @@
       "shouldPublish": false
     },
     {
+      "packageName": "holder",
+      "projectFolder": "apps/holder",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "holder-server",
+      "projectFolder": "servers/holder-server",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@diplomas/blockchain",
       "projectFolder": "libs/blockchain",
       "shouldPublish": true
