@@ -159,6 +159,16 @@ class Verifier(Party):
         dec_m = drenc(cipher_r, decryptor)
         return dec_m
 
+    def check_message_integrity(self, message, dec_m):
+        """
+        Checks that dec_m coincides with the hash of message,
+        seen as ECC points
+        """
+        g = self.curve.G
+        h = hash_into_integer(message)
+        h_ecc_point = g * h
+        return dec_m == h_ecc_point
+
 
 def step_four(curve, issuer, verifier, c_r, nirenc,
               enc_decryptor, enc_niddh, m):
@@ -169,14 +179,13 @@ def step_four(curve, issuer, verifier, c_r, nirenc,
     # VERIFIER decrypts the re-encrypted commitment
     dec_m = verifier.decrypt_commitment(c_r, decryptor)
 
-    # Check that the decrypted hash is the same with the hash of the original
-    # document, as an ECC point
-    h = hash_into_integer(m)
-    g = curve.G
-    h_ecc_point = g * h
-    check_m_content = dec_m == h_ecc_point
-    assert check_m_content
-    if not check_m_content:
+    # VERIFIER checks content of document
+    check_m_integrity = verifier.check_message_integrity(m, dec_m)
+    # h = hash_into_integer(m)
+    # g = curve.G
+    # h_ecc_point = g * h
+    assert check_m_integrity
+    if not check_m_integrity:
         payload = f'NACK {s_prf}'.encode('utf-8')
         s_ack = verifier.sign(payload)
         return s_ack
