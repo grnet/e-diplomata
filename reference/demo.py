@@ -152,17 +152,23 @@ class Verifier(Party):
         decryptor = ECC.EccPoint(x_affine, y_affine, curve=curve.desc)
         return decryptor
 
+    def decrypt_commitment(self, c_r, decryptor):
+        # TODO
+        c1, c2 = c_r
+        cipher_r = set_cipher(c1, c2)
+        dec_m = drenc(cipher_r, decryptor)
+        return dec_m
+
 
 def step_four(curve, issuer, verifier, c_r, nirenc,
               enc_decryptor, enc_niddh, m):
 
-    # Retrieve decryptor created by ISSUER for VERIFIER
+    # VERIFIER etrieves decryptor created for them by ISSUER
     decryptor = verifier.retrieve_decryptor(issuer, enc_decryptor)
 
-    # decrypt the re-encryption using the decryptor
-    c1, c2 = c_r
-    cipher_r = set_cipher(c1, c2)
-    dec_m = drenc(cipher_r, decryptor)
+    # VERIFIER decrypts the re-encrypted commitment
+    dec_m = verifier.decrypt_commitment(c_r, decryptor)
+
     # check that the decrypted hash is the same with the hash of the original
     # document, as an ECC point
     h = hash_into_integer(m)
