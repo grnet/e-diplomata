@@ -62,64 +62,6 @@ def deserialize_factor(factor):
     return Integer(factor)
 
 
-# ElGamal encryption/decryption
-
-def set_cipher(alpha, beta):
-    cipher = {
-        'alpha': alpha,
-        'beta': beta
-    }
-    return cipher
-
-def extract_cipher(cipher):
-    alpha = cipher['alpha']
-    beta = cipher['beta']
-    return alpha, beta
-    
-def elgamal_encrypt(curve, public, m):
-    g = curve.G
-    r = random_factor(curve)
-    cipher = set_cipher(
-        r * g,
-        m * g + r * public,
-    )
-    return cipher, r
-
-def elgamal_decrypt(key, cipher, table):
-    a, b = extract_cipher(cipher)
-    v = b + (key.d * (-a))
-    return table[(str(v.x), str(v.y))]
-
-def elgamal_reencrypt(curve, public, cipher):    
-    g = curve.G
-    r = random_factor(curve)
-    c1, c2 = extract_cipher(cipher)
-    cipher = set_cipher(
-        r * g + c1,
-        c2 + r * public,
-    )
-    return cipher, r
-
-def elgamal_drenc(cipher, decryptor):
-    _, c2 = extract_cipher(cipher)
-    m = c2 + (-decryptor)
-    return m
-
-def make_table(g, n):
-    table = {}
-    for i in range(n):
-        elem = (i * g)
-        table[(str(elem.x), str(elem.y))] = i
-    return table 
-
-
-# Commitments
-
-def commit(curve, public, t):
-    ht = hash_into_integer(t)                           # H(t)
-    commitment, r = elgamal_encrypt(curve, public, ht)  # (r * g, H(t) * g + r * I), r
-    return commitment, r
-
 # Chaum-Pedersen
 
 def serialize_ddh(ddh):

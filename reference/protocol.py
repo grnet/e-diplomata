@@ -6,7 +6,7 @@ class Party(object):
     def __init__(self, curve):
         self.curve = curve
         self.key = self._keygen(self.curve)
-        self.signer = DSS.new(self.key['ecc'], 'fips-186-3')
+        self.signer = self._create_signer(self.key['ecc'])
 
     @staticmethod
     def _keygen(curve):
@@ -15,11 +15,21 @@ class Party(object):
             'nacl': PrivateKey.generate(),
         }
 
+    @staticmethod
+    def _create_signer(key):
+        return DSS.new(key, 'fips-186-3')
+
+
+    # Key management
+
     def get_public_shares(self):
         return {
             'ecc': self.key['ecc'].pointQ,
             'nacl': self.key['nacl'].public_key,
         }
+
+
+    # DSA (Digital Signature Algorithm)
 
     def sign(self, payload):
         hc = SHA384.new(payload)
@@ -28,6 +38,9 @@ class Party(object):
 
     def verify_signature(self, s):
         pass
+
+
+    # Symmetric (common secret) encryption
 
     def encrypt(self, content, receiver_pub):
         """
@@ -48,6 +61,60 @@ class Party(object):
         box = Box(self.key['nacl'], sender_pub['nacl'])
         content = box.decrypt(cipher)
         return content
+
+
+    # ElGamal encryption
+
+    def set_cipher(self, c1, c2):
+        cipher = {
+            'c1': c1,
+            'c2': c2,
+        }
+        return cipher
+    
+    def extract_cipher(self, cipher):
+        c1 = cipher['c1']
+        c2 = cipher['c2']
+        return c1, c2
+        
+    def elgamal_encrypt(self, public, m):
+        g = self.curve.G
+        r = random_factor(self.curve)
+        cipher = self.set_cipher(
+            r * g,
+            m * g + r * public,
+        )
+        return cipher, r
+
+    # TODO: Make clear the meaning of this function with respet to ElGamal
+    # encryption and rename appropriately
+    def commit(self, public, t):
+        ht = hash_into_integer(t)                           # H(t)
+        commitment, r = self.elgamal_encrypt(public, ht)    # (r * g, H(t) * g + r * I), r
+        return commitment, r
+    
+    def elgamal_decrypt(self, cipher, table):
+        a, b = self.extract_cipher(cipher)
+        v = b + (self.key['ecc'].d * (-a))      # TODO
+        return table[(str(v.x), str(v.y))]
+    
+    def elgamal_reencrypt(self, public, cipher):    
+        g = self.curve.G
+        r = random_factor(self.curve)
+        c1, c2 = self.extract_cipher(cipher)
+        cipher = self.set_cipher(
+            r * g + c1,
+            c2 + r * public,
+        )
+        return cipher, r
+    
+    def elgamal_drenc(self, cipher, decryptor):
+        _, c2 = self.extract_cipher(cipher)
+        m = c2 + (-decryptor)
+        return m
+
+
+    # Other primitives
 
     # TODO: Remove it when chaum-pedersen infra is ready
     def auxiliary_chaum_pedersen_proof(self, u, w):
@@ -88,24 +155,23 @@ class Issuer(Party):
         super().__init__(curve)
 
     def commit_to_document(self, document):
-        return commit(self.curve, ecc_pub_key(self.key['ecc']), document)
+        return self.commit(
+            ecc_pub_key(self.key['ecc']),       # TODO
+            document
+        )
 
     def publish_award(self, t):
         c, r = self.commit_to_document(t)   # c1, c2
 
-        c1, c2 = extract_cipher(c)
+        c1, c2 = self.extract_cipher(c)
         payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
 
         s_awd = self.sign(payload)
         return s_awd, c, r
 
     def reencrypt_commitment(self, c):
-        """
-        """
-        # TODO: Simplify conversions
-        c_r, r_r = elgamal_reencrypt(
-            self.curve,
-            ecc_pub_key(self.key['ecc']),
+        c_r, r_r = self.elgamal_reencrypt(
+            ecc_pub_key(self.key['ecc']),       # TODO
             c,
         )
         return c_r, r_r
@@ -122,8 +188,8 @@ class Issuer(Party):
         return decryptor, enc_decryptor
 
     def generate_nirenc(self, c, c_r, verifier_pub):
-        c1  , c2   = extract_cipher(c)
-        c1_r, c2_r = extract_cipher(c_r)
+        c1  , c2   = self.extract_cipher(c)
+        c1_r, c2_r = self.extract_cipher(c_r)
 
         # TODO:
         pub = ecc_pub_key(self.key['ecc'])
@@ -181,7 +247,7 @@ class Issuer(Party):
 
         # Create PROOF tag
         nirenc_str = json.dumps(nirenc)
-        c_r_1, c_r_2 = extract_cipher(c_r)
+        c_r_1, c_r_2 = self.extract_cipher(c_r)
         payload = (f'PROOF s_req={s_req} c_r=({c_r_1.xy, c_r_2.xy}) '
                    f'{nirenc_str} {enc_decryptor} '
                    f'{enc_niddh}'.encode('utf-8'))
@@ -210,7 +276,7 @@ class Verifier(Party):
         return decryptor
 
     def decrypt_commitment(self, c_r, decryptor):
-        dec_m = elgamal_drenc(c_r, decryptor)
+        dec_m = self.elgamal_drenc(c_r, decryptor)
         return dec_m
 
     def check_message_integrity(self, message, dec_m):
