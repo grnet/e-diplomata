@@ -20,6 +20,27 @@ class Party(object):
         return DSS.new(key, 'fips-186-3')
 
 
+    # Algebra layer
+
+    def serialize_ecc_point(self, pt):
+        return [int(_) for _ in pt.xy]
+    
+    def deserialize_ecc_point(self, pt):
+        return EccPoint(*pt, curve=self.curve.desc)
+    
+    def serialize_factor(self, factor):
+        return int(factor)
+    
+    def deserialize_factor(self, factor):
+        return Integer(factor)
+
+    def generate_randomness(self):
+        return Integer.random_range(
+            min_inclusive=1, 
+            max_exclusive=self.curve.order
+        )
+
+
     # Key management
 
     def get_public_shares(self):
@@ -79,7 +100,7 @@ class Party(object):
         
     def elgamal_encrypt(self, public, m):
         g = self.curve.G
-        r = random_factor(self.curve)
+        r = self.generate_randomness()
         cipher = self.set_cipher(
             r * g,
             m * g + r * public,
@@ -100,7 +121,7 @@ class Party(object):
     
     def elgamal_reencrypt(self, public, cipher):    
         g = self.curve.G
-        r = random_factor(self.curve)
+        r = self.generate_randomness()
         c1, c2 = self.extract_cipher(cipher)
         cipher = self.set_cipher(
             r * g + c1,
@@ -114,6 +135,101 @@ class Party(object):
         return m
 
 
+    # Chaum-Pedersen protocol
+
+    def serialize_ddh(self, ddh):
+        return list(map(self.serialize_ecc_point, ddh))
+    
+    def deserialize_ddh(self, ddh):
+        return tuple(map(
+            self.deserialize_ecc_point, 
+            ddh
+        ))
+
+    def set_proof(self, u_comm, v_comm, s, d):
+        return {
+            'u_comm': u_comm,
+            'v_comm': v_comm,
+            's': s,
+            'd': d,
+        }
+
+    def serialize_proof(self, proof):
+        u_comm, v_comm, s, d = self.extract_proof(proof)
+        return {
+            'u_comm': self.serialize_ecc_point(u_comm),
+            'v_comm': self.serialize_ecc_point(v_comm),
+            's': self.serialize_factor(s),
+            'd': self.serialize_ecc_point(d)
+        }
+    
+    def deserialize_proof(self, proof):
+        u_comm, v_comm, s, d = self.extract_proof(proof)
+        return {
+            'u_comm': self.deserialize_ecc_point(u_comm),
+            'v_comm': self.deserialize_ecc_point(v_comm),
+            's': self.deserialize_factor(s),
+            'd': self.deserialize_ecc_point(d),
+        }
+    
+    def extract_proof(self, proof):
+        u_comm = proof['u_comm']
+        v_comm = proof['v_comm']
+        s = proof['s']
+        d = proof['d']
+        return u_comm, v_comm, s, d
+
+    def set_ddh_proof(self, ddh, proof):
+        return {
+            'ddh': ddh,
+            'proof': proof
+        }
+    
+    def extract_ddh_proof(self, ddh_proof):
+        ddh = ddh_proof['ddh']
+        proof = ddh_proof['proof']
+        return ddh, proof
+
+    def serialize_ddh_proof(self, ddh_proof):
+        ddh, proof = self.extract_ddh_proof(ddh_proof)
+        return {
+            'ddh': self.serialize_ddh(ddh),
+            'proof': self.serialize_proof(proof),
+        }
+    
+    def deserialize_ddh_proof(self, ddh_proof):
+        ddh, proof = self.extract_ddh_proof(ddh_proof)
+        return {
+            'ddh': self.deserialize_ddh(ddh),
+            'proof': self.deserialize_proof(proof),
+        }
+
+    def generate_chaum_pedersen(self, ddh, z, *extras):
+        g = self.curve.G
+        r = self.generate_randomness();
+    
+        u, v, w = ddh
+    
+        u_comm = r * u                                      # u commitment
+        v_comm = r * g                                      # g commitment
+    
+        c = fiat_shamir(u, v, w, u_comm, v_comm, *extras)   # challenge
+    
+        s = (r + c * z) % self.curve.order                  # response
+        d = z * u
+    
+        proof = self.set_proof(u_comm, v_comm, s, d)
+        return proof
+    
+    def verify_chaum_pedersen(self, ddh, proof, *extras):
+        g = self.curve.G
+        u, v, w = ddh
+        u_comm, v_comm, s, d = self.extract_proof(proof)
+        c = fiat_shamir(u, v, w, u_comm, v_comm,  *extras)   # challenge
+        return (s * u == u_comm + c * d) and \
+               (s * g == v_comm + c * v)
+
+
     # Other primitives
 
     # TODO: Remove it when chaum-pedersen infra is ready
@@ -122,7 +238,7 @@ class Party(object):
         v = pub
         z = int(self.key['ecc'].d)              # secret; TODO
         extras = (pub,)
-        proof = chaum_pedersen(self.curve, (u, v, w), z, *extras)
+        proof = self.generate_chaum_pedersen((u, v, w), z, *extras)
         return proof
 
     def set_nirenc(self, proof_c1, proof_c2):
@@ -193,11 +309,11 @@ class Issuer(Party):
 
         # TODO:
         pub = ecc_pub_key(self.key['ecc'])
-        proof_c1 = set_ddh_proof(
+        proof_c1 = self.set_ddh_proof(
             (c1, pub, c1_r),
             self.auxiliary_chaum_pedersen_proof(c1, c1_r)   # TODO: Remove
         )
-        proof_c2 = set_ddh_proof(
+        proof_c2 = self.set_ddh_proof(
             (c2, pub, c2_r),
             self.auxiliary_chaum_pedersen_proof(c2, c2_r)   # TODO: Remove
         )
@@ -208,8 +324,8 @@ class Issuer(Party):
     def serialize_nirenc(self, nirenc):
         proof_c1, proof_c2 = self.extract_nirenc(nirenc)
         return {
-            'proof_c1': serialize_ddh_proof(proof_c1),
-            'proof_c2': serialize_ddh_proof(proof_c2),
+            'proof_c1': self.serialize_ddh_proof(proof_c1),
+            'proof_c2': self.serialize_ddh_proof(proof_c2),
         }
 
     def generate_niddh(self, r1, r2, verifier_pub):
@@ -218,11 +334,11 @@ class Issuer(Party):
         g_r = g * r1
         g_r_r = g * r2
         pub = ecc_pub_key(self.key['ecc'])    # public; TODO
-        niddh = set_ddh_proof(
+        niddh = self.set_ddh_proof(
             (g_r, pub, g_r_r),
             self.auxiliary_chaum_pedersen_proof(g_r, g_r_r)
         )
-        niddh = serialize_ddh_proof(niddh)
+        niddh = self.serialize_ddh_proof(niddh)
 
         enc_niddh = self.encrypt(
             json.dumps(niddh).encode('utf-8'),
@@ -292,8 +408,8 @@ class Verifier(Party):
     def deserialize_nirenc(self, nirenc):
         proof_c1, proof_c2 = self.extract_nirenc(nirenc)
         return {
-            'proof_c1': deserialize_ddh_proof(self.curve, proof_c1),
-            'proof_c2': deserialize_ddh_proof(self.curve, proof_c2),
+            'proof_c1': self.deserialize_ddh_proof(proof_c1),
+            'proof_c2': self.deserialize_ddh_proof(proof_c2),
         }
 
     def verify_nirenc(self, nirenc, issuer_pub):
@@ -302,22 +418,22 @@ class Verifier(Party):
         proof_c1, proof_c2 = self.extract_nirenc(nirenc)
         extras = (issuer_pub['ecc'],)
 
-        ddh, proof = extract_ddh_proof(proof_c1)
-        check_proof_c1 = chaum_pedersen_verify(self.curve, ddh, proof, *extras)
+        ddh, proof = self.extract_ddh_proof(proof_c1)
+        check_proof_c1 = self.verify_chaum_pedersen(ddh, proof, *extras)
         assert check_proof_c1   # TODO: Remove
 
-        ddh, proof = extract_ddh_proof(proof_c2)
-        check_proof_c2 = chaum_pedersen_verify(self.curve, ddh, proof, *extras)
+        ddh, proof = self.extract_ddh_proof(proof_c2)
+        check_proof_c2 = self.verify_chaum_pedersen(ddh, proof, *extras)
         assert check_proof_c2   # TODO: Remove
 
         return check_proof_c1 and check_proof_c2
 
     def verify_niddh(self, enc_niddh, issuer_pub):
         niddh = json.loads(self.decrypt(enc_niddh, issuer_pub).decode('utf-8')) # TODO
-        niddh = deserialize_ddh_proof(self.curve, niddh)
-        ddh, proof = extract_ddh_proof(niddh)
-        extras = (issuer_pub['ecc'],)
-        return chaum_pedersen_verify(self.curve, ddh, proof, *extras)   # TODO
+        niddh = self.deserialize_ddh_proof(niddh)
+        ddh, proof = self.extract_ddh_proof(niddh)
+        extras = (issuer_pub['ecc'],)                           # TODO
+        return self.verify_chaum_pedersen(ddh, proof, *extras)
 
 
     def publish_ack(self, s_prf, m, c_r, nirenc, enc_decryptor, enc_niddh, issuer_pub):
