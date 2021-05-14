@@ -20,7 +20,7 @@ export default function Index() {
   const auth = useAuth();
   const demoLogin = useCallback(() => {
     window.setTimeout(() => {
-      window.localStorage.setItem("login-next", "/diplomas");
+      window.localStorage.setItem("login-next", "/titles");
       window.location.href = auth.config.loginURL + "?username=test";
     }, 1);
   }, [auth.config.loginURL]);
