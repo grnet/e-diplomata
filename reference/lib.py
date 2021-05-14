@@ -18,10 +18,18 @@ def hash_into_integer(bytes_seq, endianness='big'):
     """
     return int.from_bytes(SHA384.new(bytes_seq).digest(), endianness)
 
+def fiat_shamir(*points):
+    """
+    Fiat-Shamir heuristic over elliptic curve points
+    """
+    # import pdb; pdb.set_trace()
+    to_hash = ' '.join(map(lambda p: f'{p.xy}', points))
+    output = hash_into_integer(to_hash.encode('utf-8'))
+    return output
+
 def random_factor(curve):
     """
-    Plays the same role as random exponent
-    in numerical ElGamal cryptosystems
+    Plays the same role as random exponent in numerical ElGamal
     """
     return Integer.random_range(
         min_inclusive=1, 
@@ -40,6 +48,18 @@ def gen_curve(curve_name):
 
 def ecc_pub_key(ecc_key):
     return ecc_key.pointQ
+
+def serialize_ecc_point(pt):
+    return [int(_) for _ in pt.xy]
+
+def deserialize_ecc_point(curve, pt):
+    return EccPoint(*pt, curve=curve.desc)
+
+def serialize_factor(factor):
+    return int(factor)
+
+def deserialize_factor(factor):
+    return Integer(factor)
 
 
 # ElGamal encryption/decryption
@@ -85,6 +105,13 @@ def drenc(cipher, decryptor):
     m = c2 + (-decryptor)
     return m
 
+def make_table(g, n):
+    table = {}
+    for i in range(n):
+        elem = (i * g)
+        table[(str(elem.x), str(elem.y))] = i
+    return table 
+
 
 # Commitments
 
@@ -95,58 +122,92 @@ def commit(curve, public, t):
 
 # Chaum-Pedersen
 
-def fiat_shamir(*points):
-    to_hash = ' '.join(map(lambda p: f'{p.xy}', points))
-    output = hash_into_integer(to_hash.encode('utf-8'))
-    return output
+def serialize_ddh(ddh):
+    return list(map(serialize_ecc_point, ddh))
+
+def deserialize_ddh(curve, ddh):
+    return tuple(map(lambda p: deserialize_ecc_point(curve, p), ddh))
+
+def set_proof(u_comm, v_comm, s, d):
+    return {
+        'u_comm': u_comm,
+        'v_comm': v_comm,
+        's': s,
+        'd': d,
+    }
+
+def extract_proof(proof):
+    u_comm = proof['u_comm']
+    v_comm = proof['v_comm']
+    s = proof['s']
+    d = proof['d']
+    return u_comm, v_comm, s, d
+
+def serialize_proof(proof):
+    u_comm, v_comm, s, d = extract_proof(proof)
+    return {
+        'u_comm': serialize_ecc_point(u_comm),
+        'v_comm': serialize_ecc_point(v_comm),
+        's': serialize_factor(s),
+        'd': serialize_ecc_point(d)
+    }
+
+def deserialize_proof(curve, proof):
+    u_comm, v_comm, s, d = extract_proof(proof)
+    return {
+        'u_comm': deserialize_ecc_point(curve, u_comm),
+        'v_comm': deserialize_ecc_point(curve, v_comm),
+        's': deserialize_factor(s),
+        'd': deserialize_ecc_point(curve, d),
+    }
+
+def set_ddh_proof(ddh, proof):
+    return {
+        'ddh': ddh,
+        'proof': proof
+    }
+
+def extract_ddh_proof(ddh_proof):
+    ddh = ddh_proof['ddh']
+    proof = ddh_proof['proof']
+    return ddh, proof
+
+def serialize_ddh_proof(ddh_proof):
+    ddh, proof = extract_ddh_proof(ddh_proof)
+    return {
+        'ddh': serialize_ddh(ddh),
+        'proof': serialize_proof(proof),
+    }
+
+def deserialize_ddh_proof(curve, ddh_proof):
+    ddh, proof = extract_ddh_proof(ddh_proof)
+    return {
+        'ddh': deserialize_ddh(curve, ddh),
+        'proof': deserialize_proof(curve, proof),
+    }
 
 def chaum_pedersen(curve, ddh, z, *extras):
-    """
-    """
     g = curve.G
     r = random_factor(curve);
 
     u, v, w = ddh
 
-    u_comm = r * u                                   # u commitment
-    v_comm = r * g                                   # g commitment
+    u_comm = r * u                                      # u commitment
+    v_comm = r * g                                      # g commitment
 
     c = fiat_shamir(u, v, w, u_comm, v_comm, *extras)   # challenge
 
-    s = (r + c * z) % curve.order                    # response
+    s = (r + c * z) % curve.order                       # response
     d = z * u
-    return u_comm, v_comm, s, d
 
-def serialize_chaum_pedersen(u, v, u_comm, v_comm, s, d):
-    return {
-        'u': [ int (_) for _ in u.xy ],
-        'v': [ int (_) for _ in v.xy ],
-        'u_comm': [ int (_) for _ in u_comm.xy ],
-        'v_comm': [ int (_) for _ in v_comm.xy ],
-        's': int(s),        
-        'd': [ int (_) for _ in d.xy ]
-    }
+    proof = set_proof(u_comm, v_comm, s, d)
+    return proof
 
-def deserialize_chaum_pedersen(curve, proof):
-    u = EccPoint(*proof['u'], curve=curve.desc)
-    v = EccPoint(*proof['v'], curve=curve.desc)
-    u_comm = EccPoint(*proof['u_comm'], curve=curve.desc)
-    v_comm = EccPoint(*proof['v_comm'], curve=curve.desc)
-    s = Integer(proof['s'])
-    d = EccPoint(*proof['d'], curve=curve.desc)
-    return u, v, u_comm, v_comm, s, d
-
-def chaum_pedersen_verify(curve, ddh,
-        u_comm, v_comm, s, d, *extras):
+def chaum_pedersen_verify(curve, ddh, proof, *extras):
     g = curve.G
     u, v, w = ddh
+    u_comm, v_comm, s, d = extract_proof(proof)
     c = fiat_shamir(u, v, w, u_comm, v_comm,  *extras)   # challenge
     return (s * u == u_comm + c * d) and \
            (s * g == v_comm + c * v)
-    
-def make_table(g, n):
-    table = {}
-    for i in range(n):
-        elem = (i * g)
-        table[(str(elem.x), str(elem.y))] = i
-    return table 
+ 
