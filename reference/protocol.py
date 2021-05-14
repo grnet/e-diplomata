@@ -3,8 +3,8 @@ from util import *
 
 class Party(object):
 
-    def __init__(self, curve):
-        self.curve = curve
+    def __init__(self, curve='P-384'):
+        self.curve = gen_curve(curve)
         self.key = self._keygen(self.curve)
         self.signer = self._create_signer(self.key['ecc'])
 
@@ -103,7 +103,7 @@ class Party(object):
         r = self.generate_randomness()
         cipher = self.set_cipher(
             r * g,
-            m * g + r * public,
+            m * g + r * public['ecc'],
         )
         return cipher, r
 
@@ -125,7 +125,7 @@ class Party(object):
         c1, c2 = self.extract_cipher(cipher)
         cipher = self.set_cipher(
             r * g + c1,
-            c2 + r * public,
+            c2 + r * public['ecc'],
         )
         return cipher, r
     
@@ -255,9 +255,6 @@ class Party(object):
 
 class Holder(Party):
 
-    def __init__(self, curve):
-        super().__init__(curve)
-
     def publish_request(self, s_awd, verifier_pub):
         pub = verifier_pub['ecc']
         payload = (f'REQUEST s_awd={s_awd} ver_pub={pub}').encode('utf-8')
@@ -267,12 +264,9 @@ class Holder(Party):
 
 class Issuer(Party):
 
-    def __init__(self, curve):
-        super().__init__(curve)
-
     def commit_to_document(self, document):
         return self.commit(
-            ecc_pub_key(self.key['ecc']),       # TODO
+            self.get_public_shares(),           # TODO
             document
         )
 
@@ -287,7 +281,7 @@ class Issuer(Party):
 
     def reencrypt_commitment(self, c):
         c_r, r_r = self.elgamal_reencrypt(
-            ecc_pub_key(self.key['ecc']),       # TODO
+            self.get_public_shares(),           # TODO
             c,
         )
         return c_r, r_r
@@ -373,9 +367,6 @@ class Issuer(Party):
 
 
 class Verifier(Party):
-
-    def __init__(self, curve):
-        super().__init__(curve)
 
     def retrieve_decryptor(self, issuer_pub, enc_decryptor):
         dec_decryptor = self.decrypt(enc_decryptor, issuer_pub).decode('utf-8')

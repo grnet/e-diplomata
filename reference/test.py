@@ -2,7 +2,8 @@ from util import *
 from protocol import *
 
 
-def make_table(g, n):
+def make_table(curve_name, n):
+    g = gen_curve(curve_name).G
     table = {}
     for i in range(n):
         elem = (i * g)
@@ -12,17 +13,15 @@ def make_table(g, n):
 
 def test_elgamal_encdec():
     curve = gen_curve('P-384')
+    CURVE = 'P-384'
 
-    table = make_table(curve.G, 1000)
+    table = make_table(CURVE, 1000)
 
-    party_1 = Party(curve)
-    party_2 = Party(curve)
+    party_1 = Party(CURVE)
+    party_2 = Party(CURVE)
 
-    key_1 = party_1.key['ecc']
-    key_2 = party_2.key['ecc']
-
-    pub_1 = ecc_pub_key(key_1)
-    pub_2 = ecc_pub_key(key_2)
+    pub_1 = party_1.get_public_shares()
+    pub_2 = party_2.get_public_shares()
 
     import random
     ps = random.sample(range(1000), 100)

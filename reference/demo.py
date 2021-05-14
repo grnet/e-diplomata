@@ -3,13 +3,12 @@ from protocol import *
 
 if __name__ == '__main__':
 
-    # Crypto setup
-    curve = gen_curve('P-384')  # TODO
+    CURVE = 'P-384'             # Cryptosystem config
 
     # Setup involved parties
-    holder = Holder(curve)
-    issuer = Issuer(curve)
-    verifier = Verifier(curve)
+    holder = Holder(CURVE)
+    issuer = Issuer(CURVE)
+    verifier = Verifier(CURVE)
 
     # Invloved parties publish their keys
     holder_pub = holder.get_public_shares()
