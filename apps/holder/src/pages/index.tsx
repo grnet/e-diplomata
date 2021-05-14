@@ -10,10 +10,10 @@ export default function Index() {
     <HolderLayout>
       <Main >
         <PageTitle>
-          <PageTitleHeading>Ediplomas holder service</PageTitleHeading>
+          <PageTitleHeading>Titles holder service</PageTitleHeading>
         </PageTitle>
         <Paragraph>You can issue diploma in the blockchain</Paragraph>
-        <CallToActionButton href="/login?next=/diplomas">Enter here</CallToActionButton>
+        <CallToActionButton href="/login?next=/titles">Enter here</CallToActionButton>
       </Main>
     </HolderLayout>
   )
