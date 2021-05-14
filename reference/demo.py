@@ -49,6 +49,7 @@ class Party(object):
         content = box.decrypt(cipher)
         return content
 
+    # TODO: Remove it when chaum-pedersen infra is ready
     def auxiliary_chaum_pedersen_proof(self, u, w):
         pub = ecc_pub_key(self.key['ecc'])    # public; TODO
         v = pub
@@ -79,27 +80,24 @@ class Issuer(Party):
         return commit(self.curve, ecc_pub_key(self.key['ecc']), document)
 
     def publish_award(self, t):
-        # order = self.curve.order       # Maybe use in payload?
-        commitment, r = self.commit_to_document(t)
-        c1, c2 = extract_cipher(commitment)                         # TODO
-        payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
-        s_awd = self.sign(payload)
-        commitment = (c1, c2)
-        return s_awd, commitment, r
+        c, r = self.commit_to_document(t)   # c1, c2
 
-    def reencrypt_commitment(self, commitment):
+        c1, c2 = extract_cipher(c)
+        payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
+
+        s_awd = self.sign(payload)
+        return s_awd, c, r
+
+    def reencrypt_commitment(self, c):
         """
-        input: (c1, c2)
-        outout: (c1_r, c2_r), r_r
         """
         # TODO: Simplify conversions
-        cipher_r, r_r = reencrypt(
+        c_r, r_r = elgamal_reencrypt(
             self.curve,
             ecc_pub_key(self.key['ecc']),
-            set_cipher(*commitment),
+            c,
         )
-        c1_r, c2_r = extract_cipher(cipher_r)
-        return (c1_r, c2_r), r_r
+        return c_r, r_r
 
     def create_decryptor(self, r1, r2, verifier_pub):
         r_tilde = r1 + r2
@@ -113,8 +111,8 @@ class Issuer(Party):
         return decryptor, enc_decryptor
 
     def generate_nirenc(self, c, c_r, verifier_pub):
-        c1, c2 = c
-        c1_r, c2_r = c_r
+        c1, c2 = extract_cipher(c)
+        c1_r, c2_r = extract_cipher(c_r)
         pub = ecc_pub_key(self.key['ecc'])    # public; TODO
         proof_c1 = set_ddh_proof(
             (c1, pub, c1_r),
@@ -169,7 +167,8 @@ class Issuer(Party):
 
         # Create PROOF tag
         nirenc_str = json.dumps(nirenc)
-        payload = (f'PROOF s_req={s_req} c_r=({c_r[0].xy, c_r[1].xy}) '
+        c_r_1, c_r_2 = extract_cipher(c_r)
+        payload = (f'PROOF s_req={s_req} c_r=({c_r_1.xy, c_r_2.xy}) '
                    f'{nirenc_str} {enc_decryptor} '
                    f'{enc_niddh}'.encode('utf-8'))
         s_prf = self.sign(payload)
@@ -198,10 +197,7 @@ class Verifier(Party):
         return decryptor
 
     def decrypt_commitment(self, c_r, decryptor):
-        # TODO
-        c1, c2 = c_r
-        cipher_r = set_cipher(c1, c2)
-        dec_m = drenc(cipher_r, decryptor)
+        dec_m = elgamal_drenc(c_r, decryptor)
         return dec_m
 
     def check_message_integrity(self, message, dec_m):
@@ -294,7 +290,8 @@ if __name__ == '__main__':
     print('step 1')
     s_awd, c, r = issuer.publish_award(m)
     # ISSUER stores privately r used for encryption and sends s_awd to the HOLDER
-    print('c1:', c[0].xy, 'c2:', c[1].xy, 's_awd:', s_awd, 'r:', r)
+    c1, c2 = extract_cipher(c)
+    print('c1:', c1.xy, 'c2:', c2.xy, 's_awd:', s_awd, 'r:', r)
 
     print()
     print('step 2')
