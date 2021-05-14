@@ -230,66 +230,76 @@ class Verifier(Party):
             'proof_c2': deserialize_ddh_proof(self.curve, proof_c2),
         }
 
+    def verify_nirenc(self, nirenc, issuer_pub):
 
-def step_four(issuer_pub, verifier, c_r, nirenc,
-              enc_decryptor, enc_niddh, m):
+        nirenc = self.deserialize_nirenc(nirenc)
+        proof_c1, proof_c2 = self.extract_nirenc(nirenc)
+        extras = (issuer_pub['ecc'],)
 
-    # VERIFIER etrieves decryptor created for them by ISSUER
-    decryptor = verifier.retrieve_decryptor(issuer_pub, enc_decryptor)
+        ddh, proof = extract_ddh_proof(proof_c1)
+        check_proof_c1 = chaum_pedersen_verify(curve, ddh, proof, *extras)
+        assert check_proof_c1   # TODO: Remove
 
-    # VERIFIER decrypts the re-encrypted commitment
-    dec_m = verifier.decrypt_commitment(c_r, decryptor)
+        ddh, proof = extract_ddh_proof(proof_c2)
+        check_proof_c2 = chaum_pedersen_verify(curve, ddh, proof, *extras)
+        assert check_proof_c2   # TODO: Remove
 
-    # VERIFIER checks content of document
-    check_m_integrity = verifier.check_message_integrity(m, dec_m)
-    assert check_m_integrity
-    if not check_m_integrity:
-        payload = f'NACK {s_prf}'.encode('utf-8')
-        s_ack = verifier.sign(payload)
-        return s_ack
+        return check_proof_c1 and check_proof_c2
 
-    # Verify NIRENC proof
-    nirenc = verifier.deserialize_nirenc(nirenc)
-    proof_c1, proof_c2 = verifier.extract_nirenc(nirenc)
-    extras = (issuer_pub['ecc'],)
+    def verify_niddh(self, enc_niddh, issuer_pub):
+        niddh = json.loads(self.decrypt(enc_niddh, issuer_pub).decode('utf-8')) # TODO
+        niddh = deserialize_ddh_proof(self.curve, niddh)
+        ddh, proof = extract_ddh_proof(niddh)
+        extras = (issuer_pub['ecc'],)
+        return chaum_pedersen_verify(self.curve, ddh, proof, *extras)   # TODO
 
-    ddh, proof = extract_ddh_proof(proof_c1)
-    check_proof_c1 = chaum_pedersen_verify(curve, ddh, proof, *extras)
-    assert check_proof_c1
-    if not check_proof_c1:
-        payload = f'FAIL {s_prf}'.encode('utf-8')
-        s_ack = verifier.sign(payload)
-        return s_ack
 
-    ddh, proof = extract_ddh_proof(proof_c2)
-    check_proof_c2 = chaum_pedersen_verify(curve, ddh, proof, *extras)
-    assert check_proof_c2
-    if not check_proof_c2:
-        payload = f'FAIL {s_prf}'.encode('utf-8')
-        s_ack = verifier.sign(payload)
-        return s_ack
-
-    # Verify NIDDH proof
-    niddh = json.loads(verifier.decrypt(enc_niddh, issuer_pub).decode('utf-8'))
-    niddh = deserialize_ddh_proof(curve, niddh)
-    ddh, proof = extract_ddh_proof(niddh)
-    extras = (issuer_pub['ecc'],)
-    check_proof_r_r = chaum_pedersen_verify(curve, ddh, proof, *extras)
-    assert check_proof_r_r
-    if not check_proof_r_r:
-        payload = f'FAIL {s_prf}'.encode('utf-8')
-        s_ack = verifier.sign(payload)
-        return s_ack
-
-    # All checks succeded, acknowledge proof
-    payload = f'ACK {s_prf}'.encode('utf-8')
-    s_ack = verifier.sign(payload)
-    return s_ack
+    def publish_ack(self, m, c_r, nirenc, enc_decryptor, enc_niddh, issuer_pub):
+    
+        # VERIFIER etrieves decryptor created for them by ISSUER
+        decryptor = self.retrieve_decryptor(issuer_pub, enc_decryptor)
+    
+        # VERIFIER decrypts the re-encrypted commitment
+        dec_m = self.decrypt_commitment(c_r, decryptor)
+    
+        # VERIFIER checks content of document
+        check_m_integrity = self.check_message_integrity(m, dec_m)
+        assert check_m_integrity    # TODO: Remove
+    
+        # VERIFIER verifies NIRENC proof
+        check_nirenc = self.verify_nirenc(nirenc, issuer_pub)
+        assert check_nirenc         # TODO: Remove
+    
+        if not check_nirenc:
+            payload = f'FAIL {s_prf}'.encode('utf-8')
+            s_ack = self.sign(payload)
+            return s_ack
+    
+        # VERIFIER verifies NIDDH proof
+        check_niddh = self.verify_niddh(enc_niddh, issuer_pub)
+        assert check_niddh          # TODO: Remove
+    
+        # VERIFIER creates TAG
+        if not all((
+            check_m_integrity, 
+            check_nirenc, 
+            check_niddh,
+        )):
+            # Some check failed; reject proof
+            payload = f'FAIL {s_prf}'.encode('utf-8')
+            s_ack = self.sign(payload)
+            return s_ack
+        else:
+            # All checks succeded, acknowledge proof
+            payload = f'ACK {s_prf}'.encode('utf-8')
+            s_ack = self.sign(payload)
+            return s_ack
 
 
 if __name__ == '__main__':
 
-    curve = gen_curve('P-384')
+    # Crypto setup
+    curve = gen_curve('P-384')  # TODO
 
     # Setup involved parties
     holder = Holder(curve)
@@ -305,27 +315,37 @@ if __name__ == '__main__':
 
     print()
     print('step 1')
-    s_awd, c, r = issuer.publish_award(m)
+
+    s_awd, c, r = issuer.publish_award(m)   # TODO: Return JSON
+
     # ISSUER stores privately r used for encryption and sends s_awd to the HOLDER
+
     c1, c2 = extract_cipher(c)
     print('c1:', c1.xy, 'c2:', c2.xy, 's_awd:', s_awd, 'r:', r)
 
     print()
     print('step 2')
-    s_req = holder.publish_request(s_awd, verifier_pub)
+
+    s_req = holder.publish_request(s_awd, verifier_pub)     # TODO: Return JSON
+
     # The request signature can be verified by the ISSUER in order to identify
     # the HOLDER and ensure that this is the true holder of the qualification
     # committed to at s_awd
+
     print('s_req:', s_req)
 
     print()
     print('step 3')
+
     s_prf, c_r, nirenc, enc_decryptor, enc_niddh = issuer.publish_proof(
-        r, c, s_req, verifier_pub)
+            r, c, s_req, verifier_pub)  # TODO: Accept/Return JSON
+
     print('s_prf:', s_prf)
 
     print()
     print('step 4')
-    s_ack = step_four(issuer_pub, verifier, c_r, nirenc,
-                      enc_decryptor, enc_niddh, m)
+
+    s_ack = verifier.publish_ack(m, c_r, nirenc, enc_decryptor,
+            enc_niddh, issuer_pub)      # TODO: Accept JSON
+
     print('s_ack:', s_ack)
