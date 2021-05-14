@@ -1,5 +1,5 @@
-from lib import *
-from demo import *
+from util import *
+from protocol import *
 
 def test_elgamal_encdec():
     curve = gen_curve('P-384')
