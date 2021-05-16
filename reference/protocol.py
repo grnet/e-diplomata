@@ -1,47 +1,45 @@
-from util import *
+import json
+import re
+from nacl.public import PrivateKey, Box
+from Cryptodome.Signature import DSS
+from Cryptodome.Hash import SHA384
+from crypto import ElGamalCrypto
+from util import hash_into_integer
 
 
 class Party(object):
 
     def __init__(self, curve='P-384'):
-        self.curve = gen_curve(curve)
-        self.key = self._keygen(self.curve)
+        self.cryptosys = ElGamalCrypto(curve)
+        self.key = self._generate_key(self.cryptosys)
         self.signer = self._create_signer(self.key['ecc'])
 
-    @staticmethod
-    def _keygen(curve):
-        return {
-            'ecc': ECC.generate(curve=curve.desc),
-            'nacl': PrivateKey.generate(),
-        }
-
-    @staticmethod
-    def _create_signer(key):
-        return DSS.new(key, 'fips-186-3')
-
-
-    # Algebra layer
-
-    def serialize_ecc_point(self, pt):
-        return [int(_) for _ in pt.xy]
-    
-    def deserialize_ecc_point(self, pt):
-        return EccPoint(*pt, curve=self.curve.desc)
-    
-    def serialize_factor(self, factor):
-        return int(factor)
-    
-    def deserialize_factor(self, factor):
-        return Integer(factor)
-
-    def generate_randomness(self):
-        return Integer.random_range(
-            min_inclusive=1, 
-            max_exclusive=self.curve.order
-        )
+    @property
+    def generator(self):
+        return self.cryptosys.generator
 
 
     # Key management
+
+    @staticmethod
+    def _generate_key(cryptosys):
+        key = {
+            'ecc': cryptosys.generate_key(),
+            'nacl': PrivateKey.generate(),
+        }
+        return key
+
+    @property
+    def private(self):
+        return self.key['ecc'].d
+
+    @property
+    def public(self):
+        return self.key['ecc'].pointQ
+
+    @property
+    def elgamal_key(self):
+        return self.private, self.public
 
     def get_public_shares(self):
         return {
@@ -50,18 +48,7 @@ class Party(object):
         }
 
 
-    # DSA (Digital Signature Algorithm)
-
-    def sign(self, payload):
-        hc = SHA384.new(payload)
-        signature = self.signer.sign(hc)
-        return signature
-
-    def verify_signature(self, s):
-        pass
-
-
-    # Symmetric (common secret) encryption
+    # Symmetric encryption
 
     def encrypt(self, content, receiver_pub):
         """
@@ -84,173 +71,130 @@ class Party(object):
         return content
 
 
-    # ElGamal encryption
+    # DSA (Digital Signature Algorithm)
 
-    def set_cipher(self, c1, c2):
-        cipher = {
-            'c1': c1,
-            'c2': c2,
-        }
-        return cipher
-    
-    def extract_cipher(self, cipher):
-        c1 = cipher['c1']
-        c2 = cipher['c2']
-        return c1, c2
-        
-    def elgamal_encrypt(self, public, m):
-        g = self.curve.G
-        r = self.generate_randomness()
-        cipher = self.set_cipher(
-            r * g,
-            m * g + r * public['ecc'],
-        )
-        return cipher, r
+    @staticmethod
+    def _create_signer(key):
+        return DSS.new(key, 'fips-186-3')
 
-    # TODO: Make clear the meaning of this function with respet to ElGamal
-    # encryption and rename appropriately
-    def commit(self, public, t):
-        ht = hash_into_integer(t)                           # H(t)
-        commitment, r = self.elgamal_encrypt(public, ht)    # (r * g, H(t) * g + r * I), r
-        return commitment, r
-    
-    def elgamal_decrypt(self, cipher, table):
-        a, b = self.extract_cipher(cipher)
-        v = b + (self.key['ecc'].d * (-a))      # TODO
-        return table[(str(v.x), str(v.y))]
-    
-    def elgamal_reencrypt(self, public, cipher):    
-        g = self.curve.G
-        r = self.generate_randomness()
-        c1, c2 = self.extract_cipher(cipher)
-        cipher = self.set_cipher(
-            r * g + c1,
-            c2 + r * public['ecc'],
-        )
-        return cipher, r
-    
-    def elgamal_drenc(self, cipher, decryptor):
-        _, c2 = self.extract_cipher(cipher)
-        m = c2 + (-decryptor)
-        return m
+    def sign(self, payload):
+        hc = SHA384.new(payload)
+        signature = self.signer.sign(hc)
+        return signature
+
+    def verify_signature(self, s):
+        pass
 
 
-    # Chaum-Pedersen protocol
+    # ElGamal structures
 
-    def serialize_ddh(self, ddh):
-        return list(map(self.serialize_ecc_point, ddh))
+    def _serialize_ecc_point(self, pt):
+        return self.cryptosys.serialize_ecc_point(pt)
     
-    def deserialize_ddh(self, ddh):
-        return tuple(map(
-            self.deserialize_ecc_point, 
-            ddh
-        ))
+    def _deserialize_ecc_point(self, pt):
+        return self.cryptosys.deserialize_ecc_point(pt)
+    
+    def _serialize_factor(self, factor):
+        return self.cryptosys.serialize_factor(factor)
+    
+    def _deserialize_factor(self, factor):
+        return self.cryptosys.deserialize_factor(factor)
 
-    def set_proof(self, u_comm, v_comm, s, d):
-        return {
-            'u_comm': u_comm,
-            'v_comm': v_comm,
-            's': s,
-            'd': d,
-        }
+    def _set_cipher(self, c1, c2):
+        return self.cryptosys.set_cipher(c1, c2)
+    
+    def _extract_cipher(self, cipher):
+        return self.cryptosys.extract_cipher(cipher)
 
-    def serialize_proof(self, proof):
-        u_comm, v_comm, s, d = self.extract_proof(proof)
-        return {
-            'u_comm': self.serialize_ecc_point(u_comm),
-            'v_comm': self.serialize_ecc_point(v_comm),
-            's': self.serialize_factor(s),
-            'd': self.serialize_ecc_point(d)
-        }
+    def _serialize_ddh(self, ddh):
+        return self.cryptosys.serialize_ddh(ddh)
     
-    def deserialize_proof(self, proof):
-        u_comm, v_comm, s, d = self.extract_proof(proof)
-        return {
-            'u_comm': self.deserialize_ecc_point(u_comm),
-            'v_comm': self.deserialize_ecc_point(v_comm),
-            's': self.deserialize_factor(s),
-            'd': self.deserialize_ecc_point(d),
-        }
-    
-    def extract_proof(self, proof):
-        u_comm = proof['u_comm']
-        v_comm = proof['v_comm']
-        s = proof['s']
-        d = proof['d']
-        return u_comm, v_comm, s, d
+    def _deserialize_ddh(self, ddh):
+        return self.cryptosys.deserialize_ddh(ddh)
 
-    def set_ddh_proof(self, ddh, proof):
-        return {
-            'ddh': ddh,
-            'proof': proof
-        }
-    
-    def extract_ddh_proof(self, ddh_proof):
-        ddh = ddh_proof['ddh']
-        proof = ddh_proof['proof']
-        return ddh, proof
+    def _set_proof(self, u_comm, v_comm, s, d):
+        return self.cryptosys.set_proof(u_comm, v_comm, s, d)
 
-    def serialize_ddh_proof(self, ddh_proof):
-        ddh, proof = self.extract_ddh_proof(ddh_proof)
-        return {
-            'ddh': self.serialize_ddh(ddh),
-            'proof': self.serialize_proof(proof),
-        }
-    
-    def deserialize_ddh_proof(self, ddh_proof):
-        ddh, proof = self.extract_ddh_proof(ddh_proof)
-        return {
-            'ddh': self.deserialize_ddh(ddh),
-            'proof': self.deserialize_proof(proof),
-        }
+    def _extract_proof(self, proof):
+        return self.cryptosys.extract_proof(proof)
 
-    def generate_chaum_pedersen(self, ddh, z, *extras):
-        g = self.curve.G
-        r = self.generate_randomness();
+    def _serialize_proof(self, proof):
+        return self.cryptosys.serialize_proof(proof)
     
-        u, v, w = ddh
+    def _deserialize_proof(self, proof):
+        return self.cryptosys.deserialize_proof(proof)
     
-        u_comm = r * u                                      # u commitment
-        v_comm = r * g                                      # g commitment
+    def _set_ddh_proof(self, ddh, proof):
+        return self.cryptosys.set_ddh_proof(ddh, proof)
     
-        c = fiat_shamir(u, v, w, u_comm, v_comm, *extras)   # challenge
-    
-        s = (r + c * z) % self.curve.order                  # response
-        d = z * u
-    
-        proof = self.set_proof(u_comm, v_comm, s, d)
-        return proof
-    
-    def verify_chaum_pedersen(self, ddh, proof, *extras):
-        g = self.curve.G
-        u, v, w = ddh
-        u_comm, v_comm, s, d = self.extract_proof(proof)
-        c = fiat_shamir(u, v, w, u_comm, v_comm,  *extras)   # challenge
-        return (s * u == u_comm + c * d) and \
-               (s * g == v_comm + c * v)
+    def _extract_ddh_proof(self, ddh_proof):
+        return self.cryptosys.extract_ddh_proof(ddh_proof)
 
+    def _serialize_ddh_proof(self, ddh_proof):
+        return self.cryptosys.serialize_ddh_proof(ddh_proof)
+    
+    def _deserialize_ddh_proof(self, ddh_proof):
+        return self.cryptosys.deserialize_ddh_proof(ddh_proof)
 
-    # Other primitives
-
-    # TODO: Remove it when chaum-pedersen infra is ready
-    def auxiliary_chaum_pedersen_proof(self, u, w):
-        pub = ecc_pub_key(self.key['ecc'])    # public; TODO
-        v = pub
-        z = int(self.key['ecc'].d)              # secret; TODO
-        extras = (pub,)
-        proof = self.generate_chaum_pedersen((u, v, w), z, *extras)
-        return proof
-
-    def set_nirenc(self, proof_c1, proof_c2):
+    def _set_nirenc(self, proof_c1, proof_c2):
         return {
             'proof_c1': proof_c1,
             'proof_c2': proof_c2,
         }
 
-    def extract_nirenc(self, nirenc):
+    def _extract_nirenc(self, nirenc):
         proof_c1 = nirenc['proof_c1']
         proof_c2 = nirenc['proof_c2']
         return proof_c1, proof_c2
+
+    def _serialize_nirenc(self, nirenc):
+        proof_c1, proof_c2 = self._extract_nirenc(nirenc)
+        proof_c1 = self._serialize_ddh_proof(proof_c1)
+        proof_c2 = self._serialize_ddh_proof(proof_c2)
+        nirenc = self._set_nirenc(proof_c1, proof_c2)
+        return nirenc
+
+    def _deserialize_nirenc(self, nirenc):
+        proof_c1, proof_c2 = self._extract_nirenc(nirenc)
+        proof_c1 = self._deserialize_ddh_proof(proof_c1)
+        proof_c2 = self._deserialize_ddh_proof(proof_c2)
+        nirenc = self._set_nirenc(proof_c1, proof_c2)
+        return nirenc
+
+
+    # ElGamal encryption
+ 
+    def elgamal_encrypt(self, public, m):
+        pub = public['ecc']
+        return self.cryptosys.encrypt(pub, m)
+
+    def elgamal_decrypt(self, cipher, table):
+        priv = self.private
+        return self.cryptosys.decrypt(priv, cipher, table)
+
+    def elgamal_reencrypt(self, public, cipher):    
+        pub = public['ecc']
+        cipher, r = self.cryptosys.reencrypt(pub, cipher)
+        return cipher, r
+    
+    def elgamal_drenc(self, cipher, decryptor):
+        return self.cryptosys.drenc(cipher, decryptor)
+
+    # TODO: Make clear the meaning of this function with respet to ElGamal
+    # encryption and rename appropriately
+    def commit(self, public, t):
+        ht = hash_into_integer(t)                   # H(t)
+        c, r = self.elgamal_encrypt(public, ht)     # (r * g, H(t) * g + r * I), r
+        return c, r
+    
+
+    # Chaum-Pedersen protocol
+
+    def _generate_chaum_pedersen(self, ddh, z, *extras):
+        return self.cryptosys.generate_chaum_pedersen(ddh, z, *extras)
+    
+    def _verify_chaum_pedersen(self, ddh, proof, *extras):
+        return self.cryptosys.verify_chaum_pedersen(ddh, proof, *extras)
 
 
 class Holder(Party):
@@ -271,9 +215,9 @@ class Issuer(Party):
         )
 
     def publish_award(self, t):
-        c, r = self.commit_to_document(t)   # c1, c2
+        c, r = self.commit_to_document(t)   # (c1, c2), r
 
-        c1, c2 = self.extract_cipher(c)
+        c1, c2 = self._extract_cipher(c)
         payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
 
         s_awd = self.sign(payload)
@@ -288,7 +232,8 @@ class Issuer(Party):
 
     def create_decryptor(self, r1, r2, verifier_pub):
         r_tilde = r1 + r2
-        decryptor = ecc_pub_key(self.key['ecc']) * r_tilde              # TODO
+        pub = self.public
+        decryptor =  r_tilde * pub              # TODO
 
         enc_decryptor = self.encrypt(
             str(decryptor.xy).encode('utf-8'),
@@ -298,41 +243,40 @@ class Issuer(Party):
         return decryptor, enc_decryptor
 
     def generate_nirenc(self, c, c_r, verifier_pub):
-        c1  , c2   = self.extract_cipher(c)
-        c1_r, c2_r = self.extract_cipher(c_r)
+        c1  , c2   = self._extract_cipher(c)
+        c1_r, c2_r = self._extract_cipher(c_r)
+
+        priv, pub = self.elgamal_key
+        extras = (pub,)
 
         # TODO:
-        pub = ecc_pub_key(self.key['ecc'])
-        proof_c1 = self.set_ddh_proof(
+        proof_c1 = self._set_ddh_proof(
             (c1, pub, c1_r),
-            self.auxiliary_chaum_pedersen_proof(c1, c1_r)   # TODO: Remove
+            self._generate_chaum_pedersen((c1, pub, c1_r), priv, *extras)
         )
-        proof_c2 = self.set_ddh_proof(
+        proof_c2 = self._set_ddh_proof(
             (c2, pub, c2_r),
-            self.auxiliary_chaum_pedersen_proof(c2, c2_r)   # TODO: Remove
+            self._generate_chaum_pedersen((c2, pub, c2_r), priv, *extras)
         )
 
-        nirenc = self.set_nirenc(proof_c1, proof_c2)
+        nirenc = self._set_nirenc(proof_c1, proof_c2)
         return nirenc
 
-    def serialize_nirenc(self, nirenc):
-        proof_c1, proof_c2 = self.extract_nirenc(nirenc)
-        return {
-            'proof_c1': self.serialize_ddh_proof(proof_c1),
-            'proof_c2': self.serialize_ddh_proof(proof_c2),
-        }
-
     def generate_niddh(self, r1, r2, verifier_pub):
+        g = self.generator
+
+        g_r   = r1 * g
+        g_r_r = r2 * g
+
+        priv, pub = self.elgamal_key
+        extras = (pub,)
+
         # TODO
-        g = self.curve.G
-        g_r = g * r1
-        g_r_r = g * r2
-        pub = ecc_pub_key(self.key['ecc'])    # public; TODO
-        niddh = self.set_ddh_proof(
+        niddh = self._set_ddh_proof(
             (g_r, pub, g_r_r),
-            self.auxiliary_chaum_pedersen_proof(g_r, g_r_r)
+            self._generate_chaum_pedersen((g_r, pub, g_r_r), priv, *extras)
         )
-        niddh = self.serialize_ddh_proof(niddh)
+        niddh = self._serialize_ddh_proof(niddh)
 
         enc_niddh = self.encrypt(
             json.dumps(niddh).encode('utf-8'),
@@ -350,14 +294,14 @@ class Issuer(Party):
 
         # create NIRENC
         nirenc = self.generate_nirenc(c, c_r, verifier_pub)
-        nirenc = self.serialize_nirenc(nirenc)
+        nirenc = self._serialize_nirenc(nirenc)
 
         # Create and encrypt NIDDH of the above decryptor addressed to VERIFIER
         niddh, enc_niddh = self.generate_niddh(r, r_r, verifier_pub)
 
         # Create PROOF tag
         nirenc_str = json.dumps(nirenc)
-        c_r_1, c_r_2 = self.extract_cipher(c_r)
+        c_r_1, c_r_2 = self._extract_cipher(c_r)
         payload = (f'PROOF s_req={s_req} c_r=({c_r_1.xy, c_r_2.xy}) '
                    f'{nirenc_str} {enc_decryptor} '
                    f'{enc_niddh}'.encode('utf-8'))
@@ -371,6 +315,7 @@ class Verifier(Party):
     def retrieve_decryptor(self, issuer_pub, enc_decryptor):
         dec_decryptor = self.decrypt(enc_decryptor, issuer_pub).decode('utf-8')
 
+        # TODO
         extract_coords = re.match(r'^\D*(\d+)\D+(\d+)\D*$', dec_decryptor)
         x_affine = int(extract_coords.group(1))
         y_affine = int(extract_coords.group(2))
@@ -379,7 +324,7 @@ class Verifier(Party):
             payload = f'FAIL {s_prf}'.encode('utf-8')
             s_ack = verifier.sign(payload)
             return s_ack
-        decryptor = ECC.EccPoint(x_affine, y_affine, curve=self.curve.desc)
+        decryptor = self._deserialize_ecc_point((x_affine, y_affine))
         return decryptor
 
     def decrypt_commitment(self, c_r, decryptor):
@@ -391,40 +336,33 @@ class Verifier(Party):
         Checks that dec_m coincides with the hash of message,
         seen as ECC points
         """
-        g = self.curve.G
+        g = self.generator
         h = hash_into_integer(message)
-        h_ecc_point = g * h
+        h_ecc_point = h * g
         return dec_m == h_ecc_point
-
-    def deserialize_nirenc(self, nirenc):
-        proof_c1, proof_c2 = self.extract_nirenc(nirenc)
-        return {
-            'proof_c1': self.deserialize_ddh_proof(proof_c1),
-            'proof_c2': self.deserialize_ddh_proof(proof_c2),
-        }
 
     def verify_nirenc(self, nirenc, issuer_pub):
 
-        nirenc = self.deserialize_nirenc(nirenc)
-        proof_c1, proof_c2 = self.extract_nirenc(nirenc)
+        nirenc = self._deserialize_nirenc(nirenc)
+        proof_c1, proof_c2 = self._extract_nirenc(nirenc)
         extras = (issuer_pub['ecc'],)
 
-        ddh, proof = self.extract_ddh_proof(proof_c1)
-        check_proof_c1 = self.verify_chaum_pedersen(ddh, proof, *extras)
+        ddh, proof = self._extract_ddh_proof(proof_c1)
+        check_proof_c1 = self._verify_chaum_pedersen(ddh, proof, *extras)
         assert check_proof_c1   # TODO: Remove
 
-        ddh, proof = self.extract_ddh_proof(proof_c2)
-        check_proof_c2 = self.verify_chaum_pedersen(ddh, proof, *extras)
+        ddh, proof = self._extract_ddh_proof(proof_c2)
+        check_proof_c2 = self._verify_chaum_pedersen(ddh, proof, *extras)
         assert check_proof_c2   # TODO: Remove
 
         return check_proof_c1 and check_proof_c2
 
     def verify_niddh(self, enc_niddh, issuer_pub):
         niddh = json.loads(self.decrypt(enc_niddh, issuer_pub).decode('utf-8')) # TODO
-        niddh = self.deserialize_ddh_proof(niddh)
-        ddh, proof = self.extract_ddh_proof(niddh)
+        niddh = self._deserialize_ddh_proof(niddh)
+        ddh, proof = self._extract_ddh_proof(niddh)
         extras = (issuer_pub['ecc'],)                           # TODO
-        return self.verify_chaum_pedersen(ddh, proof, *extras)
+        return self._verify_chaum_pedersen(ddh, proof, *extras)
 
 
     def publish_ack(self, s_prf, m, c_r, nirenc, enc_decryptor, enc_niddh, issuer_pub):

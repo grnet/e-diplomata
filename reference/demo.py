@@ -10,7 +10,7 @@ if __name__ == '__main__':
     issuer = Issuer(CURVE)
     verifier = Verifier(CURVE)
 
-    # Invloved parties publish their keys
+    # Involved parties publish their keys
     holder_pub = holder.get_public_shares()
     issuer_pub = issuer.get_public_shares()
     verifier_pub = verifier.get_public_shares()
@@ -24,7 +24,7 @@ if __name__ == '__main__':
 
     # ISSUER stores privately r used for encryption and sends s_awd to the HOLDER
 
-    c1, c2 = issuer.extract_cipher(c)
+    c1, c2 = issuer._extract_cipher(c)
     print('c1:', c1.xy, 'c2:', c2.xy, 's_awd:', s_awd, 'r:', r)
 
     print()

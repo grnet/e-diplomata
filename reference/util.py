@@ -1,15 +1,10 @@
 from Cryptodome.PublicKey import ECC
-from Cryptodome.Signature import DSS
 from Cryptodome.Hash import SHA384
 
 from Cryptodome.PublicKey.ECC import EccPoint
 from Cryptodome.Math.Numbers import Integer
 
 import nacl.utils
-from nacl.public import PrivateKey, Box
-
-import json
-import re
 
 
 def hash_into_integer(bytes_seq, endianness='big'):
@@ -36,6 +31,3 @@ def ecc_point_to_str(ecc_point):
 def gen_curve(curve_name):
     curve = ECC._curves[curve_name]
     return curve
-
-def ecc_pub_key(ecc_key):
-    return ecc_key.pointQ

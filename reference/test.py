@@ -12,10 +12,9 @@ def make_table(curve_name, n):
 
 
 def test_elgamal_encdec():
-    curve = gen_curve('P-384')
     CURVE = 'P-384'
 
-    table = make_table(CURVE, 1000)
+    table = make_table(CURVE, 1000)     # lookup table
 
     party_1 = Party(CURVE)
     party_2 = Party(CURVE)
