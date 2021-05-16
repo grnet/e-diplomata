@@ -1,3 +1,4 @@
+from structs import *
 from util import *
 from protocol import *
 
@@ -16,8 +17,8 @@ def test_elgamal_encdec():
 
     table = make_table(CURVE, 1000)     # lookup table
 
-    party_1 = Party(CURVE)
-    party_2 = Party(CURVE)
+    party_1 = Issuer(CURVE)
+    party_2 = Verifier(CURVE)
 
     pub_1 = party_1.get_public_shares()
     pub_2 = party_2.get_public_shares()

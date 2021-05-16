@@ -1,3 +1,4 @@
+from structs import *
 from util import *
 from protocol import *
 
@@ -24,7 +25,7 @@ if __name__ == '__main__':
 
     # ISSUER stores privately r used for encryption and sends s_awd to the HOLDER
 
-    c1, c2 = issuer._extract_cipher(c)
+    c1, c2 = extract_cipher(c)
     print('c1:', c1.xy, 'c2:', c2.xy, 's_awd:', s_awd, 'r:', r)
 
     print()
