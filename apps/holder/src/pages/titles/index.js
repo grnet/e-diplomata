@@ -71,7 +71,7 @@ export default function Titles() {
   const styles = useStyles();
   const { data: datasets } = useResource("datasets");
   const { data, fetch, ...rest } = useResourceMany("titles", searchForm);
-  
+
   const delayedSearch = useCallback(
     debounce(
       (value) =>
@@ -186,17 +186,7 @@ export default function Titles() {
                   <Title className={styles.title} size="md">
                     Φίλτρα αναζήτησης
                   </Title>
-                  <NormalText variant="body1">Τίτλος σπουδών</NormalText>
                 </Grid>
-                {/* <Grid item xs={12}>
-                  {datasets && (
-                    <ComboBox
-                      options={datasets.degree}
-                      onChange={handleChange}
-                      variant="standard"
-                    ></ComboBox>
-                  )}
-                </Grid> */}
                 <Grid item>
                   <NormalText variant="body1">Είδος τίτλου σπουδών</NormalText>
                 </Grid>
