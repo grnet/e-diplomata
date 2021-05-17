@@ -46,3 +46,4 @@ def extract_nirenc(nirenc):
     proof_c1 = nirenc['proof_c1']
     proof_c2 = nirenc['proof_c2']
     return proof_c1, proof_c2
+

@@ -7,11 +7,17 @@ from Cryptodome.Math.Numbers import Integer
 import nacl.utils
 
 
+def gen_curve(curve_name):
+    curve = ECC._curves[curve_name]
+    return curve
+
+
 def hash_into_integer(bytes_seq, endianness='big'):
     """
     The t -> H(t) functionality of the deliverable
     """
     return int.from_bytes(SHA384.new(bytes_seq).digest(), endianness)
+
 
 def fiat_shamir(*points):
     """
@@ -21,13 +27,3 @@ def fiat_shamir(*points):
     to_hash = ' '.join(map(lambda p: f'{p.xy}', points))
     output = hash_into_integer(to_hash.encode('utf-8'))
     return output
-
-# def ecc_point_to_bytes(ecc_point):
-#     return ecc_point.x.to_bytes(), ecc_point.y.to_bytes()
-# 
-# def ecc_point_to_str(ecc_point):
-#     return ecc_point.x.to_bytes(), ecc_point.y.to_bytes()
-
-def gen_curve(curve_name):
-    curve = ECC._curves[curve_name]
-    return curve

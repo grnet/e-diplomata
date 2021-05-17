@@ -1,4 +1,3 @@
-from Cryptodome.Signature import DSS
 from structs import *
 from util import *
 from protocol import *
@@ -16,7 +15,7 @@ if __name__ == '__main__':
     holder_pub = holder.get_public_shares()
     issuer_pub = issuer.get_public_shares()
     verifier_pub = verifier.get_public_shares()
-    import pdb; pdb.set_trace()
+    # import pdb; pdb.set_trace()
 
     m = "This is a message to be encrypted".encode('utf-8')
 

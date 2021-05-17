@@ -1,6 +1,6 @@
 import json
 import re
-from nacl.public import PrivateKey, Box
+from nacl.public import PrivateKey, PublicKey, Box
 from Cryptodome.Signature import DSS
 from Cryptodome.Hash import SHA384
 from crypto import ElGamalCrypto, ElGamalWrapper
@@ -14,23 +14,59 @@ class Party(object):
 
     def __init__(self, curve='P-384'):
         self.cryptosys = ElGamalCrypto(curve)
-        self.key = self._generate_key(self.cryptosys)
-        self.signer = Signer(self.key['ecc'])
+        self.key = self._generate_keys(self.cryptosys)
+        self.signer = self._create_signer(self.key)
 
+
+    # Key management
 
     @staticmethod
-    def _generate_key(cryptosys):
-        key = {
-            'ecc': cryptosys.generate_key(),
-            'nacl': PrivateKey.generate(),
-        }
-        return key
-
-    def get_public_shares(self):
+    def _set_keys(ecc_key, nacl_key):
         return {
-            'ecc': self.key['ecc'].pointQ,
-            'nacl': self.key['nacl'].public_key,
+            'ecc': ecc_key,
+            'nacl': nacl_key,
         }
+
+    @staticmethod
+    def _extract_keys(key):
+        ecc_key  = key['ecc']
+        nacl_key = key['nacl']
+        return ecc_key, nacl_key
+
+    # @staticmethod
+    def _generate_keys(self, cryptosys):
+        ecc_key = cryptosys.generate_key()
+        nacl_key = PrivateKey.generate()
+        keys = self._set_keys(ecc_key, nacl_key)
+        return keys
+
+    def get_public_shares(self, serialized=True):
+        ecc_key, nacl_key = self._extract_keys(self.key)
+        ecc_pub = ecc_key.pointQ                                        # TODO
+        nacl_pub = nacl_key.public_key                                  # TODO
+        if serialized:
+            ecc_pub = self.cryptosys.serialize_ecc_point(ecc_pub)       # TODO
+            nacl_pub = bytes(nacl_pub).hex()                            # TODO
+        public_shares = self._set_keys(ecc_pub, nacl_pub)
+        return public_shares
+
+    @property
+    def keys(self):
+        ecc_key, nacl_key = self._extract_keys(self.key)
+        return ecc_key, nacl_key
+
+    @property
+    def public_keys(self):
+        public_shares = self.get_public_shares(serialized=False)
+        ecc_pub, nacl_pub = self._extract_keys(public_shares)
+        return ecc_pub, nacl_pub
+
+    def deserialize_public(self, public):
+        ecc_pub, nacl_pub = self._extract_keys(public)
+        ecc_pub = self.cryptosys.deserialize_ecc_point(ecc_pub)         # TODO
+        nacl_pub = PublicKey(bytes.fromhex(nacl_pub))                   # TODO
+        public = self._set_keys(ecc_pub, nacl_pub)
+        return public
 
 
     # Symmetrict encryption
@@ -38,8 +74,6 @@ class Party(object):
     def encrypt(self, content, receiver_pub):
         """
         Encrypt using common secret (currently a wrapper around box.encrypt)
-
-        content: bytes
         """
         box = Box(self.key['nacl'], receiver_pub['nacl'])
         cipher = box.encrypt(content)
@@ -48,8 +82,6 @@ class Party(object):
     def decrypt(self, cipher, sender_pub):
         """
         Decrypt using common secret (currently a wrapper around box.decrypt)
-
-        return: bytes
         """
         box = Box(self.key['nacl'], sender_pub['nacl'])
         content = box.decrypt(cipher)
@@ -57,6 +89,10 @@ class Party(object):
 
 
     # Signatures
+
+    @staticmethod
+    def _create_signer(key):
+        return Signer(key['ecc'])
 
     def sign(self, payload):
         return self.signer.sign(payload)
@@ -81,24 +117,21 @@ class Issuer(Party):
 
     def __init__(self, curve='P-386'):
         super().__init__(curve)
-        self.prover = primitives.Prover(curve, key=self.key['ecc'])    # TODO
+        ecc_key, _ = self.keys
+        self.prover = primitives.Prover(curve, key=ecc_key)     # TODO
 
     def commit_to_document(self, document):
-        return self.prover.commit(              # TODO
-            self.get_public_shares()['ecc'],           # TODO
-            document
-        )
+        ecc_pub, _ = self.public_keys
+        return self.prover.commit(ecc_pub, document)                    # TODO
 
     def reencrypt_commitment(self, c):
-        c_r, r_r = self.prover.reencrypt(       # TODO
-            self.get_public_shares()['ecc'],           # TODO
-            c,
-        )
+        ecc_pub, _ = self.public_keys
+        c_r, r_r = self.prover.reencrypt(ecc_pub, c)                    # TODO
         return c_r, r_r
 
     def create_decryptor(self, r1, r2, verifier_pub):
         r_tilde = r1 + r2
-        pub = self.get_public_shares()['ecc']   # TODO
+        pub, _ = self.public_keys
         decryptor =  r_tilde * pub              # TODO
 
         # TODO: Separate encryption from generation
@@ -127,6 +160,8 @@ class Issuer(Party):
 
 
     def publish_proof(self, r, c, s_req, verifier_pub):
+        # import pdb; pdb.set_trace()
+        verifier_pub = self.deserialize_public(verifier_pub)
 
         # Re-encrypt commitment
         c_r, r_r = self.reencrypt_commitment(c)
@@ -163,7 +198,8 @@ class Verifier(Party):
 
     def __init__(self, curve='P-386'):
         super().__init__(curve)
-        self.verifier = primitives.Verifier(curve, key=self.key['ecc'])    # TODO
+        ecc_key, _ = self.keys
+        self.verifier = primitives.Verifier(curve, key=ecc_key)    # TODO
 
     def retrieve_decryptor(self, sender_pub, enc_decryptor):
         dec_decryptor = self.decrypt(enc_decryptor, sender_pub).decode('utf-8')
@@ -188,6 +224,7 @@ class Verifier(Party):
         return nirenc
 
     def publish_ack(self, s_prf, m, c_r, nirenc, enc_decryptor, enc_niddh, issuer_pub):
+        issuer_pub = self.deserialize_public(issuer_pub)
 
         # VERIFIER etrieves decryptor created for them by ISSUER
         decryptor = self.retrieve_decryptor(issuer_pub, enc_decryptor)
