@@ -156,10 +156,18 @@ class Issuer(Party):
         payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
 
         s_awd = self.sign(payload)
+
+        c = self.cryptosys.serialize_cipher(c)                      # TODO
+        r = self.cryptosys.serialize_scalar(r)                      # TODO
         return s_awd, c, r
 
 
     def publish_proof(self, r, c, s_req, verifier_pub):
+
+        r = self.cryptosys.deserialize_scalar(r)                    # TODO
+        c = self.cryptosys.deserialize_cipher(c)                    # TODO
+
+
         # import pdb; pdb.set_trace()
         verifier_pub = self.deserialize_public(verifier_pub)
 
@@ -167,8 +175,9 @@ class Issuer(Party):
         c_r, r_r = self.reencrypt_commitment(c)
 
         # Create and encrypt decryptor
-        # TODO: separate generation from decryption
+        # TODO: separate generation from encryption
         decryptor, enc_decryptor = self.create_decryptor(r, r_r, verifier_pub)
+        enc_decryptor = enc_decryptor.hex()                         # TODO
 
         # create NIRENC
         # TODO serapate generation from serialization
@@ -182,6 +191,7 @@ class Issuer(Party):
             json.dumps(niddh).encode('utf-8'),
             verifier_pub
         )
+        enc_niddh = enc_niddh.hex()     # TODO
 
         # Create PROOF tag
         nirenc_str = json.dumps(nirenc)
@@ -190,6 +200,8 @@ class Issuer(Party):
                    f'{nirenc_str} {enc_decryptor} '
                    f'{enc_niddh}'.encode('utf-8'))
         s_prf = self.sign(payload)
+
+        c_r = self.cryptosys.serialize_cipher(c_r)              # TODO
 
         return (s_prf, c_r, nirenc, enc_decryptor, enc_niddh)
 
@@ -224,9 +236,11 @@ class Verifier(Party):
         return nirenc
 
     def publish_ack(self, s_prf, m, c_r, nirenc, enc_decryptor, enc_niddh, issuer_pub):
+        c_r = self.cryptosys.deserialize_cipher(c_r)
         issuer_pub = self.deserialize_public(issuer_pub)
 
         # VERIFIER etrieves decryptor created for them by ISSUER
+        enc_decryptor = bytes.fromhex(enc_decryptor)
         decryptor = self.retrieve_decryptor(issuer_pub, enc_decryptor)
     
         # VERIFIER decrypts the re-encrypted commitment
@@ -242,6 +256,7 @@ class Verifier(Party):
         assert check_nirenc         # TODO: Remove
     
         # VERIFIER verifies NIDDH proof
+        enc_niddh = bytes.fromhex(enc_niddh)
         niddh = json.loads(self.decrypt(enc_niddh, issuer_pub).decode('utf-8')) # TODO
         niddh = self.verifier._deserialize_ddh_proof(niddh)                     # TODO
         check_niddh = self.verifier.verify_niddh(niddh, issuer_pub)

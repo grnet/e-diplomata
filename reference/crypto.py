@@ -36,6 +36,20 @@ class ElGamalCrypto(object):
     def deserialize_scalar(self, scalar):
         return Integer(scalar)
 
+    def serialize_cipher(self, cipher):
+        c1, c2 = extract_cipher(cipher)
+        c1 = self.serialize_ecc_point(c1)
+        c2 = self.serialize_ecc_point(c2)
+        cipher = set_cipher(c1, c2)
+        return cipher
+
+    def deserialize_cipher(self, cipher):
+        c1, c2 = extract_cipher(cipher)
+        c1 = self.deserialize_ecc_point(c1)
+        c2 = self.deserialize_ecc_point(c2)
+        cipher = set_cipher(c1, c2)
+        return cipher
+
     def serialize_ddh(self, ddh):
         return list(map(self.serialize_ecc_point, ddh))
     
