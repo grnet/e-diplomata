@@ -1,3 +1,4 @@
+from Cryptodome.Signature import DSS
 from structs import *
 from util import *
 from protocol import *
@@ -15,6 +16,7 @@ if __name__ == '__main__':
     holder_pub = holder.get_public_shares()
     issuer_pub = issuer.get_public_shares()
     verifier_pub = verifier.get_public_shares()
+    import pdb; pdb.set_trace()
 
     m = "This is a message to be encrypted".encode('utf-8')
 
@@ -22,6 +24,9 @@ if __name__ == '__main__':
     print('step 1')
 
     s_awd, c, r = issuer.publish_award(m)   # TODO: Return JSON
+
+    p = Prover(curve='P-384')
+    # v = VVerifier(curve='P-384')
 
     # ISSUER stores privately r used for encryption and sends s_awd to the HOLDER
 

@@ -1,3 +1,5 @@
+from Cryptodome.Signature import DSS
+
 """
 Crypto layer (El-Gamal)
 """
@@ -148,3 +150,92 @@ class ElGamalCrypto(object):
         c = fiat_shamir(u, v, w, u_comm, v_comm, *extras)   # challenge
         return (s * u == u_comm + c * d) and \
                (s * g == v_comm + c * v)
+
+
+class KeyOwner(object):
+    """
+    El-Gamal key owner interface
+    """
+
+    def __init__(self, cryptosys, key=None):
+        self.key = self._generate_key(cryptosys) \
+            if not key else key
+
+    @staticmethod
+    def _generate_key(cryptosys):
+        return cryptosys.generate_key()
+
+    @property
+    def private(self):
+        return self.key.d
+
+    @property
+    def public(self):
+        return self.key.pointQ
+
+    @property
+    def keypair(self):
+        return self.private, self.public
+
+
+class Signer(object):
+    """
+    DSA (Digital Signature Algorithm) infrastructure
+    """
+
+    def __init__(self, key):
+        self._signer = DSS.new(key, 'fips-186-3')
+    
+    def sign(self, payload):
+        hc = SHA384.new(payload)
+        signature = self._signer.sign(hc)
+        return signature
+
+    def verify_signature(self, s):
+        raise NotImplementedError
+
+
+class ElGamalWrapper(object):
+    """
+    Cryptosystem wrapper interface
+    """
+
+    @property
+    def generator(self):
+        return self.cryptosys.generator
+    
+    def _serialize_ecc_point(self, pt):
+        return self.cryptosys.serialize_ecc_point(pt)
+    
+    def _deserialize_ecc_point(self, pt):
+        return self.cryptosys.deserialize_ecc_point(pt)
+    
+    def _serialize_scalar(self, scalar):
+        return self.cryptosys.serialize_scalar(scalar)
+    
+    def _deserialize_scalar(self, scalar):
+        return self.cryptosys.deserialize_scalar(scalar)
+
+    def _serialize_ddh(self, ddh):
+        return self.cryptosys.serialize_ddh(ddh)
+    
+    def _deserialize_ddh(self, ddh):
+        return self.cryptosys.deserialize_ddh(ddh)
+
+    def _serialize_proof(self, proof):
+        return self.cryptosys.serialize_proof(proof)
+    
+    def _deserialize_proof(self, proof):
+        return self.cryptosys.deserialize_proof(proof)
+    
+    def _serialize_ddh_proof(self, ddh_proof):
+        return self.cryptosys.serialize_ddh_proof(ddh_proof)
+    
+    def _deserialize_ddh_proof(self, ddh_proof):
+        return self.cryptosys.deserialize_ddh_proof(ddh_proof)
+
+    def _generate_chaum_pedersen(self, ddh, z, *extras):
+        return self.cryptosys.generate_chaum_pedersen(ddh, z, *extras)
+    
+    def _verify_chaum_pedersen(self, ddh, proof, *extras):
+        return self.cryptosys.verify_chaum_pedersen(ddh, proof, *extras)

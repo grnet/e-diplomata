@@ -22,11 +22,11 @@ def fiat_shamir(*points):
     output = hash_into_integer(to_hash.encode('utf-8'))
     return output
 
-def ecc_point_to_bytes(ecc_point):
-    return ecc_point.x.to_bytes(), ecc_point.y.to_bytes()
-
-def ecc_point_to_str(ecc_point):
-    return ecc_point.x.to_bytes(), ecc_point.y.to_bytes()
+# def ecc_point_to_bytes(ecc_point):
+#     return ecc_point.x.to_bytes(), ecc_point.y.to_bytes()
+# 
+# def ecc_point_to_str(ecc_point):
+#     return ecc_point.x.to_bytes(), ecc_point.y.to_bytes()
 
 def gen_curve(curve_name):
     curve = ECC._curves[curve_name]

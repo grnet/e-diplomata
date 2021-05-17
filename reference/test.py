@@ -2,6 +2,7 @@ from structs import *
 from util import *
 from protocol import *
 
+CURVE = 'P-384'
 
 def make_table(curve_name, n):
     g = gen_curve(curve_name).G
@@ -13,7 +14,6 @@ def make_table(curve_name, n):
 
 
 def test_elgamal_encdec():
-    CURVE = 'P-384'
 
     table = make_table(CURVE, 1000)     # lookup table
 
@@ -26,7 +26,7 @@ def test_elgamal_encdec():
     import random
     ps = random.sample(range(1000), 100)
     for i in range(100):
-        cipher, r = party_1.elgamal_encrypt(pub_2, ps[i])
-        cipher_r, r_r = party_1.elgamal_reencrypt(pub_2, cipher)        
-        assert(party_2.elgamal_decrypt(cipher, table) == ps[i])
-        assert(party_2.elgamal_decrypt(cipher_r, table) == ps[i])
+        cipher, r = party_1.prover.encrypt(pub_2['ecc'], ps[i])
+        cipher_r, r_r = party_1.prover.reencrypt(pub_2['ecc'], cipher)        
+        assert(party_2.verifier.decrypt(cipher, table) == ps[i])
+        assert(party_2.verifier.decrypt(cipher_r, table) == ps[i])
