@@ -85,6 +85,12 @@ class Party(object):
     def _deserialize_cipher(self, cipher):
         return self.cryptosys.deserialize_cipher(cipher)
 
+    def _serialize_ddh_proof(self, ddh_proof):
+        return self.cryptosys.serialize_ddh_proof(ddh_proof)
+
+    def _deserialize_ddh_proof(self, ddh_proof):
+        return self.cryptosys.deserialize_ddh_proof(ddh_proof)
+
     def _serialize_ecc_public(self, pub):
         return self._serialize_ecc_point(pub)
 
@@ -157,13 +163,15 @@ class Issuer(Party):
         ecc_key, _ = self.keys
         self.prover = primitives.Prover(curve, key=ecc_key)     # TODO
 
-    def commit_to_document(self, document):
-        ecc_pub, _ = self.public_keys
-        return self.prover.commit(ecc_pub, document)                    # TODO
+    def commit_to_document(self, t):
+        ht = hash_into_integer(t)                       # H(t)
+        ecc_pub, _ = self.public_keys                   # I
+        c, r = self.prover.commit(ht, pub=ecc_pub)      # r * g, H(t) * g + r * I
+        return c, r
 
     def reencrypt_commitment(self, c):
-        ecc_pub, _ = self.public_keys
-        c_r, r_r = self.prover.reencrypt(ecc_pub, c)                    # TODO
+        ecc_pub, _ = self.public_keys                   # I
+        c_r, r_r = self.prover.reencrypt(ecc_pub, c)    # (r1 + r2) * g, H(t) + (r1 + r2) * I
         return c_r, r_r
 
     def create_decryptor(self, r1, r2, verifier_pub):
@@ -181,8 +189,8 @@ class Issuer(Party):
 
     def _serialize_nirenc(self, nirenc):
         proof_c1, proof_c2 = extract_nirenc(nirenc)
-        proof_c1 = self.prover._serialize_ddh_proof(proof_c1)       # TODO
-        proof_c2 = self.prover._serialize_ddh_proof(proof_c2)       # TODO
+        proof_c1 = self._serialize_ddh_proof(proof_c1)       # TODO
+        proof_c2 = self._serialize_ddh_proof(proof_c2)       # TODO
         nirenc = set_nirenc(proof_c1, proof_c2)
         return nirenc
 
@@ -260,13 +268,13 @@ class Verifier(Party):
             payload = f'FAIL {s_prf}'.encode('utf-8')
             s_ack = verifier.sign(payload)
             return s_ack
-        decryptor = self.verifier._deserialize_ecc_point((x_affine, y_affine)) # TODO
+        decryptor = self._deserialize_ecc_point((x_affine, y_affine)) # TODO
         return decryptor
 
     def _deserialize_nirenc(self, nirenc):
         proof_c1, proof_c2 = extract_nirenc(nirenc)
-        proof_c1 = self.verifier._deserialize_ddh_proof(proof_c1)   # TODO
-        proof_c2 = self.verifier._deserialize_ddh_proof(proof_c2)   # TODO
+        proof_c1 = self._deserialize_ddh_proof(proof_c1)   # TODO
+        proof_c2 = self._deserialize_ddh_proof(proof_c2)   # TODO
         nirenc = set_nirenc(proof_c1, proof_c2)
         return nirenc
 
@@ -291,7 +299,7 @@ class Verifier(Party):
     
         # VERIFIER verifies NIDDH proof
         niddh = json.loads(self.decrypt(enc_niddh, issuer_pub).decode('utf-8')) # TODO
-        niddh = self.verifier._deserialize_ddh_proof(niddh)                     # TODO
+        niddh = self._deserialize_ddh_proof(niddh)                     # TODO
         check_niddh = self.verifier.verify_niddh(niddh, issuer_pub)
         assert check_niddh          # TODO: Remove
     

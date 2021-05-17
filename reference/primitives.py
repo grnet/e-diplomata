@@ -14,25 +14,19 @@ class Prover(ElGamalWrapper, KeyOwner):
         self.cryptosys = ElGamalCrypto(curve)
         super().__init__(self.cryptosys, key=key)
 
-    def encrypt(self, public, m):
-        cipher, r = self.cryptosys.encrypt(public, m)
+    def encrypt(self, pub, elem):
+        cipher, r = self.cryptosys.encrypt(pub, elem)
         return cipher, r
 
-    def reencrypt(self, public, cipher):    
-        cipher, r = self.cryptosys.reencrypt(public, cipher)
-        return cipher, r
-
-    # TODO: Make clear the meaning of this function with respet to ElGamal
-    # encryption and rename appropriately
-    def commit(self, public, t):
-        ht = hash_into_integer(t)           # H(t)
-        c, r = self.encrypt(public, ht)     # (r * g, H(t) * g + r * I), r
+    def commit(self, elem, pub=None):
+        pub = self.public if not pub else pub   # y
+        c, r = self.encrypt(pub, elem)          # r * g, m * g + r * y
         return c, r
 
-    def reencrypt_commitment(self, c):
-        pub = self.public
-        c_r, r_r = self.elgamal_reencrypt(pub, c)
-        return c_r, r_r
+    def reencrypt(self, pub, cipher):    
+        cipher, r = self.cryptosys.reencrypt(
+            pub, cipher)
+        return cipher, r                        # (r1 + r2) * g, m * g + (r1 + r2) * y
 
     def create_decryptor(self, r1, r2, verifier_pub):
         r_tilde = r1 + r2

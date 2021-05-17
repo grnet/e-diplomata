@@ -107,12 +107,12 @@ class ElGamalCrypto(object):
     # Encryption/Decryption
 
     def encrypt(self, pub, m):
-        g = self.generator
-        r = self.generate_randomness()
+        g = self.generator                  # g
+        r = self.generate_randomness()      # r
         cipher = set_cipher(
             r * g,
             m * g + r * pub,
-        )
+        )                                   # r * g, m * g + r * y
         return cipher, r
 
     def decrypt(self, priv, cipher, table):
@@ -121,13 +121,13 @@ class ElGamalCrypto(object):
         return table[(str(v.x), str(v.y))]
 
     def reencrypt(self, public, cipher):    
-        g = self.generator
-        r = self.generate_randomness()
-        c1, c2 = extract_cipher(cipher)
+        g = self.generator                  # g
+        r = self.generate_randomness()      # r
+        c1, c2 = extract_cipher(cipher)     # r_1 * g, m * g + r_1 * y
         cipher = set_cipher(
-            r * g + c1,
+            r * g + c1,                     
             c2 + r * public,
-        )
+        )                                   # (r1 + r2) * g, m * g + (r1 + r2) * y
         return cipher, r
     
     def drenc(self, cipher, decryptor):
