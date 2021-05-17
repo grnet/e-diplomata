@@ -131,10 +131,11 @@ class Party(object):
         return Signer(key['ecc'])
 
     def sign(self, payload):
-        return self.signer.sign(payload)
+        return self.signer.sign(payload).hex()
 
-    def verify_signature(self, s):
-        return self.signer.verify_signature(s)
+    def verify_signature(self, sig):
+        s = bytes.fromhex(sig)
+        return self.signer.verify_signature(sig)
 
 
 class Holder(Party):

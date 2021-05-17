@@ -24,11 +24,11 @@ if __name__ == '__main__':
     s_awd, c, r = issuer.publish_award(m)   # TODO: Return JSON
     # import pdb; pdb.set_trace()
     out1 = {
-        's_awd': s_awd.hex(),
+        's_awd': s_awd,
         'c': c,
         'r': r,
     }
-    print(json.dumps(out1, indent=4))
+    print(json.dumps(out1, indent=2))
     # print('c: ', c, 's_awd: ', s_awd, 'r:', r)
 
     # ISSUER stores privately r used for encryption and sends s_awd to the HOLDER
@@ -38,7 +38,7 @@ if __name__ == '__main__':
 
     s_req = holder.publish_request(s_awd, verifier_pub)     # TODO: Return JSON
     # import pdb; pdb.set_trace()
-    print('s_req:', s_req.hex())
+    print('s_req:', s_req)
 
     # The request signature can be verified by the ISSUER in order to identify
     # the HOLDER and ensure that this is the true holder of the qualification
@@ -51,7 +51,7 @@ if __name__ == '__main__':
             r, c, s_req, verifier_pub)  # TODO: Accept/Return JSON
     # import pdb; pdb.set_trace()
 
-    print('s_prf:', s_prf.hex())
+    print('s_prf:', s_prf)
     # import pdb; pdb.set_trace()
     # print(proof)
 
@@ -62,4 +62,4 @@ if __name__ == '__main__':
             enc_niddh, issuer_pub)      # TODO: Accept JSON
     # import pdb; pdb.set_trace()
 
-    print('s_ack:', s_ack.hex())
+    print('s_ack:', s_ack)
