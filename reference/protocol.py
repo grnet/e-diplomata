@@ -33,6 +33,12 @@ class Party(object):
         nacl_key = key['nacl']
         return ecc_key, nacl_key
 
+    @staticmethod
+    def _extract_public_keys(key):
+        ecc_pub  = key['ecc'].pointQ
+        nacl_pub = key['nacl'].public_key
+        return ecc_pub, nacl_pub
+
     # @staticmethod
     def _generate_keys(self, cryptosys):
         ecc_key = cryptosys.generate_key()
@@ -41,12 +47,10 @@ class Party(object):
         return keys
 
     def get_public_shares(self, serialized=True):
-        ecc_key, nacl_key = self._extract_keys(self.key)
-        ecc_pub = ecc_key.pointQ                                        # TODO
-        nacl_pub = nacl_key.public_key                                  # TODO
+        ecc_pub, nacl_pub = self._extract_public_keys(self.key)
         if serialized:
-            ecc_pub = self.cryptosys.serialize_ecc_point(ecc_pub)       # TODO
-            nacl_pub = bytes(nacl_pub).hex()                            # TODO
+            ecc_pub = self._serialize_ecc_public(ecc_pub)
+            nacl_pub = self._serialize_nacl_public(nacl_pub)
         public_shares = self._set_keys(ecc_pub, nacl_pub)
         return public_shares
 
@@ -57,14 +61,46 @@ class Party(object):
 
     @property
     def public_keys(self):
-        public_shares = self.get_public_shares(serialized=False)
-        ecc_pub, nacl_pub = self._extract_keys(public_shares)
+        ecc_pub, nacl_pub = self._extract_public_keys(self.key)
         return ecc_pub, nacl_pub
+
+
+    # Serialization/deserialization
+
+    def _serialize_scalar(self, scalar):
+        return self.cryptosys.serialize_scalar(scalar)
+
+    def _deserialize_scalar(self, scalar):
+        return self.cryptosys.deserialize_scalar(scalar)
+
+    def _serialize_ecc_point(self, pt):
+        return self.cryptosys.serialize_ecc_point(pt)
+
+    def _deserialize_ecc_point(self, pt):
+        return self.cryptosys.deserialize_ecc_point(pt)
+
+    def _serialize_cipher(self, cipher):
+        return self.cryptosys.serialize_cipher(cipher)
+
+    def _deserialize_cipher(self, cipher):
+        return self.cryptosys.deserialize_cipher(cipher)
+
+    def _serialize_ecc_public(self, pub):
+        return self._serialize_ecc_point(pub)
+
+    def _deserialize_ecc_public(self, pub):
+        return self._deserialize_ecc_point(pub)
+
+    def _serialize_nacl_public(self, pub):
+        return bytes(pub).hex()
+
+    def _deserialize_nacl_public(self, pub):
+        return PublicKey(bytes.fromhex(pub))
 
     def deserialize_public(self, public):
         ecc_pub, nacl_pub = self._extract_keys(public)
-        ecc_pub = self.cryptosys.deserialize_ecc_point(ecc_pub)         # TODO
-        nacl_pub = PublicKey(bytes.fromhex(nacl_pub))                   # TODO
+        ecc_pub = self._deserialize_ecc_public(ecc_pub)
+        nacl_pub = self._deserialize_nacl_public(nacl_pub)
         public = self._set_keys(ecc_pub, nacl_pub)
         return public
 
@@ -76,7 +112,7 @@ class Party(object):
         Encrypt using common secret (currently a wrapper around box.encrypt)
         """
         box = Box(self.key['nacl'], receiver_pub['nacl'])
-        cipher = box.encrypt(content)
+        cipher = box.encrypt(content).hex()
         return cipher
 
     def decrypt(self, cipher, sender_pub):
@@ -84,7 +120,7 @@ class Party(object):
         Decrypt using common secret (currently a wrapper around box.decrypt)
         """
         box = Box(self.key['nacl'], sender_pub['nacl'])
-        content = box.decrypt(cipher)
+        content = box.decrypt(bytes.fromhex(cipher))
         return content
 
 
@@ -157,15 +193,15 @@ class Issuer(Party):
 
         s_awd = self.sign(payload)
 
-        c = self.cryptosys.serialize_cipher(c)                      # TODO
-        r = self.cryptosys.serialize_scalar(r)                      # TODO
+        c = self._serialize_cipher(c)                      # TODO
+        r = self._serialize_scalar(r)                      # TODO
         return s_awd, c, r
 
 
     def publish_proof(self, r, c, s_req, verifier_pub):
 
-        r = self.cryptosys.deserialize_scalar(r)                    # TODO
-        c = self.cryptosys.deserialize_cipher(c)                    # TODO
+        r = self._deserialize_scalar(r)                    # TODO
+        c = self._deserialize_cipher(c)                    # TODO
 
 
         # import pdb; pdb.set_trace()
@@ -177,7 +213,6 @@ class Issuer(Party):
         # Create and encrypt decryptor
         # TODO: separate generation from encryption
         decryptor, enc_decryptor = self.create_decryptor(r, r_r, verifier_pub)
-        enc_decryptor = enc_decryptor.hex()                         # TODO
 
         # create NIRENC
         # TODO serapate generation from serialization
@@ -191,7 +226,6 @@ class Issuer(Party):
             json.dumps(niddh).encode('utf-8'),
             verifier_pub
         )
-        enc_niddh = enc_niddh.hex()     # TODO
 
         # Create PROOF tag
         nirenc_str = json.dumps(nirenc)
@@ -201,7 +235,7 @@ class Issuer(Party):
                    f'{enc_niddh}'.encode('utf-8'))
         s_prf = self.sign(payload)
 
-        c_r = self.cryptosys.serialize_cipher(c_r)              # TODO
+        c_r = self._serialize_cipher(c_r)              # TODO
 
         return (s_prf, c_r, nirenc, enc_decryptor, enc_niddh)
 
@@ -236,11 +270,10 @@ class Verifier(Party):
         return nirenc
 
     def publish_ack(self, s_prf, m, c_r, nirenc, enc_decryptor, enc_niddh, issuer_pub):
-        c_r = self.cryptosys.deserialize_cipher(c_r)
+        c_r = self._deserialize_cipher(c_r)
         issuer_pub = self.deserialize_public(issuer_pub)
 
         # VERIFIER etrieves decryptor created for them by ISSUER
-        enc_decryptor = bytes.fromhex(enc_decryptor)
         decryptor = self.retrieve_decryptor(issuer_pub, enc_decryptor)
     
         # VERIFIER decrypts the re-encrypted commitment
@@ -256,7 +289,6 @@ class Verifier(Party):
         assert check_nirenc         # TODO: Remove
     
         # VERIFIER verifies NIDDH proof
-        enc_niddh = bytes.fromhex(enc_niddh)
         niddh = json.loads(self.decrypt(enc_niddh, issuer_pub).decode('utf-8')) # TODO
         niddh = self.verifier._deserialize_ddh_proof(niddh)                     # TODO
         check_niddh = self.verifier.verify_niddh(niddh, issuer_pub)
