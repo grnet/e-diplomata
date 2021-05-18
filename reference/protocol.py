@@ -331,21 +331,17 @@ class Verifier(Party):
         check_integrity = self.verify_document_integrity(t, c)
         check_nirenc    = self.verify_nirenc(nirenc, issuer_pub)
         check_niddh     = self.verify_niddh(niddh, issuer_pub)
-        assert check_integrity      # TODO: Remove
-        assert check_nirenc         # TODO: Remove
-        assert check_niddh          # TODO: Remove
-    
-        # VERIFIER creates TAG
-        if not all((
+
+        # Create ACK tag
+        result = all((
             check_integrity, 
             check_nirenc, 
             check_niddh,
-        )):
-            payload = self.create_tag('FAIL', s_prf)
-            s_ack = self.sign(payload)
-            return s_ack
-        else:
-            # All checks succeded, acknowledge proof
-            payload = self.create_tag('ACK', s_prf)
-            s_ack = self.sign(payload)
-            return s_ack
+        ))
+        assert result   # TODO: Remove
+        payload = self.create_tag(
+            'ACK' if result else 'NACK',
+            result=result
+        )
+        s_ack = self.sign(payload)
+        return s_ack, result

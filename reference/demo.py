@@ -52,7 +52,9 @@ if __name__ == '__main__':
     print('\nstep 4')                           # step 4
 
     # VERIFIER verifies proof against document and ISSUER's key
-    s_ack = verifier.publish_ack(s_prf, t, proof, issuer_pub)
+    s_ack, result = verifier.publish_ack(s_prf, t, proof, issuer_pub)
 
     # VERIFIER publishes s_ack (ledger) and the verification result
     print('s_ack:', s_ack)
+    print('[%s] Verification: %s' % (('+', 'SUCCESS') if result else ('-',
+        'FAILURE')))
