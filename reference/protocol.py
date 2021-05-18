@@ -231,8 +231,8 @@ class Issuer(Party):
         c1, c2 = extract_cipher(c)
         payload = self.create_tag(
             'AWARD',
-            c1=c1.xy,
-            c2=c2.xy,
+            c1=self._serialize_ecc_point(c1),
+            c2=self._serialize_ecc_point(c2),
         )
         s_awd = self.sign(payload)
 
@@ -264,13 +264,13 @@ class Issuer(Party):
             niddh, verifier_pub)                        # E_V(NIDDH_I(r + r_r))
 
         # Create PROOF tag
-        nirenc_str = json.dumps(nirenc)
         c_r_1, c_r_2 = extract_cipher(c_r)
         payload = self.create_tag(
             'PROOF',
             s_req=s_req,
-            c_r=(c_r_1.xy, c_r_2.xy),
-            nirenc=nirenc_str,
+            c_r_1=self._serialize_ecc_point(c_r_1),
+            c_r_2=self._serialize_ecc_point(c_r_2),
+            nirenc=nirenc,
             decryptor=enc_decryptor,
             niddh=enc_niddh,
         )
