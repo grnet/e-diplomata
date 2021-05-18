@@ -54,7 +54,7 @@ class Party(object):
         public_shares = self._set_keys(ecc_pub, nacl_pub)
         return public_shares
 
-    def _get_ecc_key(self):
+    def _get_ecc_keypair(self):
         ecc_key, _ = self._extract_keys(self.key)
         return ecc_key.d, ecc_key.pointQ
 
@@ -127,6 +127,12 @@ class Party(object):
         proof_c2 = self._deserialize_ddh_proof(proof_c2)
         nirenc = set_nirenc(proof_c1, proof_c2)
         return nirenc
+
+    def _serialize_niddh(self, niddh):
+        return self.cryptosys.serialize_ddh_proof(niddh)
+
+    def _deserialize_niddh(self, niddh):
+        return self.cryptosys.deserialize_ddh_proof(niddh)
 
 
     # Encoding for symmetric encryption
@@ -218,8 +224,17 @@ class Issuer(Party):
         return enc_decryptor
 
     def create_nirenc(self, c, c_r):
-        keypair = self._get_ecc_key()
+        keypair = self._get_ecc_keypair()
         return self.prover.generate_nirenc(c, c_r, keypair)
+
+    def create_niddh(self, r1, r2):
+        keypair = self._get_ecc_keypair()
+        return self.prover.generate_niddh(r1, r2, keypair)
+
+    def encrypt_niddh(self, niddh, verifier_pub):
+        niddh = self.encode(niddh, self._serialize_niddh)
+        enc_niddh = self.encrypt(niddh, verifier_pub)
+        return enc_niddh
 
     def publish_award(self, t):
         c, r = self.commit_to_document(t)               # r * g, H(t) * g + r * I
@@ -251,14 +266,10 @@ class Issuer(Party):
         nirenc = self.create_nirenc(c, c_r)
         nirenc = self._serialize_nirenc(nirenc)         # NIRENC_I(c, c_r)
 
-        # Create and encrypt NIDDH of the above decryptor addressed to VERIFIER
-        # TODO: Separate generation from encryption
-        # niddh = self.prover.generate_niddh(r, r_r, verifier_pub)
-        niddh = self.prover.generate_niddh(r, r_r)
-        enc_niddh = self.encrypt(
-            json.dumps(niddh).encode('utf-8'),
-            verifier_pub
-        )
+        # Create NIDDH for reencryption-decryptor
+        niddh = self.create_niddh(r, r_r)               # NIDDH_I(r + r_r)
+        enc_niddh = self.encrypt_niddh(
+            niddh, verifier_pub)                        # E_V(NIDDH_I(r + r_r))
 
         # Create PROOF tag
         nirenc_str = json.dumps(nirenc)
@@ -280,14 +291,20 @@ class Verifier(Party):
         ecc_key, _ = self.keys
         self.verifier = primitives.Verifier(curve, key=ecc_key)    # TODO
 
-    def retrieve_decryptor(self, sender_pub, enc_decryptor):
-        decryptor = self.decrypt(enc_decryptor, sender_pub)
+    def retrieve_decryptor(self, issuer_pub, enc_decryptor):
+        decryptor = self.decrypt(enc_decryptor, issuer_pub)
         return self.decode(decryptor, self._deserialize_ecc_point)
+
+    def retrieve_niddh(self, issuer_pub, enc_niddh):
+        niddh = self.decrypt(enc_niddh, issuer_pub)
+        return self.decode(niddh, self._deserialize_niddh)
 
     def publish_ack(self, s_prf, m, c_r, nirenc, enc_decryptor, enc_niddh, issuer_pub):
         c_r = self._deserialize_cipher(c_r)                             # TODO
         issuer_pub = self._deserialize_public(issuer_pub)               # TODO
         decryptor = self.retrieve_decryptor(issuer_pub, enc_decryptor)  # TODO
+        nirenc = self._deserialize_nirenc(nirenc)                       # TODO
+        niddh = self.retrieve_niddh(issuer_pub, enc_niddh)
     
         # VERIFIER decrypts the re-encrypted commitment
         dec_m = self.verifier.decrypt_commitment(c_r, decryptor)    # TODO
@@ -297,13 +314,10 @@ class Verifier(Party):
         assert check_m_integrity    # TODO: Remove
     
         # VERIFIER verifies NIRENC proof
-        nirenc = self._deserialize_nirenc(nirenc)
         check_nirenc = self.verifier.verify_nirenc(nirenc, issuer_pub)      # TODO
         assert check_nirenc         # TODO: Remove
     
         # VERIFIER verifies NIDDH proof
-        niddh = json.loads(self.decrypt(enc_niddh, issuer_pub).decode('utf-8')) # TODO
-        niddh = self._deserialize_ddh_proof(niddh)                     # TODO
         check_niddh = self.verifier.verify_niddh(niddh, issuer_pub)
         assert check_niddh          # TODO: Remove
     

@@ -51,23 +51,20 @@ class Prover(ElGamalWrapper, KeyOwner):
         nirenc = set_nirenc(proof_c1, proof_c2)
         return nirenc
 
-    def generate_niddh(self, r1, r2):
+    def generate_niddh(self, r1, r2, keypair=None):
         g = self.generator
 
         g_r   = r1 * g
         g_r_r = r2 * g
 
-        # priv, pub = self.elgamal_key
-        priv = self.private                     # TODO
-        pub = self.public                       # TODO
-        extras = (pub,)
+        priv, pub = self.keypair if not keypair \
+            else keypair
+        extras = (pub,)                         # TODO: Maybe enhance extras
 
-        # TODO
         niddh = set_ddh_proof(
             (g_r, pub, g_r_r),
             self._generate_chaum_pedersen((g_r, pub, g_r_r), priv, *extras)
         )
-        niddh = self._serialize_ddh_proof(niddh)
 
         return niddh
 
