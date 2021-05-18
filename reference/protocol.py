@@ -171,21 +171,20 @@ class Issuer(Party):
 
     def reencrypt_commitment(self, c):
         ecc_pub, _ = self.public_keys                   # I
-        c_r, r_r = self.prover.reencrypt(ecc_pub, c)    # (r1 + r2) * g, H(t) + (r1 + r2) * I
+        c_r, r_r = self.prover.reencrypt(ecc_pub, c)    # (r1 + r2) * g, H(t) * g + (r1 + r2) * I
         return c_r, r_r
 
-    def create_decryptor(self, r1, r2, verifier_pub):
-        r_tilde = r1 + r2
-        pub, _ = self.public_keys
-        decryptor =  r_tilde * pub              # TODO
+    def create_decryptor(self, r1, r2):
+        ecc_pub, _ = self.public_keys                   # I
+        decryptor = self.prover.generate_decryptor(
+            r1, r2, ecc_pub)
+        return decryptor                                # (r1 + r2) * I
 
-        # TODO: Separate encryption from generation
-        enc_decryptor = self.encrypt(
+    def encrypt_decryptor(self, decryptor, verifier_pub):
+        return self.encrypt(
             str(decryptor.xy).encode('utf-8'),  # TODO
             verifier_pub
-        )
-
-        return decryptor, enc_decryptor
+        )                                               # E_V((r1 + r2) * I)
 
     def _serialize_nirenc(self, nirenc):
         proof_c1, proof_c2 = extract_nirenc(nirenc)
@@ -195,10 +194,10 @@ class Issuer(Party):
         return nirenc
 
     def publish_award(self, t):
-        c, r = self.commit_to_document(t)   # (c1, c2), r
+        c, r = self.commit_to_document(t)               # r * g, H(t) * g + r * I
 
         c1, c2 = extract_cipher(c)
-        payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')
+        payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')    # TODO
 
         s_awd = self.sign(payload)
 
@@ -208,20 +207,17 @@ class Issuer(Party):
 
 
     def publish_proof(self, r, c, s_req, verifier_pub):
-
-        r = self._deserialize_scalar(r)                    # TODO
-        c = self._deserialize_cipher(c)                    # TODO
-
-
-        # import pdb; pdb.set_trace()
-        verifier_pub = self.deserialize_public(verifier_pub)
+        r = self._deserialize_scalar(r)                         # TODO
+        c = self._deserialize_cipher(c)                         # TODO
+        verifier_pub = self.deserialize_public(verifier_pub)    # TODO
 
         # Re-encrypt commitment
-        c_r, r_r = self.reencrypt_commitment(c)
+        c_r, r_r = self.reencrypt_commitment(c)         # (r + r_r) * g, H(t) * g + (r + r_r) * I
 
-        # Create and encrypt decryptor
-        # TODO: separate generation from encryption
-        decryptor, enc_decryptor = self.create_decryptor(r, r_r, verifier_pub)
+        # Create and encrypt reencryption-decryptor
+        decryptor = self.create_decryptor(r, r_r)       # (r + r_r) * I
+        enc_decryptor = self.encrypt_decryptor(
+            decryptor, verifier_pub)                    # E_V((r + r_r) * I)
 
         # create NIRENC
         # TODO serapate generation from serialization

@@ -28,18 +28,8 @@ class Prover(ElGamalWrapper, KeyOwner):
             pub, cipher)
         return cipher, r                        # (r1 + r2) * g, m * g + (r1 + r2) * y
 
-    def create_decryptor(self, r1, r2, verifier_pub):
-        r_tilde = r1 + r2
-        pub = self.public
-        decryptor =  r_tilde * pub              # TODO
-
-        # TODO: Transfer one layer above
-        enc_decryptor = self.encrypt(
-            str(decryptor.xy).encode('utf-8'),  # TODO
-            verifier_pub
-        )
-
-        return decryptor, enc_decryptor
+    def generate_decryptor(self, r1, r2, pub):
+        return (r1 + r2) * pub
 
     def generate_nirenc(self, c, c_r, verifier_pub):
         c1  , c2   = extract_cipher(c)
