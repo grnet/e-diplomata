@@ -8,9 +8,10 @@ from structs import *
 from util import hash_into_integer
 from primitives import *
 import primitives
+from crypto import ElGamalWrapper
 
 
-class Party(object):
+class Party(ElGamalWrapper):
 
     def __init__(self, curve='P-384'):
         self.cryptosys = ElGamalCrypto(curve)
@@ -70,30 +71,6 @@ class Party(object):
 
 
     # Serialization/deserialization
-
-    def _serialize_scalar(self, scalar):
-        return self.cryptosys.serialize_scalar(scalar)
-
-    def _deserialize_scalar(self, scalar):
-        return self.cryptosys.deserialize_scalar(scalar)
-
-    def _serialize_ecc_point(self, pt):
-        return self.cryptosys.serialize_ecc_point(pt)
-
-    def _deserialize_ecc_point(self, pt):
-        return self.cryptosys.deserialize_ecc_point(pt)
-
-    def _serialize_cipher(self, cipher):
-        return self.cryptosys.serialize_cipher(cipher)
-
-    def _deserialize_cipher(self, cipher):
-        return self.cryptosys.deserialize_cipher(cipher)
-
-    def _serialize_ddh_proof(self, ddh_proof):
-        return self.cryptosys.serialize_ddh_proof(ddh_proof)
-
-    def _deserialize_ddh_proof(self, ddh_proof):
-        return self.cryptosys.deserialize_ddh_proof(ddh_proof)
 
     def _serialize_ecc_public(self, pub):
         return self._serialize_ecc_point(pub)

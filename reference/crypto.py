@@ -230,6 +230,12 @@ class ElGamalWrapper(object):
     def _deserialize_scalar(self, scalar):
         return self.cryptosys.deserialize_scalar(scalar)
 
+    def _serialize_cipher(self, cipher):
+        return self.cryptosys.serialize_cipher(cipher)
+    
+    def _deserialize_cipher(self, cipher):
+        return self.cryptosys.deserialize_cipher(cipher)
+
     def _serialize_ddh(self, ddh):
         return self.cryptosys.serialize_ddh(ddh)
     
