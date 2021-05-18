@@ -3,7 +3,7 @@ import re
 from nacl.public import PrivateKey, Box
 from Cryptodome.Signature import DSS
 from Cryptodome.Hash import SHA384
-from crypto import ElGamalCrypto, Signer, KeyOwner, ElGamalWrapper
+from elgamal import ElGamalCrypto, Signer, KeyOwner, ElGamalWrapper
 from structs import *
 from util import hash_into_integer
 
