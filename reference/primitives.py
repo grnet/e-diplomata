@@ -1,11 +1,9 @@
-import json
-import re
-from nacl.public import PrivateKey, Box
-from Cryptodome.Signature import DSS
-from Cryptodome.Hash import SHA384
-from elgamal import ElGamalCrypto, Signer
-from structs import *
-from util import hash_into_integer
+"""
+Basic Crypto Layer
+"""
+
+from elgamal import ElGamalCrypto
+from util import *
 
 
 class KeyOwner(object):
@@ -30,6 +28,9 @@ class KeyOwner(object):
 
 
 class Prover(KeyOwner):
+    """
+    Proof-generator over an ElGamal cryptosystem
+    """
 
     def __init__(self, curve='P-384', key=None):
         self.cryptosys = ElGamalCrypto(curve)
@@ -47,7 +48,7 @@ class Prover(KeyOwner):
     def reencrypt(self, pub, cipher):    
         cipher, r = self.cryptosys.reencrypt(
             pub, cipher)
-        return cipher, r                        # (r1 + r2) * g, m * g + (r1 + r2) * y
+        return cipher, r                            # (r1 + r2) * g, m * g + (r1 + r2) * y
 
     def generate_decryptor(self, r1, r2, pub):
         return (r1 + r2) * pub
@@ -94,6 +95,9 @@ class Prover(KeyOwner):
 
 
 class Verifier(KeyOwner):
+    """
+    Proof-verifier over an ElGamal cryptosystem
+    """
 
     def __init__(self, curve='P-384', key=None):
         self.cryptosys = ElGamalCrypto(curve)

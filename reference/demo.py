@@ -1,4 +1,3 @@
-from structs import *
 from util import *
 from protocol import *
 

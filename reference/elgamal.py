@@ -1,17 +1,44 @@
+"""
+ElGamal Backend
+"""
+
 from Cryptodome.Signature import DSS
-
-"""
-Crypto layer (El-Gamal)
-"""
-
-from structs import *
+from Cryptodome.PublicKey.ECC import EccPoint
+from Cryptodome.Math.Numbers import Integer
+from Cryptodome.PublicKey import ECC
+from Cryptodome.Hash import SHA384
 from util import *
 
 
+def gen_curve(name):
+    """
+    Elliptic-curve generation
+    """
+    return ECC._curves[name]
+
+def hash_into_scalar(bytes_seq, endianness='big'):
+    """
+    t -> H(t), where H(t) can act as scalar on elliptic points
+    """
+    value = int.from_bytes(SHA384.new(bytes_seq).digest(), endianness)
+    return Integer(value)
+
+def fiat_shamir(*points):
+    """
+    Fiat-Shamir heuristic over elliptic curve points
+    """
+    to_hash = ' '.join(map(lambda p: f'{p.xy}', points))
+    output = hash_into_scalar(to_hash.encode('utf-8'))
+    return output
+
+
 class ElGamalCrypto(object):
+    """
+    The cryptosystem
+    """
 
     def __init__(self, curve='P-384'):
-        self.curve = gen_curve(curve)
+        self.curve = gen_curve(name=curve)
 
     @property
     def generator(self):
@@ -144,8 +171,6 @@ class ElGamalCrypto(object):
         r = self.generate_randomness()
     
         u, v, w = ddh
-        z = int(z)
-    
         u_comm = r * u                                      # u commitment
         v_comm = r * g                                      # g commitment
     

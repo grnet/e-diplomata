@@ -1,16 +1,20 @@
+"""
+Tranaction Layer
+"""
+
 import json
-import re
-from nacl.public import PrivateKey, PublicKey, Box
-from Cryptodome.Signature import DSS
-from Cryptodome.Hash import SHA384
-from elgamal import ElGamalCrypto, ElGamalSerializer
-from structs import *
-from util import hash_into_integer
-from primitives import *
+from nacl.public import PrivateKey as _NaclKey
+from nacl.public import PublicKey as _NaclPublicKey
+from nacl.public import Box as _NaclBox
+from elgamal import ElGamalCrypto, ElGamalSerializer, Signer, hash_into_scalar
+from util import *
 import primitives
 
 
 class Party(ElGamalSerializer):
+    """
+    Common infrastructure for Holder, Issuer and Verifier
+    """
 
     def __init__(self, curve='P-384'):
         self.cryptosys = ElGamalCrypto(curve)
@@ -41,7 +45,7 @@ class Party(ElGamalSerializer):
 
     def _generate_keys(self, cryptosys):
         ecc_key = cryptosys.generate_key()
-        nacl_key = PrivateKey.generate()
+        nacl_key = _NaclKey.generate()
         keys = self._set_keys(ecc_key, nacl_key)
         return keys
 
@@ -80,7 +84,7 @@ class Party(ElGamalSerializer):
         return bytes(pub).hex()
 
     def _deserialize_nacl_public(self, pub):
-        return PublicKey(bytes.fromhex(pub))
+        return _NaclPublicKey(bytes.fromhex(pub))
 
     def _deserialize_public(self, public):
         ecc_pub, nacl_pub = self._extract_keys(public)
@@ -125,17 +129,17 @@ class Party(ElGamalSerializer):
 
     def encrypt(self, content, receiver_pub):
         """
-        Encrypt using common secret (currently a wrapper around box.encrypt)
+        Encrypt using common secret
         """
-        box = Box(self.key['nacl'], receiver_pub['nacl'])
+        box = _NaclBox(self.key['nacl'], receiver_pub['nacl'])
         cipher = box.encrypt(content).hex()
         return cipher
 
     def decrypt(self, cipher, sender_pub):
         """
-        Decrypt using common secret (currently a wrapper around box.decrypt)
+        Decrypt using common secret
         """
-        box = Box(self.key['nacl'], sender_pub['nacl'])
+        box = _NaclBox(self.key['nacl'], sender_pub['nacl'])
         content = box.decrypt(bytes.fromhex(cipher))
         return content
 
@@ -186,7 +190,7 @@ class Issuer(Party):
         self.prover = primitives.Prover(curve, key=ecc_key)     # TODO
 
     def commit_to_document(self, t):
-        ht = hash_into_integer(t)                       # H(t)
+        ht = hash_into_scalar(t)                       # H(t)
         ecc_pub, _ = self.public_keys                   # I
         c, r = self.prover.commit(ht, pub=ecc_pub)      # r * g, H(t) * g + r * I
         return c, r
@@ -301,7 +305,7 @@ class Verifier(Party):
         return c
 
     def verify_document_integrity(self, t, c):
-        ht = hash_into_integer(t)
+        ht = hash_into_scalar(t)
         return self.verifier.verify_message_integrity(ht, c)
 
     def verify_nirenc(self, nirenc, issuer_pub):

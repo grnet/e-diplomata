@@ -1,11 +1,11 @@
-from structs import *
 from util import *
 from protocol import *
+from elgamal import *
 
 CURVE = 'P-384'
 
-def make_table(curve_name, n):
-    g = gen_curve(curve_name).G
+def make_table(curve, n):
+    g = gen_curve(name=curve).G
     table = {}
     for i in range(n):
         elem = (i * g)

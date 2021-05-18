@@ -1,29 +1,51 @@
-from Cryptodome.PublicKey import ECC
-from Cryptodome.Hash import SHA384
+# Structures
 
-from Cryptodome.PublicKey.ECC import EccPoint
-from Cryptodome.Math.Numbers import Integer
+def set_cipher(c1, c2):
+    cipher = {
+        'c1': c1,
+        'c2': c2,
+    }
+    return cipher
 
-import nacl.utils
+def extract_cipher(cipher):
+    c1 = cipher['c1']
+    c2 = cipher['c2']
+    return c1, c2
 
+def set_proof(u_comm, v_comm, s, d):
+    return {
+        'u_comm': u_comm,
+        'v_comm': v_comm,
+        's': s,
+        'd': d,
+    }
 
-def gen_curve(curve_name):
-    curve = ECC._curves[curve_name]
-    return curve
+def extract_proof(proof):
+    u_comm = proof['u_comm']
+    v_comm = proof['v_comm']
+    s = proof['s']
+    d = proof['d']
+    return u_comm, v_comm, s, d
 
+def set_ddh_proof(ddh, proof):
+    return {
+        'ddh': ddh,
+        'proof': proof
+    }
 
-def hash_into_integer(bytes_seq, endianness='big'):
-    """
-    The t -> H(t) functionality of the deliverable
-    """
-    return int.from_bytes(SHA384.new(bytes_seq).digest(), endianness)
+def extract_ddh_proof(ddh_proof):
+    ddh = ddh_proof['ddh']
+    proof = ddh_proof['proof']
+    return ddh, proof
 
+def set_nirenc(proof_c1, proof_c2):
+    return {
+        'proof_c1': proof_c1,
+        'proof_c2': proof_c2,
+    }
 
-def fiat_shamir(*points):
-    """
-    Fiat-Shamir heuristic over elliptic curve points
-    """
-    # import pdb; pdb.set_trace()
-    to_hash = ' '.join(map(lambda p: f'{p.xy}', points))
-    output = hash_into_integer(to_hash.encode('utf-8'))
-    return output
+def extract_nirenc(nirenc):
+    proof_c1 = nirenc['proof_c1']
+    proof_c2 = nirenc['proof_c2']
+    return proof_c1, proof_c2
+
