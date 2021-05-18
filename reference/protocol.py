@@ -274,9 +274,21 @@ class Verifier(Party):
         niddh = self.decrypt(enc_niddh, issuer_pub)
         return self.decode(niddh, self._deserialize_niddh)
 
+    def decrypt_commitment(self, c_r, decryptor):
+        c = self.cryptosys.drenc(c_r, decryptor)    # TODO
+        return c
+
     def verify_document_integrity(self, t, c):
         ht = hash_into_integer(t)
         return self.verifier.verify_message_integrity(ht, c)
+
+    def verify_nirenc(self, nirenc, issuer_pub):
+        pub = issuer_pub['ecc']
+        return self.verifier.verify_nirenc(nirenc, pub)
+
+    def verify_niddh(self, niddh, issuer_pub):
+        pub = issuer_pub['ecc']
+        return self.verifier.verify_niddh(niddh, pub)
 
     def publish_ack(self, s_prf, m, c_r, nirenc, enc_decryptor, enc_niddh, issuer_pub):
         c_r = self._deserialize_cipher(c_r)                             # TODO
@@ -286,18 +298,18 @@ class Verifier(Party):
         niddh = self.retrieve_niddh(issuer_pub, enc_niddh)
     
         # VERIFIER decrypts the re-encrypted commitment
-        c = self.verifier.decrypt_commitment(c_r, decryptor) # initial commit 
+        c = self.decrypt_commitment(c_r, decryptor)
     
         # VERIFIER checks content of document (TODO: elaborate)
         check_m_integrity = self.verify_document_integrity(m, c)
         assert check_m_integrity    # TODO: Remove
     
         # VERIFIER verifies NIRENC proof
-        check_nirenc = self.verifier.verify_nirenc(nirenc, issuer_pub)      # TODO
+        check_nirenc = self.verify_nirenc(nirenc, issuer_pub)
         assert check_nirenc         # TODO: Remove
     
         # VERIFIER verifies NIDDH proof
-        check_niddh = self.verifier.verify_niddh(niddh, issuer_pub)
+        check_niddh = self.verify_niddh(niddh, issuer_pub)
         assert check_niddh          # TODO: Remove
     
         # VERIFIER creates TAG

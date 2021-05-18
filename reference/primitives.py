@@ -14,13 +14,9 @@ class Prover(ElGamalWrapper, KeyOwner):
         self.cryptosys = ElGamalCrypto(curve)
         super().__init__(self.cryptosys, key=key)
 
-    def encrypt(self, pub, elem):
-        cipher, r = self.cryptosys.encrypt(pub, elem)
-        return cipher, r
-
     def commit(self, elem, pub=None):
-        pub = self.public if not pub else pub   # y
-        c, r = self.encrypt(pub, elem)          # r * g, m * g + r * y
+        pub = self.public if not pub else pub       # y
+        c, r = self.cryptosys.encrypt(pub, elem)    # r * g, m * g + r * y
         return c, r
 
     def reencrypt(self, pub, cipher):    
@@ -75,38 +71,27 @@ class Verifier(ElGamalWrapper, KeyOwner):
         self.cryptosys = ElGamalCrypto(curve)
         super().__init__(self.cryptosys, key=key)
 
-    def decrypt(self, cipher, table):
-        priv = self.private
-        return self.cryptosys.decrypt(priv, cipher, table)
- 
-    def drenc(self, cipher, decryptor):
-        return self.cryptosys.drenc(cipher, decryptor)
-
-    def decrypt_commitment(self, c_r, decryptor):
-        dec_m = self.drenc(c_r, decryptor)
-        return dec_m
-
     def verify_message_integrity(self, m, c):
         g = self.generator
         return c == m * g
 
-    def verify_nirenc(self, nirenc, issuer_pub):
+    def verify_nirenc(self, nirenc, prover_pub):
 
         proof_c1, proof_c2 = extract_nirenc(nirenc)
-        extras = (issuer_pub['ecc'],)
+        extras = (prover_pub,)                  # TODO: Maybe enhance extras?
 
         ddh, proof = extract_ddh_proof(proof_c1)
         check_proof_c1 = self._verify_chaum_pedersen(ddh, proof, *extras)
-        assert check_proof_c1   # TODO: Remove
+        assert check_proof_c1                   # TODO: Remove
 
         ddh, proof = extract_ddh_proof(proof_c2)
         check_proof_c2 = self._verify_chaum_pedersen(ddh, proof, *extras)
-        assert check_proof_c2   # TODO: Remove
+        assert check_proof_c2                   # TODO: Remove
 
         return check_proof_c1 and check_proof_c2
 
-    def verify_niddh(self, niddh, issuer_pub):
+    def verify_niddh(self, niddh, prover_pub):
         ddh, proof = extract_ddh_proof(niddh)
-        extras = (issuer_pub['ecc'],)                           # TODO
+        extras = (prover_pub,)                  # TODO: Maybe enchance extras?
         return self._verify_chaum_pedersen(ddh, proof, *extras)
 
