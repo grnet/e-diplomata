@@ -27,9 +27,9 @@ def fiat_shamir(*points):
     """
     Fiat-Shamir heuristic over elliptic curve points
     """
-    to_hash = ' '.join(map(lambda p: f'{p.xy}', points))
-    output = hash_into_scalar(to_hash.encode('utf-8'))
-    return output
+    payload = ' '.join(map(lambda p: f'{p.xy}', points)).encode('utf-8')
+    out = hash_into_scalar(payload)
+    return out
 
 
 class ElGamalCrypto(object):
@@ -86,35 +86,35 @@ class ElGamalCrypto(object):
             ddh
         ))
 
-    def serialize_proof(self, proof):
-        u_comm, v_comm, s, d = extract_proof(proof)
+    def serialize_chaum_pedersen(self, proof):
+        u_comm, v_comm, s, d = extract_chaum_pedersen(proof)
         u_comm = self.serialize_ecc_point(u_comm)
         v_comm = self.serialize_ecc_point(v_comm)
         s = self.serialize_scalar(s)
         d = self.serialize_ecc_point(d)
-        proof = set_proof(u_comm, v_comm, s, d)
+        proof = set_chaum_pedersen(u_comm, v_comm, s, d)
         return proof
     
-    def deserialize_proof(self, proof):
-        u_comm, v_comm, s, d = extract_proof(proof)
+    def deserialize_chaum_pedersen(self, proof):
+        u_comm, v_comm, s, d = extract_chaum_pedersen(proof)
         u_comm = self.deserialize_ecc_point(u_comm)
         v_comm = self.deserialize_ecc_point(v_comm)
         s = self.deserialize_scalar(s)
         d = self.deserialize_ecc_point(d)
-        proof = set_proof(u_comm, v_comm, s, d)
+        proof = set_chaum_pedersen(u_comm, v_comm, s, d)
         return proof
     
     def serialize_ddh_proof(self, ddh_proof):
         ddh, proof = extract_ddh_proof(ddh_proof)
         ddh = self.serialize_ddh(ddh)
-        proof = self.serialize_proof(proof)
+        proof = self.serialize_chaum_pedersen(proof)
         ddh_proof = set_ddh_proof(ddh, proof)
         return ddh_proof
     
     def deserialize_ddh_proof(self, ddh_proof):
         ddh, proof = extract_ddh_proof(ddh_proof)
         ddh = self.deserialize_ddh(ddh)
-        proof = self.deserialize_proof(proof)
+        proof = self.deserialize_chaum_pedersen(proof)
         ddh_proof = set_ddh_proof(ddh, proof)
         return ddh_proof
 
@@ -179,13 +179,13 @@ class ElGamalCrypto(object):
         s = (r + z * c) % p                                 # response
         d = z * u
     
-        proof = set_proof(u_comm, v_comm, s, d)
+        proof = set_chaum_pedersen(u_comm, v_comm, s, d)
         return proof
     
     def verify_chaum_pedersen(self, ddh, proof, *extras):
         g = self.generator
         u, v, w = ddh
-        u_comm, v_comm, s, d = extract_proof(proof)
+        u_comm, v_comm, s, d = extract_chaum_pedersen(proof)
         c = fiat_shamir(u, v, w, u_comm, v_comm, *extras)   # challenge
         return (s * u == u_comm + c * d) and \
                (s * g == v_comm + c * v)
@@ -237,11 +237,11 @@ class ElGamalSerializer(object):
     def _deserialize_ddh(self, ddh):
         return self.cryptosys.deserialize_ddh(ddh)
 
-    def _serialize_proof(self, proof):
-        return self.cryptosys.serialize_proof(proof)
+    def _serialize_chaum_pedersen(self, proof):
+        return self.cryptosys.serialize_chaum_pedersen(proof)
     
-    def _deserialize_proof(self, proof):
-        return self.cryptosys.deserialize_proof(proof)
+    def _deserialize_chaum_pedersen(self, proof):
+        return self.cryptosys.deserialize_chaum_pedersen(proof)
     
     def _serialize_ddh_proof(self, ddh_proof):
         return self.cryptosys.serialize_ddh_proof(ddh_proof)

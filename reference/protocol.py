@@ -1,5 +1,5 @@
 """
-Tranaction Layer
+Transaction Layer
 """
 
 import json
@@ -7,8 +7,16 @@ from nacl.public import PrivateKey as _NaclKey
 from nacl.public import PublicKey as _NaclPublicKey
 from nacl.public import Box as _NaclBox
 from elgamal import ElGamalCrypto, ElGamalSerializer, Signer, hash_into_scalar
+from primitives import Prover as _Prover
+from primitives import Verifier as _Verifier
 from util import *
-import primitives
+
+AWARD   = 'AWARD'
+REQUEST = 'REQUEST'
+PROOF   = 'PROOF'
+ACK     = 'ACK'
+NACK    = 'NACK'
+FAIL    = 'FAIL'
 
 
 class Party(ElGamalSerializer):
@@ -19,7 +27,7 @@ class Party(ElGamalSerializer):
     def __init__(self, curve='P-384'):
         self.cryptosys = ElGamalCrypto(curve)
         self.key = self._generate_keys(self.cryptosys)
-        self.signer = self._create_signer(self.key)
+        self._signer = self._create_signer(self.key)
 
 
     # Key management
@@ -67,9 +75,19 @@ class Party(ElGamalSerializer):
         return ecc_key, nacl_key
 
     @property
+    def elgamal_key(self):
+        ecc_key, _ = self.keys
+        return ecc_key
+
+    @property
     def public_keys(self):
         ecc_pub, nacl_pub = self._extract_public_keys(self.key)
         return ecc_pub, nacl_pub
+
+    @property
+    def elgamal_pub(self):
+        ecc_pub, _ = self.public_keys
+        return ecc_pub
 
 
     # Serialization/deserialization
@@ -163,11 +181,11 @@ class Party(ElGamalSerializer):
         return Signer(key['ecc'])
 
     def sign(self, payload):
-        return self.signer.sign(payload).hex()
+        return self._signer.sign(payload).hex()
 
     def verify_signature(self, sig):
         s = bytes.fromhex(sig)
-        return self.signer.verify_signature(sig)
+        return self._signer.verify_signature(sig)
 
 
 class Holder(Party):
@@ -177,7 +195,7 @@ class Holder(Party):
 
     def publish_request(self, s_awd, verifier_pub):
         pub = verifier_pub['ecc']
-        payload = self.create_tag('REQUEST', s_awd=s_awd, ver_pub=pub)
+        payload = self.create_tag(REQUEST, s_awd=s_awd, ver_pub=pub)
         s_req = self.sign(payload)
         return s_req
 
@@ -186,24 +204,23 @@ class Issuer(Party):
 
     def __init__(self, curve='P-386'):
         super().__init__(curve)
-        ecc_key, _ = self.keys
-        self.prover = primitives.Prover(curve, key=ecc_key)     # TODO
+        self._prover = _Prover(curve, key=self.elgamal_key)
 
     def commit_to_document(self, t):
-        ht = hash_into_scalar(t)                       # H(t)
-        ecc_pub, _ = self.public_keys                   # I
-        c, r = self.prover.commit(ht, pub=ecc_pub)      # r * g, H(t) * g + r * I
+        ht = hash_into_scalar(t)                        # H(t)
+        pub = self.elgamal_pub                          # I
+        c, r = self._prover.commit(ht, pub=pub)         # r * g, H(t) * g + r * I
         return c, r
 
     def reencrypt_commitment(self, c):
-        ecc_pub, _ = self.public_keys                   # I
-        c_r, r_r = self.prover.reencrypt(ecc_pub, c)    # (r1 + r2) * g, H(t) * g + (r1 + r2) * I
+        pub = self.elgamal_pub                          # I
+        c_r, r_r = self._prover.reencrypt(pub, c)       # (r1 + r2) * g, H(t) * g + (r1 + r2) * I
         return c_r, r_r
 
     def create_decryptor(self, r1, r2):
-        ecc_pub, _ = self.public_keys                   # I
-        decryptor = self.prover.generate_decryptor(
-            r1, r2, ecc_pub)
+        pub = self.elgamal_pub                          # I
+        decryptor = self._prover.generate_decryptor(
+            r1, r2, pub)
         return decryptor                                # (r1 + r2) * I
 
     def encrypt_decryptor(self, decryptor, verifier_pub):
@@ -217,11 +234,11 @@ class Issuer(Party):
 
     def create_nirenc(self, c, c_r):
         keypair = self._get_ecc_keypair()
-        return self.prover.generate_nirenc(c, c_r, keypair)
+        return self._prover.generate_nirenc(c, c_r, keypair)
 
     def create_niddh(self, r1, r2):
         keypair = self._get_ecc_keypair()
-        return self.prover.generate_niddh(r1, r2, keypair)
+        return self._prover.generate_niddh(r1, r2, keypair)
 
     def encrypt_niddh(self, niddh, verifier_pub):
         niddh = self.encode(niddh, 
@@ -232,48 +249,41 @@ class Issuer(Party):
     def publish_award(self, t):
         c, r = self.commit_to_document(t)               # r * g, H(t) * g + r * I
 
-        c1, c2 = extract_cipher(c)
-        payload = self.create_tag(
-            'AWARD',
-            c1=self._serialize_ecc_point(c1),
-            c2=self._serialize_ecc_point(c2),
-        )
+        # Serialize output and create AWARD tag
+        c = self._serialize_cipher(c)
+        r = self._serialize_scalar(r)
+        payload = self.create_tag(AWARD, c=c)
         s_awd = self.sign(payload)
 
-        c = self._serialize_cipher(c)                      # TODO
-        r = self._serialize_scalar(r)                      # TODO
         return s_awd, c, r
 
-
     def publish_proof(self, s_req, r, c, verifier_pub):
-        r = self._deserialize_scalar(r)                         # TODO
-        c = self._deserialize_cipher(c)                         # TODO
-        verifier_pub = self._deserialize_public(verifier_pub)   # TODO
 
-        # Re-encrypt commitment
+        # Deserialize input
+        r = self._deserialize_scalar(r)
+        c = self._deserialize_cipher(c)
+        verifier_pub = self._deserialize_public(verifier_pub)
+
         c_r, r_r = self.reencrypt_commitment(c)         # (r + r_r) * g, H(t) * g + (r + r_r) * I
 
-        # Create and encrypt reencryption-decryptor
+        # Create reencryption-decryptor
         decryptor = self.create_decryptor(r, r_r)       # (r + r_r) * I
-        enc_decryptor = self.encrypt_decryptor(
-            decryptor, verifier_pub)                    # E_V((r + r_r) * I)
 
-        # create NIRENC for c, c_r
+        # Create NIRENC for c, c_r
         nirenc = self.create_nirenc(c, c_r)             # NIRENC_I(c, c_r)
 
         # Create NIDDH for reencryption-decryptor
         niddh = self.create_niddh(r, r_r)               # NIDDH_I(r + r_r)
-        enc_niddh = self.encrypt_niddh(
-            niddh, verifier_pub)                        # E_V(NIDDH_I(r + r_r))
 
         # Create proof and PROOF tag
-        proof = {
-            'c_r': self._serialize_cipher(c_r),
-            'nirenc': self._serialize_nirenc(nirenc),
-            'decryptor': enc_decryptor,
-            'niddh': enc_niddh,
-        }
-        payload = self.create_tag('PROOF', **proof)
+        c_r = self._serialize_cipher(c_r)               # c_r
+        enc_decryptor = self.encrypt_decryptor(
+            decryptor, verifier_pub)                    # E_V((r + r_r) * I)
+        nirenc = self._serialize_nirenc(nirenc)         # NIRENC_I(c, c_r)
+        enc_niddh = self.encrypt_niddh(
+            niddh, verifier_pub)                        # E_V(NIDDH_I(r + r_r))
+        proof = set_proof(c_r, enc_decryptor, nirenc, enc_niddh)
+        payload = self.create_tag(PROOF, s_req=s_req, **proof)
         s_prf = self.sign(payload)
 
         return s_prf, proof
@@ -283,16 +293,23 @@ class Verifier(Party):
 
     def __init__(self, curve='P-386'):
         super().__init__(curve)
-        ecc_key, _ = self.keys
-        self.verifier = primitives.Verifier(curve, key=ecc_key)    # TODO
+        self._verifier = _Verifier(curve, key=self.elgamal_key)
 
-    def retrieve_decryptor(self, issuer_pub, enc_decryptor):
+    def _retrieve_decryptor(self, issuer_pub, enc_decryptor):
         decryptor = self.decrypt(enc_decryptor, issuer_pub)
         return self.decode(decryptor, self._deserialize_ecc_point)
 
-    def retrieve_niddh(self, issuer_pub, enc_niddh):
+    def _retrieve_niddh(self, issuer_pub, enc_niddh):
         niddh = self.decrypt(enc_niddh, issuer_pub)
         return self.decode(niddh, self._deserialize_niddh)
+
+    def _retrieve_from_proof(self, issuer_pub, proof):
+        c_r, enc_decryptor, nirenc, enc_niddh = extract_proof(proof)
+        c_r = self._deserialize_cipher(c_r)
+        decryptor = self._retrieve_decryptor(issuer_pub, enc_decryptor)
+        nirenc = self._deserialize_nirenc(nirenc)
+        niddh = self._retrieve_niddh(issuer_pub, enc_niddh)
+        return c_r, decryptor, nirenc, niddh
 
     def decrypt_commitment(self, c_r, decryptor):
         c = self.cryptosys.drenc(c_r, decryptor)    # TODO
@@ -300,31 +317,24 @@ class Verifier(Party):
 
     def verify_document_integrity(self, t, c):
         ht = hash_into_scalar(t)
-        return self.verifier.verify_message_integrity(ht, c)
+        return self._verifier.verify_message_integrity(ht, c)
 
     def verify_nirenc(self, nirenc, issuer_pub):
         pub = issuer_pub['ecc']
-        return self.verifier.verify_nirenc(nirenc, pub)
+        return self._verifier.verify_nirenc(nirenc, pub)
 
     def verify_niddh(self, niddh, issuer_pub):
         pub = issuer_pub['ecc']
-        return self.verifier.verify_niddh(niddh, pub)
+        return self._verifier.verify_niddh(niddh, pub)
 
     def publish_ack(self, s_prf, t, proof, issuer_pub):
+        issuer_pub = self._deserialize_public(issuer_pub)
 
-        # TODO
-        c_r = proof['c_r']
-        nirenc = proof['nirenc']
-        enc_decryptor = proof['decryptor']
-        enc_niddh = proof['niddh']
+        # Deserialize and decrypt (if needed) proof components
+        c_r, decryptor, nirenc, niddh = self._retrieve_from_proof(
+            issuer_pub, proof)
 
-        c_r = self._deserialize_cipher(c_r)                             # TODO
-        issuer_pub = self._deserialize_public(issuer_pub)               # TODO
-        decryptor = self.retrieve_decryptor(issuer_pub, enc_decryptor)  # TODO
-        nirenc = self._deserialize_nirenc(nirenc)                       # TODO
-        niddh = self.retrieve_niddh(issuer_pub, enc_niddh)
-    
-        # Decrypt the issuer's initial commitment to document
+        # Retrieve the issuer's initial commitment to document
         c = self.decrypt_commitment(c_r, decryptor)
     
         # Verifications
@@ -332,16 +342,14 @@ class Verifier(Party):
         check_nirenc    = self.verify_nirenc(nirenc, issuer_pub)
         check_niddh     = self.verify_niddh(niddh, issuer_pub)
 
-        # Create ACK tag
+        # Create result and ACK tag
         result = all((
             check_integrity, 
             check_nirenc, 
             check_niddh,
         ))
         assert result   # TODO: Remove
-        payload = self.create_tag(
-            'ACK' if result else 'NACK',
-            result=result
-        )
+        payload = self.create_tag(ACK if result else NACK,
+            s_prf=s_prf, result=result)
         s_ack = self.sign(payload)
         return s_ack, result
