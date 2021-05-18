@@ -111,6 +111,17 @@ class Party(object):
         return public
 
 
+    # Encoding for symmetric encryption
+
+    def encode(self, entity, serializer):
+        return json.dumps(serializer(
+            entity)).encode('utf-8')
+
+    def decode(self, entity, deserializer):
+        return deserializer(json.loads(
+            entity.decode('utf-8')))
+
+
     # Symmetrict encryption
 
     def encrypt(self, content, receiver_pub):
@@ -181,15 +192,17 @@ class Issuer(Party):
         return decryptor                                # (r1 + r2) * I
 
     def encrypt_decryptor(self, decryptor, verifier_pub):
-        return self.encrypt(
-            str(decryptor.xy).encode('utf-8'),  # TODO
+        decryptor = self.encode(decryptor, self._serialize_ecc_point)
+        enc_decryptor = self.encrypt(
+            decryptor,
             verifier_pub
         )                                               # E_V((r1 + r2) * I)
+        return enc_decryptor
 
     def _serialize_nirenc(self, nirenc):
         proof_c1, proof_c2 = extract_nirenc(nirenc)
-        proof_c1 = self._serialize_ddh_proof(proof_c1)       # TODO
-        proof_c2 = self._serialize_ddh_proof(proof_c2)       # TODO
+        proof_c1 = self._serialize_ddh_proof(proof_c1)
+        proof_c2 = self._serialize_ddh_proof(proof_c2)
         nirenc = set_nirenc(proof_c1, proof_c2)
         return nirenc
 
@@ -253,19 +266,8 @@ class Verifier(Party):
         self.verifier = primitives.Verifier(curve, key=ecc_key)    # TODO
 
     def retrieve_decryptor(self, sender_pub, enc_decryptor):
-        dec_decryptor = self.decrypt(enc_decryptor, sender_pub).decode('utf-8')
-
-        # TODO
-        extract_coords = re.match(r'^\D*(\d+)\D+(\d+)\D*$', dec_decryptor)
-        x_affine = int(extract_coords.group(1))
-        y_affine = int(extract_coords.group(2))
-        # TODO: Raise exception for caller?
-        if not extract_coords:
-            payload = f'FAIL {s_prf}'.encode('utf-8')
-            s_ack = verifier.sign(payload)
-            return s_ack
-        decryptor = self._deserialize_ecc_point((x_affine, y_affine)) # TODO
-        return decryptor
+        decryptor = self.decrypt(enc_decryptor, sender_pub)
+        return self.decode(decryptor, self._deserialize_ecc_point)
 
     def _deserialize_nirenc(self, nirenc):
         proof_c1, proof_c2 = extract_nirenc(nirenc)
@@ -275,11 +277,9 @@ class Verifier(Party):
         return nirenc
 
     def publish_ack(self, s_prf, m, c_r, nirenc, enc_decryptor, enc_niddh, issuer_pub):
-        c_r = self._deserialize_cipher(c_r)
-        issuer_pub = self.deserialize_public(issuer_pub)
-
-        # VERIFIER etrieves decryptor created for them by ISSUER
-        decryptor = self.retrieve_decryptor(issuer_pub, enc_decryptor)
+        c_r = self._deserialize_cipher(c_r)                             # TODO
+        issuer_pub = self.deserialize_public(issuer_pub)                # TODO
+        decryptor = self.retrieve_decryptor(issuer_pub, enc_decryptor)  # TODO
     
         # VERIFIER decrypts the re-encrypted commitment
         dec_m = self.verifier.decrypt_commitment(c_r, decryptor)    # TODO
