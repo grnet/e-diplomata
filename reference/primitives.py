@@ -86,15 +86,9 @@ class Verifier(ElGamalWrapper, KeyOwner):
         dec_m = self.drenc(c_r, decryptor)
         return dec_m
 
-    def check_message_integrity(self, message, dec_m):
-        """
-        Checks that dec_m coincides with the hash of message,
-        seen as ECC points
-        """
+    def verify_message_integrity(self, m, c):
         g = self.generator
-        h = hash_into_integer(message)
-        h_ecc_point = h * g
-        return dec_m == h_ecc_point
+        return c == m * g
 
     def verify_nirenc(self, nirenc, issuer_pub):
 
