@@ -31,15 +31,14 @@ class Prover(ElGamalWrapper, KeyOwner):
     def generate_decryptor(self, r1, r2, pub):
         return (r1 + r2) * pub
 
-    def generate_nirenc(self, c, c_r, verifier_pub):
+    def generate_nirenc(self, c, c_r, keypair=None):
         c1  , c2   = extract_cipher(c)
         c1_r, c2_r = extract_cipher(c_r)
 
-        priv = self.private                     # TODO
-        pub = self.public                       # TODO
-        extras = (pub,)
+        priv, pub = self.keypair if not keypair \
+            else keypair
+        extras = (pub,)                         # TODO: Maybe enhance extras
 
-        # TODO:
         proof_c1 = set_ddh_proof(
             (c1, pub, c1_r),
             self._generate_chaum_pedersen((c1, pub, c1_r), priv, *extras)
@@ -52,7 +51,7 @@ class Prover(ElGamalWrapper, KeyOwner):
         nirenc = set_nirenc(proof_c1, proof_c2)
         return nirenc
 
-    def generate_niddh(self, r1, r2, verifier_pub):
+    def generate_niddh(self, r1, r2):
         g = self.generator
 
         g_r   = r1 * g

@@ -54,6 +54,10 @@ class Party(object):
         public_shares = self._set_keys(ecc_pub, nacl_pub)
         return public_shares
 
+    def _get_ecc_key(self):
+        ecc_key, _ = self._extract_keys(self.key)
+        return ecc_key.d, ecc_key.pointQ
+
     @property
     def keys(self):
         ecc_key, nacl_key = self._extract_keys(self.key)
@@ -103,12 +107,26 @@ class Party(object):
     def _deserialize_nacl_public(self, pub):
         return PublicKey(bytes.fromhex(pub))
 
-    def deserialize_public(self, public):
+    def _deserialize_public(self, public):
         ecc_pub, nacl_pub = self._extract_keys(public)
         ecc_pub = self._deserialize_ecc_public(ecc_pub)
         nacl_pub = self._deserialize_nacl_public(nacl_pub)
         public = self._set_keys(ecc_pub, nacl_pub)
         return public
+
+    def _serialize_nirenc(self, nirenc):
+        proof_c1, proof_c2 = extract_nirenc(nirenc)
+        proof_c1 = self._serialize_ddh_proof(proof_c1)
+        proof_c2 = self._serialize_ddh_proof(proof_c2)
+        nirenc = set_nirenc(proof_c1, proof_c2)
+        return nirenc
+
+    def _deserialize_nirenc(self, nirenc):
+        proof_c1, proof_c2 = extract_nirenc(nirenc)
+        proof_c1 = self._deserialize_ddh_proof(proof_c1)
+        proof_c2 = self._deserialize_ddh_proof(proof_c2)
+        nirenc = set_nirenc(proof_c1, proof_c2)
+        return nirenc
 
 
     # Encoding for symmetric encryption
@@ -199,12 +217,9 @@ class Issuer(Party):
         )                                               # E_V((r1 + r2) * I)
         return enc_decryptor
 
-    def _serialize_nirenc(self, nirenc):
-        proof_c1, proof_c2 = extract_nirenc(nirenc)
-        proof_c1 = self._serialize_ddh_proof(proof_c1)
-        proof_c2 = self._serialize_ddh_proof(proof_c2)
-        nirenc = set_nirenc(proof_c1, proof_c2)
-        return nirenc
+    def create_nirenc(self, c, c_r):
+        keypair = self._get_ecc_key()
+        return self.prover.generate_nirenc(c, c_r, keypair)
 
     def publish_award(self, t):
         c, r = self.commit_to_document(t)               # r * g, H(t) * g + r * I
@@ -222,7 +237,7 @@ class Issuer(Party):
     def publish_proof(self, r, c, s_req, verifier_pub):
         r = self._deserialize_scalar(r)                         # TODO
         c = self._deserialize_cipher(c)                         # TODO
-        verifier_pub = self.deserialize_public(verifier_pub)    # TODO
+        verifier_pub = self._deserialize_public(verifier_pub)   # TODO
 
         # Re-encrypt commitment
         c_r, r_r = self.reencrypt_commitment(c)         # (r + r_r) * g, H(t) * g + (r + r_r) * I
@@ -232,14 +247,14 @@ class Issuer(Party):
         enc_decryptor = self.encrypt_decryptor(
             decryptor, verifier_pub)                    # E_V((r + r_r) * I)
 
-        # create NIRENC
-        # TODO serapate generation from serialization
-        nirenc = self.prover.generate_nirenc(c, c_r, verifier_pub)
-        nirenc = self._serialize_nirenc(nirenc)
+        # create NIRENC for c, c_r
+        nirenc = self.create_nirenc(c, c_r)
+        nirenc = self._serialize_nirenc(nirenc)         # NIRENC_I(c, c_r)
 
         # Create and encrypt NIDDH of the above decryptor addressed to VERIFIER
         # TODO: Separate generation from encryption
-        niddh = self.prover.generate_niddh(r, r_r, verifier_pub)
+        # niddh = self.prover.generate_niddh(r, r_r, verifier_pub)
+        niddh = self.prover.generate_niddh(r, r_r)
         enc_niddh = self.encrypt(
             json.dumps(niddh).encode('utf-8'),
             verifier_pub
@@ -269,16 +284,9 @@ class Verifier(Party):
         decryptor = self.decrypt(enc_decryptor, sender_pub)
         return self.decode(decryptor, self._deserialize_ecc_point)
 
-    def _deserialize_nirenc(self, nirenc):
-        proof_c1, proof_c2 = extract_nirenc(nirenc)
-        proof_c1 = self._deserialize_ddh_proof(proof_c1)   # TODO
-        proof_c2 = self._deserialize_ddh_proof(proof_c2)   # TODO
-        nirenc = set_nirenc(proof_c1, proof_c2)
-        return nirenc
-
     def publish_ack(self, s_prf, m, c_r, nirenc, enc_decryptor, enc_niddh, issuer_pub):
         c_r = self._deserialize_cipher(c_r)                             # TODO
-        issuer_pub = self.deserialize_public(issuer_pub)                # TODO
+        issuer_pub = self._deserialize_public(issuer_pub)               # TODO
         decryptor = self.retrieve_decryptor(issuer_pub, enc_decryptor)  # TODO
     
         # VERIFIER decrypts the re-encrypted commitment
