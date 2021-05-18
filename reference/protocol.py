@@ -140,6 +140,18 @@ class Party(ElGamalWrapper):
         return content
 
 
+    # Tag creation
+
+    @staticmethod
+    def create_tag(label, *args, **kwargs):
+        out = label
+        for arg in args:
+            out += f' {arg}'
+        for (key, value) in kwargs.items():
+            out += f' {key}={value}'
+        return out.encode('utf-8')
+
+
     # Signatures
 
     @staticmethod
@@ -161,7 +173,7 @@ class Holder(Party):
 
     def publish_request(self, s_awd, verifier_pub):
         pub = verifier_pub['ecc']
-        payload = (f'REQUEST s_awd={s_awd} ver_pub={pub}').encode('utf-8')
+        payload = self.create_tag('REQUEST', s_awd=s_awd, ver_pub=pub)
         s_req = self.sign(payload)
         return s_req
 
@@ -191,7 +203,8 @@ class Issuer(Party):
         return decryptor                                # (r1 + r2) * I
 
     def encrypt_decryptor(self, decryptor, verifier_pub):
-        decryptor = self.encode(decryptor, self._serialize_ecc_point)
+        decryptor = self.encode(decryptor, 
+            serializer=self._serialize_ecc_point)
         enc_decryptor = self.encrypt(
             decryptor,
             verifier_pub
@@ -207,7 +220,8 @@ class Issuer(Party):
         return self.prover.generate_niddh(r1, r2, keypair)
 
     def encrypt_niddh(self, niddh, verifier_pub):
-        niddh = self.encode(niddh, self._serialize_niddh)
+        niddh = self.encode(niddh, 
+            serializer=self._serialize_niddh)
         enc_niddh = self.encrypt(niddh, verifier_pub)
         return enc_niddh
 
@@ -215,8 +229,11 @@ class Issuer(Party):
         c, r = self.commit_to_document(t)               # r * g, H(t) * g + r * I
 
         c1, c2 = extract_cipher(c)
-        payload = f'AWARD c1={c1.xy} c2={c2.xy}'.encode('utf-8')    # TODO
-
+        payload = self.create_tag(
+            'AWARD',
+            c1=c1.xy,
+            c2=c2.xy,
+        )
         s_awd = self.sign(payload)
 
         c = self._serialize_cipher(c)                      # TODO
@@ -249,9 +266,14 @@ class Issuer(Party):
         # Create PROOF tag
         nirenc_str = json.dumps(nirenc)
         c_r_1, c_r_2 = extract_cipher(c_r)
-        payload = (f'PROOF s_req={s_req} c_r=({c_r_1.xy, c_r_2.xy}) '
-                   f'{nirenc_str} {enc_decryptor} '
-                   f'{enc_niddh}'.encode('utf-8'))
+        payload = self.create_tag(
+            'PROOF',
+            s_req=s_req,
+            c_r=(c_r_1.xy, c_r_2.xy),
+            nirenc=nirenc_str,
+            decryptor=enc_decryptor,
+            niddh=enc_niddh,
+        )
         s_prf = self.sign(payload)
 
         c_r = self._serialize_cipher(c_r)              # TODO
@@ -318,12 +340,11 @@ class Verifier(Party):
             check_nirenc, 
             check_niddh,
         )):
-            # Some check failed; reject proof
-            payload = f'FAIL {s_prf}'.encode('utf-8')
+            payload = self.create_tag('FAIL', s_prf)
             s_ack = self.sign(payload)
             return s_ack
         else:
             # All checks succeded, acknowledge proof
-            payload = f'ACK {s_prf}'.encode('utf-8')
+            payload = self.create_tag('ACK', s_prf)
             s_ack = self.sign(payload)
             return s_ack
