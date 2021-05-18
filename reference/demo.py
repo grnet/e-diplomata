@@ -1,5 +1,5 @@
-from util import *
-from protocol import *
+import json
+from protocol import Holder, Issuer, Verifier
 
 if __name__ == '__main__':
 
@@ -15,50 +15,44 @@ if __name__ == '__main__':
     issuer_pub = issuer.get_public_shares()
     verifier_pub = verifier.get_public_shares()
 
-    m = "This is a message to be encrypted".encode('utf-8')
+    # The document under verification
+    t = "This is a message to be encrypted".encode('utf-8')
 
-    print()
-    print('step 1')
+    print('\nstep 1')                           # step 1
 
-    s_awd, c, r = issuer.publish_award(m)   # TODO: Return JSON
-    # import pdb; pdb.set_trace()
-    out1 = {
-        's_awd': s_awd,
-        'c': c,
-        'r': r,
-    }
-    print(json.dumps(out1, indent=2))
-    # print('c: ', c, 's_awd: ', s_awd, 'r:', r)
+    # ISSUER commits to document t
+    s_awd, c, r = issuer.publish_award(t)
 
-    # ISSUER stores privately r used for encryption and sends s_awd to the HOLDER
+    # ISSUER stores r privately, publishes the commitment c and
+    # publishes s_awd (ledger) sending it also to HOLDER
+    print('s_awd:', s_awd)
+    print('c:', c)
+    print('r:', r)
 
-    print()
-    print('step 2')
+    print('\nstep 2')                           # step 2
 
-    s_req = holder.publish_request(s_awd, verifier_pub)     # TODO: Return JSON
-    # import pdb; pdb.set_trace()
+    # HOLDER makes a request for proof of t (on behalf of ISSUER)
+    # addressed to VERIFIER
+    s_req = holder.publish_request(s_awd, verifier_pub)
+
+    # HOLDER publishes s_req (ledger)
     print('s_req:', s_req)
 
-    # The request signature can be verified by the ISSUER in order to identify
-    # the HOLDER and ensure that this is the true holder of the qualification
-    # committed to at s_awd
+    print('\nstep 3')                           # step 3
 
-    print()
-    print('step 3')
+    # ISSUER generates the requested proof for VERIFIER, using commitment c
+    # to the original document and the privately stored randomness r used
+    # to generate it
+    s_prf, proof = issuer.publish_proof(s_req, r, c, verifier_pub)
 
-    s_prf, c_r, nirenc, enc_decryptor, enc_niddh = issuer.publish_proof(
-            r, c, s_req, verifier_pub)  # TODO: Accept/Return JSON
-    # import pdb; pdb.set_trace()
-
+    # ISSUER publishes s_prf (ledger) and sends proof to VERIFIER
     print('s_prf:', s_prf)
-    # import pdb; pdb.set_trace()
-    # print(proof)
+    print('proof:', json.dumps(proof, indent=2))
 
-    print()
-    print('step 4')
+    print('\nstep 4')                           # step 4
 
-    s_ack = verifier.publish_ack(s_prf, m, c_r, nirenc, enc_decryptor,
-            enc_niddh, issuer_pub)      # TODO: Accept JSON
-    # import pdb; pdb.set_trace()
+    # VERIFIER verifies proof against document and ISSUER's key
+    s_ack = verifier.publish_ack(s_prf, t, proof, issuer_pub)
 
+    # VERIFIER publishes s_ack (ledger) and the verification result
     print('s_ack:', s_ack)

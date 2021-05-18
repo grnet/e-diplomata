@@ -245,7 +245,7 @@ class Issuer(Party):
         return s_awd, c, r
 
 
-    def publish_proof(self, r, c, s_req, verifier_pub):
+    def publish_proof(self, s_req, r, c, verifier_pub):
         r = self._deserialize_scalar(r)                         # TODO
         c = self._deserialize_cipher(c)                         # TODO
         verifier_pub = self._deserialize_public(verifier_pub)   # TODO
@@ -259,30 +259,24 @@ class Issuer(Party):
             decryptor, verifier_pub)                    # E_V((r + r_r) * I)
 
         # create NIRENC for c, c_r
-        nirenc = self.create_nirenc(c, c_r)
-        nirenc = self._serialize_nirenc(nirenc)         # NIRENC_I(c, c_r)
+        nirenc = self.create_nirenc(c, c_r)             # NIRENC_I(c, c_r)
 
         # Create NIDDH for reencryption-decryptor
         niddh = self.create_niddh(r, r_r)               # NIDDH_I(r + r_r)
         enc_niddh = self.encrypt_niddh(
             niddh, verifier_pub)                        # E_V(NIDDH_I(r + r_r))
 
-        # Create PROOF tag
-        c_r_1, c_r_2 = extract_cipher(c_r)
-        payload = self.create_tag(
-            'PROOF',
-            s_req=s_req,
-            c_r_1=self._serialize_ecc_point(c_r_1),
-            c_r_2=self._serialize_ecc_point(c_r_2),
-            nirenc=nirenc,
-            decryptor=enc_decryptor,
-            niddh=enc_niddh,
-        )
+        # Create proof and PROOF tag
+        proof = {
+            'c_r': self._serialize_cipher(c_r),
+            'nirenc': self._serialize_nirenc(nirenc),
+            'decryptor': enc_decryptor,
+            'niddh': enc_niddh,
+        }
+        payload = self.create_tag('PROOF', **proof)
         s_prf = self.sign(payload)
 
-        c_r = self._serialize_cipher(c_r)              # TODO
-
-        return (s_prf, c_r, nirenc, enc_decryptor, enc_niddh)
+        return s_prf, proof
 
 
 class Verifier(Party):
@@ -316,31 +310,34 @@ class Verifier(Party):
         pub = issuer_pub['ecc']
         return self.verifier.verify_niddh(niddh, pub)
 
-    def publish_ack(self, s_prf, m, c_r, nirenc, enc_decryptor, enc_niddh, issuer_pub):
+    def publish_ack(self, s_prf, t, proof, issuer_pub):
+
+        # TODO
+        c_r = proof['c_r']
+        nirenc = proof['nirenc']
+        enc_decryptor = proof['decryptor']
+        enc_niddh = proof['niddh']
+
         c_r = self._deserialize_cipher(c_r)                             # TODO
         issuer_pub = self._deserialize_public(issuer_pub)               # TODO
         decryptor = self.retrieve_decryptor(issuer_pub, enc_decryptor)  # TODO
         nirenc = self._deserialize_nirenc(nirenc)                       # TODO
         niddh = self.retrieve_niddh(issuer_pub, enc_niddh)
     
-        # VERIFIER decrypts the re-encrypted commitment
+        # Decrypt the issuer's initial commitment to document
         c = self.decrypt_commitment(c_r, decryptor)
     
-        # VERIFIER checks content of document (TODO: elaborate)
-        check_m_integrity = self.verify_document_integrity(m, c)
-        assert check_m_integrity    # TODO: Remove
-    
-        # VERIFIER verifies NIRENC proof
-        check_nirenc = self.verify_nirenc(nirenc, issuer_pub)
+        # Verifications
+        check_integrity = self.verify_document_integrity(t, c)
+        check_nirenc    = self.verify_nirenc(nirenc, issuer_pub)
+        check_niddh     = self.verify_niddh(niddh, issuer_pub)
+        assert check_integrity      # TODO: Remove
         assert check_nirenc         # TODO: Remove
-    
-        # VERIFIER verifies NIDDH proof
-        check_niddh = self.verify_niddh(niddh, issuer_pub)
         assert check_niddh          # TODO: Remove
     
         # VERIFIER creates TAG
         if not all((
-            check_m_integrity, 
+            check_integrity, 
             check_nirenc, 
             check_niddh,
         )):
