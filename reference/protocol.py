@@ -3,14 +3,14 @@ import re
 from nacl.public import PrivateKey, PublicKey, Box
 from Cryptodome.Signature import DSS
 from Cryptodome.Hash import SHA384
-from elgamal import ElGamalCrypto, ElGamalWrapper
+from elgamal import ElGamalCrypto, ElGamalSerializer
 from structs import *
 from util import hash_into_integer
 from primitives import *
 import primitives
 
 
-class Party(ElGamalWrapper):
+class Party(ElGamalSerializer):
 
     def __init__(self, curve='P-384'):
         self.cryptosys = ElGamalCrypto(curve)

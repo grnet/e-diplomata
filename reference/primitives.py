@@ -3,16 +3,41 @@ import re
 from nacl.public import PrivateKey, Box
 from Cryptodome.Signature import DSS
 from Cryptodome.Hash import SHA384
-from elgamal import ElGamalCrypto, Signer, KeyOwner, ElGamalWrapper
+from elgamal import ElGamalCrypto, Signer
 from structs import *
 from util import hash_into_integer
 
 
-class Prover(ElGamalWrapper, KeyOwner):
+class KeyOwner(object):
+    """
+    ElGamal-key owner interface
+    """
+
+    def __init__(self, cryptosys, key=None):
+        self.key = key
+
+    @property
+    def private(self):
+        return self.key.d
+
+    @property
+    def public(self):
+        return self.key.pointQ
+
+    @property
+    def keypair(self):
+        return self.private, self.public
+
+
+class Prover(KeyOwner):
 
     def __init__(self, curve='P-384', key=None):
         self.cryptosys = ElGamalCrypto(curve)
         super().__init__(self.cryptosys, key=key)
+
+    @property
+    def generator(self):
+        return self.cryptosys.generator
 
     def commit(self, elem, pub=None):
         pub = self.public if not pub else pub       # y
@@ -26,6 +51,9 @@ class Prover(ElGamalWrapper, KeyOwner):
 
     def generate_decryptor(self, r1, r2, pub):
         return (r1 + r2) * pub
+
+    def _generate_chaum_pedersen(self, ddh, z, *extras):
+        return self.cryptosys.generate_chaum_pedersen(ddh, z, *extras)
 
     def generate_nirenc(self, c, c_r, keypair=None):
         c1  , c2   = extract_cipher(c)
@@ -65,11 +93,18 @@ class Prover(ElGamalWrapper, KeyOwner):
         return niddh
 
 
-class Verifier(ElGamalWrapper, KeyOwner):
+class Verifier(KeyOwner):
 
     def __init__(self, curve='P-384', key=None):
         self.cryptosys = ElGamalCrypto(curve)
         super().__init__(self.cryptosys, key=key)
+
+    @property
+    def generator(self):
+        return self.cryptosys.generator
+
+    def _verify_chaum_pedersen(self, ddh, proof, *extras):
+        return self.cryptosys.verify_chaum_pedersen(ddh, proof, *extras)
 
     def verify_message_integrity(self, m, c):
         g = self.generator
