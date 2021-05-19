@@ -26,7 +26,10 @@ def test_elgamal_encdec():
     import random
     ps = random.sample(range(1000), 100)
     for i in range(100):
-        cipher, r = party_1.cryptosys.encrypt(pub_2['ecc'], ps[i])
-        cipher_r, r_r = party_1.cryptosys.reencrypt(pub_2['ecc'], cipher)        
-        assert(party_2.cryptosys.decrypt(party_2._verifier.private, cipher, table) == ps[i])
-        assert(party_2.cryptosys.decrypt(party_2._verifier.private, cipher_r, table) == ps[i])
+        verifier_pub  = pub_2['ecc']
+        verifier_priv = party_2._verifier.private
+        cryptosys = party_1._cryptosys
+        cipher, r = cryptosys.encrypt(verifier_pub, ps[i])
+        cipher_r, r_r = cryptosys.reencrypt(verifier_pub, cipher)        
+        assert(cryptosys.decrypt(verifier_priv, cipher,   table) == ps[i])
+        assert(cryptosys.decrypt(verifier_priv, cipher_r, table) == ps[i])

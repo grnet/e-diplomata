@@ -56,7 +56,18 @@ def extract_nirenc(nirenc):
     return proof_c1, proof_c2
 
 
-# Transaction Layer (public API) Structures
+# Transaction Layer Structures
+
+def set_keys(ecc_key, nacl_key):
+    return {
+        'ecc': ecc_key,
+        'nacl': nacl_key,
+    }
+
+def extract_keys(key):
+    ecc_key  = key['ecc']
+    nacl_key = key['nacl']
+    return ecc_key, nacl_key
 
 def set_proof(c_r, decryptor, nirenc, niddh):
     return {

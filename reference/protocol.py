@@ -6,7 +6,9 @@ import json
 from nacl.public import PrivateKey as _NaclKey
 from nacl.public import PublicKey as _NaclPublicKey
 from nacl.public import Box as _NaclBox
-from elgamal import ElGamalCrypto, ElGamalSerializer, Signer, hash_into_scalar
+from Cryptodome.PublicKey import ECC as _ECC
+from elgamal import ElGamalCrypto, ElGamalSerializer, Signer, \
+    hash_into_scalar, _ecc_pub
 from primitives import Prover as _Prover
 from primitives import Verifier as _Verifier
 from util import *
@@ -19,70 +21,56 @@ NACK    = 'NACK'
 FAIL    = 'FAIL'
 
 
+def _nacl_pub(nacl_key):
+    return nacl_key.public_key
+
+def _extract_public_keys(key):
+    ecc_key, nacl_key = extract_keys(key)
+    ecc_pub  = _ecc_pub(ecc_key)
+    nacl_pub = _nacl_pub(nacl_key)
+    return ecc_pub, nacl_pub
+
+
 class Party(ElGamalSerializer):
     """
     Common infrastructure for Holder, Issuer and Verifier
     """
 
     def __init__(self, curve='P-384'):
-        self.cryptosys = ElGamalCrypto(curve)
-        self.key = self._generate_keys(self.cryptosys)
-        self._signer = self._create_signer(self.key)
-
-
-    # Key management
+        self._cryptosys = ElGamalCrypto(curve)
+        self._key = self.generate_keys(curve)
+        self._signer = self._create_signer(self._key)
 
     @staticmethod
-    def _set_keys(ecc_key, nacl_key):
-        return {
-            'ecc': ecc_key,
-            'nacl': nacl_key,
-        }
-
-    @staticmethod
-    def _extract_keys(key):
-        ecc_key  = key['ecc']
-        nacl_key = key['nacl']
-        return ecc_key, nacl_key
-
-    @staticmethod
-    def _extract_public_keys(key):
-        ecc_pub  = key['ecc'].pointQ
-        nacl_pub = key['nacl'].public_key
-        return ecc_pub, nacl_pub
-
-    def _generate_keys(self, cryptosys):
-        ecc_key = cryptosys.generate_key()
+    def generate_keys(curve):
+        ecc_key  = ElGamalCrypto(curve).generate_key()
         nacl_key = _NaclKey.generate()
-        keys = self._set_keys(ecc_key, nacl_key)
+        keys = set_keys(ecc_key, nacl_key)
         return keys
 
     def get_public_shares(self, serialized=True):
-        ecc_pub, nacl_pub = self._extract_public_keys(self.key)
+        ecc_pub, nacl_pub = _extract_public_keys(self._key)
         if serialized:
             ecc_pub = self._serialize_ecc_public(ecc_pub)
             nacl_pub = self._serialize_nacl_public(nacl_pub)
-        public_shares = self._set_keys(ecc_pub, nacl_pub)
+        public_shares = set_keys(ecc_pub, nacl_pub)
         return public_shares
-
-    def _get_ecc_keypair(self):
-        ecc_key, _ = self._extract_keys(self.key)
-        return ecc_key.d, ecc_key.pointQ
 
     @property
     def keys(self):
-        ecc_key, nacl_key = self._extract_keys(self.key)
+        ecc_key, nacl_key = extract_keys(self._key)
         return ecc_key, nacl_key
 
     @property
-    def elgamal_key(self):
-        ecc_key, _ = self.keys
-        return ecc_key
-
-    @property
     def public_keys(self):
-        ecc_pub, nacl_pub = self._extract_public_keys(self.key)
+        ecc_pub, nacl_pub = _extract_public_keys(self._key)
         return ecc_pub, nacl_pub
+
+    def _get_elgamal_key(self, extracted=False):
+        ecc_key, _ = self.keys
+        if extracted:
+            return ecc_key.d, ecc_key.pointQ
+        return ecc_key
 
     @property
     def elgamal_pub(self):
@@ -92,11 +80,11 @@ class Party(ElGamalSerializer):
 
     # Serialization/deserialization
 
-    def _serialize_ecc_public(self, pub):
-        return self._serialize_ecc_point(pub)
+    def _serialize_nacl_key(self, nacl_key):
+        return nacl_key._private_key.hex()
 
-    def _deserialize_ecc_public(self, pub):
-        return self._deserialize_ecc_point(pub)
+    def _deserialize_nacl_key(self, nacl_key):
+        return _NaclKey(private_key=bytes.fromhex(nacl_key))
 
     def _serialize_nacl_public(self, pub):
         return bytes(pub).hex()
@@ -104,11 +92,11 @@ class Party(ElGamalSerializer):
     def _deserialize_nacl_public(self, pub):
         return _NaclPublicKey(bytes.fromhex(pub))
 
-    def _deserialize_public(self, public):
-        ecc_pub, nacl_pub = self._extract_keys(public)
+    def _deserialize_public_shares(self, public):
+        ecc_pub, nacl_pub = extract_keys(public)
         ecc_pub = self._deserialize_ecc_public(ecc_pub)
         nacl_pub = self._deserialize_nacl_public(nacl_pub)
-        public = self._set_keys(ecc_pub, nacl_pub)
+        public = set_keys(ecc_pub, nacl_pub)
         return public
 
     def _serialize_nirenc(self, nirenc):
@@ -126,10 +114,10 @@ class Party(ElGamalSerializer):
         return nirenc
 
     def _serialize_niddh(self, niddh):
-        return self.cryptosys.serialize_ddh_proof(niddh)
+        return self._cryptosys.serialize_ddh_proof(niddh)
 
     def _deserialize_niddh(self, niddh):
-        return self.cryptosys.deserialize_ddh_proof(niddh)
+        return self._cryptosys.deserialize_ddh_proof(niddh)
 
 
     # Encoding for symmetric encryption
@@ -149,7 +137,7 @@ class Party(ElGamalSerializer):
         """
         Encrypt using common secret
         """
-        box = _NaclBox(self.key['nacl'], receiver_pub['nacl'])
+        box = _NaclBox(self._key['nacl'], receiver_pub['nacl'])
         cipher = box.encrypt(content).hex()
         return cipher
 
@@ -157,7 +145,7 @@ class Party(ElGamalSerializer):
         """
         Decrypt using common secret
         """
-        box = _NaclBox(self.key['nacl'], sender_pub['nacl'])
+        box = _NaclBox(self._key['nacl'], sender_pub['nacl'])
         content = box.decrypt(bytes.fromhex(cipher))
         return content
 
@@ -204,7 +192,7 @@ class Issuer(Party):
 
     def __init__(self, curve='P-386'):
         super().__init__(curve)
-        self._prover = _Prover(curve, key=self.elgamal_key)
+        self._prover = _Prover(curve, key=self._get_elgamal_key())
 
     def commit_to_document(self, t):
         ht = hash_into_scalar(t)                        # H(t)
@@ -233,11 +221,11 @@ class Issuer(Party):
         return enc_decryptor
 
     def create_nirenc(self, c, c_r):
-        keypair = self._get_ecc_keypair()
+        keypair = self._get_elgamal_key(extracted=True)
         return self._prover.generate_nirenc(c, c_r, keypair)
 
     def create_niddh(self, r1, r2):
-        keypair = self._get_ecc_keypair()
+        keypair = self._get_elgamal_key(extracted=True)
         return self._prover.generate_niddh(r1, r2, keypair)
 
     def encrypt_niddh(self, niddh, verifier_pub):
@@ -262,7 +250,7 @@ class Issuer(Party):
         # Deserialize input
         r = self._deserialize_scalar(r)
         c = self._deserialize_cipher(c)
-        verifier_pub = self._deserialize_public(verifier_pub)
+        verifier_pub = self._deserialize_public_shares(verifier_pub)
 
         c_r, r_r = self.reencrypt_commitment(c)         # (r + r_r) * g, H(t) * g + (r + r_r) * I
 
@@ -293,7 +281,7 @@ class Verifier(Party):
 
     def __init__(self, curve='P-386'):
         super().__init__(curve)
-        self._verifier = _Verifier(curve, key=self.elgamal_key)
+        self._verifier = _Verifier(curve, key=self._get_elgamal_key())
 
     def _retrieve_decryptor(self, issuer_pub, enc_decryptor):
         decryptor = self.decrypt(enc_decryptor, issuer_pub)
@@ -312,7 +300,7 @@ class Verifier(Party):
         return c_r, decryptor, nirenc, niddh
 
     def decrypt_commitment(self, c_r, decryptor):
-        c = self.cryptosys.drenc(c_r, decryptor)    # TODO
+        c = self._cryptosys.drenc(c_r, decryptor)   # TODO
         return c
 
     def verify_document_integrity(self, t, c):
@@ -328,7 +316,7 @@ class Verifier(Party):
         return self._verifier.verify_niddh(niddh, pub)
 
     def publish_ack(self, s_prf, t, proof, issuer_pub):
-        issuer_pub = self._deserialize_public(issuer_pub)
+        issuer_pub = self._deserialize_public_shares(issuer_pub)
 
         # Deserialize and decrypt (if needed) proof components
         c_r, decryptor, nirenc, niddh = self._retrieve_from_proof(

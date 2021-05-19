@@ -31,6 +31,12 @@ def fiat_shamir(*points):
     out = hash_into_scalar(payload)
     return out
 
+def _ecc_pub(ecc_key):
+    """
+    Public part of provided key
+    """
+    return ecc_key.pointQ
+
 
 class ElGamalCrypto(object):
     """
@@ -56,12 +62,36 @@ class ElGamalCrypto(object):
     
     def deserialize_ecc_point(self, pt):
         return EccPoint(*pt, curve=self.curve.desc)
-    
+ 
     def serialize_scalar(self, scalar):
         return int(scalar)
     
     def deserialize_scalar(self, scalar):
         return Integer(scalar)
+
+    def serialize_ecc_key(self, ecc_key):
+        pub  = self.serialize_ecc_point(ecc_key.pointQ)
+        priv = self.serialize_scalar(ecc_key.d)
+        return {
+            'x': pub[0],
+            'y': pub[1],
+            'd': priv,
+        }
+
+    def deserialize_ecc_key(self, ecc_key):
+        payload = {
+            'curve': self.curve.desc,
+            'point_x': ecc_key['x'],
+            'point_y': ecc_key['y'],
+            'd': ecc_key['d'],
+        }
+        return ECC.construct(**payload)
+
+    def serialize_ecc_public(self, pub):
+        return self.serialize_ecc_point(pub)
+
+    def deserialize_ecc_public(self, pub):
+        return self.deserialize_ecc_point(pub)
 
     def serialize_cipher(self, cipher):
         c1, c2 = extract_cipher(cipher)
@@ -214,37 +244,49 @@ class ElGamalSerializer(object):
     """
 
     def _serialize_ecc_point(self, pt):
-        return self.cryptosys.serialize_ecc_point(pt)
+        return self._cryptosys.serialize_ecc_point(pt)
     
     def _deserialize_ecc_point(self, pt):
-        return self.cryptosys.deserialize_ecc_point(pt)
+        return self._cryptosys.deserialize_ecc_point(pt)
     
     def _serialize_scalar(self, scalar):
-        return self.cryptosys.serialize_scalar(scalar)
+        return self._cryptosys.serialize_scalar(scalar)
     
     def _deserialize_scalar(self, scalar):
-        return self.cryptosys.deserialize_scalar(scalar)
+        return self._cryptosys.deserialize_scalar(scalar)
+
+    def _serialize_ecc_key(self, ecc_key):
+        return self._cryptosys.serialize_ecc_key(ecc_key)
+    
+    def _deserialize_ecc_key(self, ecc_key):
+        return self._cryptosys.deserialize_ecc_key(ecc_key)
+
+    def _serialize_ecc_public(self, pub):
+        return self._cryptosys.serialize_ecc_public(pub)
+
+    def _deserialize_ecc_public(self, pub):
+        return self._cryptosys.deserialize_ecc_public(pub)
 
     def _serialize_cipher(self, cipher):
-        return self.cryptosys.serialize_cipher(cipher)
+        return self._cryptosys.serialize_cipher(cipher)
     
     def _deserialize_cipher(self, cipher):
-        return self.cryptosys.deserialize_cipher(cipher)
+        return self._cryptosys.deserialize_cipher(cipher)
 
     def _serialize_ddh(self, ddh):
-        return self.cryptosys.serialize_ddh(ddh)
+        return self._cryptosys.serialize_ddh(ddh)
     
     def _deserialize_ddh(self, ddh):
-        return self.cryptosys.deserialize_ddh(ddh)
+        return self._cryptosys.deserialize_ddh(ddh)
 
     def _serialize_chaum_pedersen(self, proof):
-        return self.cryptosys.serialize_chaum_pedersen(proof)
+        return self._cryptosys.serialize_chaum_pedersen(proof)
     
     def _deserialize_chaum_pedersen(self, proof):
-        return self.cryptosys.deserialize_chaum_pedersen(proof)
+        return self._cryptosys.deserialize_chaum_pedersen(proof)
     
     def _serialize_ddh_proof(self, ddh_proof):
-        return self.cryptosys.serialize_ddh_proof(ddh_proof)
+        return self._cryptosys.serialize_ddh_proof(ddh_proof)
     
     def _deserialize_ddh_proof(self, ddh_proof):
-        return self.cryptosys.deserialize_ddh_proof(ddh_proof)
+        return self._cryptosys.deserialize_ddh_proof(ddh_proof)
