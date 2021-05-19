@@ -32,13 +32,45 @@ const useStyles = makeStyles(
 export default function Title() {
   const router = useRouter();
   const styles = useStyles();
+  const [status, setStatus] = useState();
   const [title, setTitle] = useState();
   const id = router.query.id;
   const { data, fetch: refetch, invalidate } = useResource("titles", id);
+  const { data: dataChanged, loaded, loading, fetch } = useResourceAction(
+    "award",
+    null,
+    "PUT",
+    status
+  );
 
   useEffect(() => {
     setTitle(data);
   }, [data]);
+
+  useEffect(() => {
+    if (status) {
+      fetch();
+    }
+  }, [status]);
+
+  useEffect(() => {
+    if (loaded) {
+      invalidate();
+      refetch();
+
+    }
+  }, [loaded]);
+
+  const updateStatus = function () {
+    setStatus({
+      id: router.query.id,
+      statusTitle: "pending"
+    })
+  };
+
+  const goToAwards = function () {
+    router.push("/awards/verifications");
+  }
 
   return (
     <HolderLayout>
@@ -105,6 +137,13 @@ export default function Title() {
             )}
           </Grid>
           <Grid container direction="row">
+            <Grid item xs={4}>
+              {title && (title.status === "fail") && (<Button onClick={updateStatus}>Retry</Button>)}
+              {title && (title.status === "pending") && (<Button>Wait..</Button>)}
+              {title && (title.status === "unawarded") && (<Button onClick={updateStatus}>Award</Button>)}
+              {title && title.status === "success" && (<Button onClick={goToAwards}>Προβολή</Button>)}
+            </Grid>
+            <Grid item xs={4}></Grid>
             <Grid item xs={4} style={{ textAlign: "right" }}><CallToActionButton href="/titles">Πίσω</CallToActionButton></Grid>
           </Grid>
         </Grid>
