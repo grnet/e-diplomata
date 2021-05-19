@@ -1,50 +1,7 @@
 {
-  "folders": [
-    {
-      "path": "apps/issuer",
-      "name": "issuer-app"
-    },
-    {
-      "path": "apps/holder",
-      "name": "holder-app"
-    },
-    {
-      "path": "libs/blockchain",
-      "name": "blockchain-lib"
-    },
-    {
-      "path": "servers/issuer-server"
-    }
-    ,
-    {
-      "path": "servers/holder-server"
-    }
-  ],
-  "settings": {
-    "eslint.nodePath": "common/temp/node_modules",
-    "eslint.workingDirectories": [
-      {
-        "directory": "apps/issuer",
-        "changeProcessCWD": true
-      },
-      {
-        "directory": "apps/holder",
-        "changeProcessCWD": true
-      },
-      {
-        "directory": "servers/issuer-server",
-        "changeProcessCWD": true
-      },
-      {
-        "directory": "servers/holder-holder",
-        "changeProcessCWD": true
-      },
-    ],
-    "eslint.format.enable": true,
-    "eslint.codeActionsOnSave.mode": "all",
-    "eslint.lintTask.enable": true,
-    "editor.codeActionsOnSave": {
-      "source.fixAll": true
-    }
-  }
+	"folders": [
+		{
+			"path": "."
+		}
+	]
 }

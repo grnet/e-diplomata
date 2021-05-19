@@ -410,6 +410,16 @@
       "shouldPublish": false
     },
     {
+      "packageName": "verifier",
+      "projectFolder": "apps/verifier",
+      "shouldPublish": false
+    },
+    {
+      "packageName": "verifier-server",
+      "projectFolder": "servers/verifier-server",
+      "shouldPublish": false
+    },
+    {
       "packageName": "@diplomas/blockchain",
       "projectFolder": "libs/blockchain",
       "shouldPublish": true

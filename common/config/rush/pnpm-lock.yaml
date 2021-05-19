@@ -11,8 +11,12 @@ dependencies:
   '@material-ui/icons': 4.11.2_0d762b53e6ef0e32f5c62d92bee63937
   '@material-ui/lab': 4.0.0-alpha.57_0d762b53e6ef0e32f5c62d92bee63937
   '@rush-temp/blockchain': file:projects/blockchain.tgz
+  '@rush-temp/holder': file:projects/holder.tgz
+  '@rush-temp/holder-server': file:projects/holder-server.tgz
   '@rush-temp/issuer': file:projects/issuer.tgz
   '@rush-temp/issuer-server': file:projects/issuer-server.tgz
+  '@rush-temp/verifier': file:projects/verifier.tgz
+  '@rush-temp/verifier-server': file:projects/verifier-server.tgz
   '@types/jest': 26.0.23
   '@types/react': 16.9.56
   abi-decoder: 2.4.0
@@ -15989,6 +15993,58 @@ packages:
       integrity: sha512-K129yfdw7Ls6YLT5Ur2jKvOWIjwGxHwh8zJ+Byia9vtxkOziSaMgNqzhHgLNpy8rmSC6STYBk7PREJQo3F24Vw==
       tarball: file:projects/blockchain.tgz
     version: 0.0.0
+  file:projects/holder-server.tgz:
+    dependencies:
+      '@digigov/cli': 0.5.3-beta-1
+      '@digigov/cli-app': 0.3.3-beta-1_30bc56e06dfa626a6f695d9e0e178d28
+      '@digigov/cli-build': 0.3.4-beta-1_8b6ddd1d5f6fdb39f0922eb335e3de4d
+      '@digigov/cli-lint': 0.3.1-beta-1_f4be503647339cd79639c579ad4e2d48
+      '@digigov/cli-test': 0.3.1-beta-1_603e222e08030e3a837a02252079232b
+      '@types/node': 14.14.9
+      '@types/react': 16.9.56
+      ethers: 5.1.0
+      ganache-cli: 6.12.2
+      nedb: 1.8.0
+      next: 10.0.9_b958e7dd147f90c3340abf309afb59c9
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
+      typescript: 4.2.3
+    dev: false
+    name: '@rush-temp/holder-server'
+    resolution:
+      integrity: sha512-zOUfCa6KwDPxZ25J1jayPwZSlJAIpgC4OuejDO1zRMA9Y8jAPEtmNmsxigG33fMSLiygBcZeRFUo88PzCpNEgA==
+      tarball: file:projects/holder-server.tgz
+    version: 0.0.0
+  file:projects/holder.tgz:
+    dependencies:
+      '@digigov/auth': 0.2.0_react-dom@16.14.0+react@16.14.0
+      '@digigov/cli': 0.5.3-beta-1
+      '@digigov/cli-app': 0.3.3-beta-1_30bc56e06dfa626a6f695d9e0e178d28
+      '@digigov/cli-build': 0.3.4-beta-1_8b6ddd1d5f6fdb39f0922eb335e3de4d
+      '@digigov/cli-lint': 0.3.1-dce9221f_f4be503647339cd79639c579ad4e2d48
+      '@digigov/cli-test': 0.3.1-beta-1_603e222e08030e3a837a02252079232b
+      '@digigov/form': 0.3.1_fff47dbf8df3fbe23f564199a063d4a3
+      '@digigov/nextjs': 0.2.4_258489a781498ac3a00e203646a99a5a
+      '@digigov/ui': 0.4.1_9927b3c065f6acb466335db19dbdd22b
+      '@material-ui/core': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
+      '@material-ui/icons': 4.11.2_0d762b53e6ef0e32f5c62d92bee63937
+      '@material-ui/lab': 4.0.0-alpha.57_0d762b53e6ef0e32f5c62d92bee63937
+      '@types/node': 14.14.9
+      '@types/react': 16.9.56
+      clsx: 1.1.1
+      i18next: 20.2.1
+      lodash: 4.17.21
+      next: 10.0.9_b958e7dd147f90c3340abf309afb59c9
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
+      react-i18next: 11.8.12_i18next@20.2.1+react@16.14.0
+      typescript: 4.2.3
+    dev: false
+    name: '@rush-temp/holder'
+    resolution:
+      integrity: sha512-uA0t7HVU3m5AAPhpJyuHwWCk25r1IxqzXKiZgy35O5yg8VwdbQn0bQZAsukdyABTMUr54ehSWzi+OP+waiTWQg==
+      tarball: file:projects/holder.tgz
+    version: 0.0.0
   file:projects/issuer-server.tgz:
     dependencies:
       '@digigov/cli': 0.5.3-beta-1
@@ -16042,6 +16098,58 @@ packages:
       integrity: sha512-jynbLgILyhyJVMXpmdihq+Y7uXLmMDcg4F1yGxbT2YnlnbCevFN6gZXx2/P1Mzq86h1n5hrYc+CeeD4eH9jQ+w==
       tarball: file:projects/issuer.tgz
     version: 0.0.0
+  file:projects/verifier-server.tgz:
+    dependencies:
+      '@digigov/cli': 0.5.3-beta-1
+      '@digigov/cli-app': 0.3.3-beta-1_30bc56e06dfa626a6f695d9e0e178d28
+      '@digigov/cli-build': 0.3.4-beta-1_8b6ddd1d5f6fdb39f0922eb335e3de4d
+      '@digigov/cli-lint': 0.3.1-beta-1_f4be503647339cd79639c579ad4e2d48
+      '@digigov/cli-test': 0.3.1-beta-1_603e222e08030e3a837a02252079232b
+      '@types/node': 14.14.9
+      '@types/react': 16.9.56
+      ethers: 5.1.0
+      ganache-cli: 6.12.2
+      nedb: 1.8.0
+      next: 10.0.9_b958e7dd147f90c3340abf309afb59c9
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
+      typescript: 4.2.3
+    dev: false
+    name: '@rush-temp/verifier-server'
+    resolution:
+      integrity: sha512-seB+gDVpHbSPkLHlgUQEWqhi76tAWi7lPJlGnvqizLcVXmj8mOE15HHen94p/u+mgreI48NtIMym5VV575B5tg==
+      tarball: file:projects/verifier-server.tgz
+    version: 0.0.0
+  file:projects/verifier.tgz:
+    dependencies:
+      '@digigov/auth': 0.2.0_react-dom@16.14.0+react@16.14.0
+      '@digigov/cli': 0.5.3-beta-1
+      '@digigov/cli-app': 0.3.3-beta-1_30bc56e06dfa626a6f695d9e0e178d28
+      '@digigov/cli-build': 0.3.4-beta-1_8b6ddd1d5f6fdb39f0922eb335e3de4d
+      '@digigov/cli-lint': 0.3.1-dce9221f_f4be503647339cd79639c579ad4e2d48
+      '@digigov/cli-test': 0.3.1-beta-1_603e222e08030e3a837a02252079232b
+      '@digigov/form': 0.3.1_fff47dbf8df3fbe23f564199a063d4a3
+      '@digigov/nextjs': 0.2.4_258489a781498ac3a00e203646a99a5a
+      '@digigov/ui': 0.4.1_9927b3c065f6acb466335db19dbdd22b
+      '@material-ui/core': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
+      '@material-ui/icons': 4.11.2_0d762b53e6ef0e32f5c62d92bee63937
+      '@material-ui/lab': 4.0.0-alpha.57_0d762b53e6ef0e32f5c62d92bee63937
+      '@types/node': 14.14.9
+      '@types/react': 16.9.56
+      clsx: 1.1.1
+      i18next: 20.2.1
+      lodash: 4.17.21
+      next: 10.0.9_b958e7dd147f90c3340abf309afb59c9
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
+      react-i18next: 11.8.12_i18next@20.2.1+react@16.14.0
+      typescript: 4.2.3
+    dev: false
+    name: '@rush-temp/verifier'
+    resolution:
+      integrity: sha512-H8MhPpPUyFR2P2X1fBQ+06q4EiT0UV9Ya3hyM/0GTXhC3gS/gLmyulwwLt1tj+wGrHzZCiGyoMuCG6Vxevf36A==
+      tarball: file:projects/verifier.tgz
+    version: 0.0.0
 registry: ''
 specifiers:
   '@digigov/auth': 0.2.0
@@ -16056,8 +16164,12 @@ specifiers:
   '@material-ui/icons': 4.11.2
   '@material-ui/lab': ~4.0.0-alpha.57
   '@rush-temp/blockchain': file:./projects/blockchain.tgz
+  '@rush-temp/holder': file:./projects/holder.tgz
+  '@rush-temp/holder-server': file:./projects/holder-server.tgz
   '@rush-temp/issuer': file:./projects/issuer.tgz
   '@rush-temp/issuer-server': file:./projects/issuer-server.tgz
+  '@rush-temp/verifier': file:./projects/verifier.tgz
+  '@rush-temp/verifier-server': file:./projects/verifier-server.tgz
   '@types/jest': ~26.0.22
   '@types/react': 16.9.56
   abi-decoder: ~2.4.0
