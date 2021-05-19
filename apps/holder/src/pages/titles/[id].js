@@ -37,7 +37,7 @@ export default function Title() {
   const id = router.query.id;
   const { data, fetch: refetch, invalidate } = useResource("titles", id);
   const { data: dataChanged, loaded, loading, fetch } = useResourceAction(
-    "award",
+    "share",
     null,
     "PUT",
     status
@@ -69,7 +69,7 @@ export default function Title() {
   };
 
   const goToAwards = function () {
-    router.push("/awards/verifications");
+    router.push("/shares/verifications");
   }
 
   return (
@@ -140,7 +140,7 @@ export default function Title() {
             <Grid item xs={4}>
               {title && (title.status === "fail") && (<Button onClick={updateStatus}>Retry</Button>)}
               {title && (title.status === "pending") && (<Button>Wait..</Button>)}
-              {title && (title.status === "unawarded") && (<Button onClick={updateStatus}>Award</Button>)}
+              {title && (title.status === "unawarded") && (<Button onClick={updateStatus}>Share</Button>)}
               {title && title.status === "success" && (<Button onClick={goToAwards}>Προβολή</Button>)}
             </Grid>
             <Grid item xs={4}></Grid>
