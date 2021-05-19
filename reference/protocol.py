@@ -7,7 +7,7 @@ from nacl.public import PrivateKey as _NaclKey
 from nacl.public import PublicKey as _NaclPublicKey
 from nacl.public import Box as _NaclBox
 from Cryptodome.PublicKey import ECC as _ECC
-from elgamal import ElGamalCrypto, ElGamalSerializer, Signer, \
+from elgamal import ElGamalCrypto, ElGamalKeySerializer, ElGamalSerializer, Signer, \
     hash_into_scalar, _ecc_pub
 from primitives import Prover as _Prover
 from primitives import Verifier as _Verifier
@@ -31,22 +31,51 @@ def _extract_public_keys(key):
     return ecc_pub, nacl_pub
 
 
-class Party(ElGamalSerializer):
+class KeySerializer(ElGamalKeySerializer):
+
+    def _serialize_nacl_key(self, nacl_key):
+        return nacl_key._private_key.hex()
+
+    def _deserialize_nacl_key(self, nacl_key):
+        return _NaclKey(private_key=bytes.fromhex(nacl_key))
+
+    def _serialize_nacl_public(self, pub):
+        return bytes(pub).hex()
+
+    def _deserialize_nacl_public(self, pub):
+        return _NaclPublicKey(bytes.fromhex(pub))
+
+
+class KeyGenerator(KeySerializer):
+
+    def __init__(self, curve='P-384'):
+        self._cryptosys = ElGamalCrypto(curve)
+
+    def _generate_ecc_key(self):
+        return self._cryptosys.generate_key()
+
+    def _generate_nacl_key(self):
+        return _NaclKey.generate()
+
+    def generate_keys(self, serialized=True):
+        ecc_key  = self._generate_ecc_key()
+        nacl_key = self._generate_nacl_key()
+        if serialized:
+            ecc_key  = self._serialize_ecc_key(ecc_key)
+            nacl_key = self._serialize_nacl_key(nacl_key)
+        keys = set_keys(ecc_key, nacl_key)
+        return keys
+
+
+class Party(KeySerializer, ElGamalSerializer):
     """
     Common infrastructure for Holder, Issuer and Verifier
     """
 
     def __init__(self, curve='P-384'):
         self._cryptosys = ElGamalCrypto(curve)
-        self._key = self.generate_keys(curve)
+        self._key = KeyGenerator(curve).generate_keys(serialized=False)
         self._signer = self._create_signer(self._key)
-
-    @staticmethod
-    def generate_keys(curve):
-        ecc_key  = ElGamalCrypto(curve).generate_key()
-        nacl_key = _NaclKey.generate()
-        keys = set_keys(ecc_key, nacl_key)
-        return keys
 
     def get_public_shares(self, serialized=True):
         ecc_pub, nacl_pub = _extract_public_keys(self._key)
@@ -79,18 +108,6 @@ class Party(ElGamalSerializer):
 
 
     # Serialization/deserialization
-
-    def _serialize_nacl_key(self, nacl_key):
-        return nacl_key._private_key.hex()
-
-    def _deserialize_nacl_key(self, nacl_key):
-        return _NaclKey(private_key=bytes.fromhex(nacl_key))
-
-    def _serialize_nacl_public(self, pub):
-        return bytes(pub).hex()
-
-    def _deserialize_nacl_public(self, pub):
-        return _NaclPublicKey(bytes.fromhex(pub))
 
     def _deserialize_public_shares(self, public):
         ecc_pub, nacl_pub = extract_keys(public)

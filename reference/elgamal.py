@@ -157,8 +157,8 @@ class ElGamalCrypto(object):
             max_exclusive=self.order
         )
 
-    def generate_key(self):
-        return ECC.generate(curve=self.curve.desc)
+    def generate_key(self, curve='P-384'):
+        return ECC.generate(curve=curve)
     
 
     # Encryption/Decryption
@@ -238,9 +238,9 @@ class Signer(object):
         raise NotImplementedError
 
 
-class ElGamalSerializer(object):
+class EccPointSerializer(object):
     """
-    Serializer infrastructure for wrapping ElGamal cryptosystems
+    Serializer infrastructure for elliptic points and scalars
     """
 
     def _serialize_ecc_point(self, pt):
@@ -255,6 +255,12 @@ class ElGamalSerializer(object):
     def _deserialize_scalar(self, scalar):
         return self._cryptosys.deserialize_scalar(scalar)
 
+
+class ElGamalKeySerializer(EccPointSerializer):
+    """
+    Serializer infrastructure for El-Gamal keys
+    """
+
     def _serialize_ecc_key(self, ecc_key):
         return self._cryptosys.serialize_ecc_key(ecc_key)
     
@@ -266,6 +272,12 @@ class ElGamalSerializer(object):
 
     def _deserialize_ecc_public(self, pub):
         return self._cryptosys.deserialize_ecc_public(pub)
+
+
+class ElGamalSerializer(EccPointSerializer):
+    """
+    Serializer infrastructure for ElGamal structures
+    """
 
     def _serialize_cipher(self, cipher):
         return self._cryptosys.serialize_cipher(cipher)

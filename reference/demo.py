@@ -1,9 +1,14 @@
 import json
-from protocol import Holder, Issuer, Verifier
+from protocol import KeyGenerator, Holder, Issuer, Verifier
 
 if __name__ == '__main__':
 
     CURVE = 'P-384'             # Cryptosystem config
+
+    kg = KeyGenerator(CURVE)
+    holder_key   = kg.generate_keys(CURVE)
+    issuer_key   = kg.generate_keys(CURVE)
+    verifier_key = kg.generate_keys(CURVE)
 
     # Setup involved parties
     holder = Holder(CURVE)
