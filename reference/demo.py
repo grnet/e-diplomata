@@ -38,6 +38,12 @@ if __name__ == '__main__':
 
     # HOLDER makes a request for proof of t (on behalf of ISSUER)
     # addressed to VERIFIER
+
+    # TODO
+    from protocol import AWARD
+    payload = holder.create_tag(AWARD, c=c)
+    assert holder.verify_signature(s_awd, issuer_pub, payload)
+
     s_req = holder.publish_request(s_awd, verifier_pub)
 
     # HOLDER publishes s_req (ledger)
@@ -48,6 +54,12 @@ if __name__ == '__main__':
     # ISSUER generates the requested proof for VERIFIER, using commitment c
     # to the original document and the privately stored randomness r used
     # to generate it
+
+    # TODO
+    from protocol import REQUEST
+    payload = issuer.create_tag(REQUEST, s_awd=s_awd, verifier=verifier_pub)
+    assert issuer.verify_signature(s_req, holder_pub, payload)
+
     s_prf, proof = issuer.publish_proof(s_req, r, c, verifier_pub)
 
     # ISSUER publishes s_prf (ledger) and sends proof to VERIFIER
@@ -57,6 +69,12 @@ if __name__ == '__main__':
     print('\nstep 4')                           # step 4
 
     # VERIFIER verifies proof against document and ISSUER's key
+
+    # TODO
+    from protocol import PROOF
+    payload = verifier.create_tag(PROOF, s_req=s_req, **proof)
+    assert verifier.verify_signature(s_prf, issuer_pub, payload)
+
     s_ack, result = verifier.publish_ack(s_prf, t, proof, issuer_pub)
 
     # VERIFIER publishes s_ack (ledger) and the verification result

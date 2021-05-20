@@ -7,7 +7,7 @@ from nacl.public import PrivateKey as _NaclKey
 from nacl.public import PublicKey as _NaclPublicKey
 from nacl.public import Box as _NaclBox
 from Cryptodome.PublicKey import ECC as _ECC
-from elgamal import ElGamalCrypto, ElGamalKeySerializer, ElGamalSerializer, Signer, \
+from elgamal import ElGamalCrypto, ElGamalKeySerializer, ElGamalSerializer, \
     hash_into_scalar, _ecc_pub
 from primitives import Prover as _Prover
 from primitives import Verifier as _Verifier
@@ -91,7 +91,7 @@ class Party(KeySerializer, ElGamalSerializer):
             self._key = KeyGenerator(curve).generate_keys(serialized=False)
         else:
             self._key = self._deserialize_key(key)
-        self._signer = self._create_signer(self._key)
+        # self._signer = self._create_signer(self._key)
 
     @classmethod
     def create_from_key(cls, key, curve='P-384'):
@@ -201,16 +201,26 @@ class Party(KeySerializer, ElGamalSerializer):
 
     # Signatures
 
-    @staticmethod
-    def _create_signer(key):
-        return Signer(key['ecc'])
+    def _serialize_signature(self, signature):
+        return signature.hex()
 
-    def sign(self, payload):
-        return self._signer.sign(payload).hex()
+    def _deserialize_signature(self, signature):
+        return bytes.fromhex(signature)
 
-    def verify_signature(self, sig):
-        s = bytes.fromhex(sig)
-        return self._signer.verify_signature(sig)
+    def sign(self, message, serialized=True):
+        signature = self._cryptosys.sign(self._key['ecc'], message)
+        if serialized is True:
+            signature = self._serialize_signature(signature)
+        return signature
+
+    def verify_signature(self, sig, pub, message, from_serialized=True):
+        if from_serialized is True:
+            sig = self._deserialize_signature(sig)
+        return self._cryptosys.verify_signature(
+            sig, 
+            pub=pub['ecc'], 
+            message=message
+        )
 
 
 class Holder(Party):
@@ -219,8 +229,8 @@ class Holder(Party):
         super().__init__(curve, key)
 
     def publish_request(self, s_awd, verifier_pub):
-        pub = verifier_pub['ecc']
-        payload = self.create_tag(REQUEST, s_awd=s_awd, ver_pub=pub)
+        pub = verifier_pub
+        payload = self.create_tag(REQUEST, s_awd=s_awd, verifier=pub)
         s_req = self.sign(payload)
         return s_req
 
@@ -278,6 +288,7 @@ class Issuer(Party):
         c = self._serialize_cipher(c)
         r = self._serialize_scalar(r)
         payload = self.create_tag(AWARD, c=c)
+        # import pdb; pdb.set_trace()
         s_awd = self.sign(payload)
 
         return s_awd, c, r

@@ -79,18 +79,23 @@ class ElGamalCrypto(object):
         }
 
     def deserialize_ecc_key(self, ecc_key):
-        payload = {
-            'curve': self.curve.desc,
-            'point_x': ecc_key['x'],
-            'point_y': ecc_key['y'],
-            'd': ecc_key['d'],
-        }
-        return ECC.construct(**payload)
+        return ECC.construct(
+            curve=self.curve.desc,
+            point_x=ecc_key['x'],
+            point_y=ecc_key['y'],
+            d=ecc_key['d'],
+        )
 
     def serialize_ecc_public(self, pub):
         return self.serialize_ecc_point(pub)
 
-    def deserialize_ecc_public(self, pub):
+    def deserialize_ecc_public(self, pub, for_signature=False):
+        if for_signature is True:
+            return ECC.construct(
+                curve=self.curve.desc, 
+                point_x=pub[0], 
+                point_y=pub[1],
+            )
         return self.deserialize_ecc_point(pub)
 
     def serialize_cipher(self, cipher):
@@ -221,21 +226,24 @@ class ElGamalCrypto(object):
                (s * g == v_comm + c * v)
 
 
-class Signer(object):
-    """
-    DSA (Digital Signature Algorithm) infrastructure
-    """
+    # Digital Signature Algorithm (DSA)
 
-    def __init__(self, key):
-        self._signer = DSS.new(key, 'fips-186-3')
-    
-    def sign(self, payload):
-        hc = SHA384.new(payload)
-        signature = self._signer.sign(hc)
+    def sign(self, key, message):
+        signer = DSS.new(key, 'fips-186-3')
+        hmsg = SHA384.new(message)
+        signature = signer.sign(hmsg)
         return signature
 
-    def verify_signature(self, s):
-        raise NotImplementedError
+    def verify_signature(self, sig, pub, message):
+        pub = self.deserialize_ecc_public(pub, 
+            for_signature=True)
+        verifier = DSS.new(pub, 'fips-186-3')
+        hmsg = SHA384.new(message)
+        try:
+            verifier.verify(hmsg, sig)
+        except ValueError:
+            return False
+        return True
 
 
 class EccPointSerializer(object):

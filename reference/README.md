@@ -32,7 +32,7 @@ python3 demo.py
         'y': <int>
         'd': <int>
     },
-    'nacl': <str> (hexadecimal)
+    'nacl': <str(hex)>
 }
 ```
 
@@ -51,9 +51,135 @@ python3 demo.py
 ```
 {
     'ecc': [<int>, <int>],
-    'nacl': <str> (hexadecimal)
+    'nacl': <str(hex)>
 }
 ```
+
+### JSON I/O
+
+#### `Issuer.publish_award()`
+
+<br>*input*
+```
+t: <bytes>
+```
+
+<br>*output*
+```
+s_awd <str(hex)>
+
+c {
+    c1: [<int>, <int>],
+    c2: [<int>, <int>]
+}
+
+r <int>
+```
+
+#### `Holder.publish_request()`
+
+<br>*input*
+```
+s_awd <str>
+
+verifier_pub {
+    ecc: [<int>, <int>],
+    nacl: <str(hex)>
+}
+```
+
+<br>*output*
+```
+s_req <str(hex)>
+```
+
+#### `Issuer.publish_proof()`
+
+<br>*input*
+```
+s_req <str(hex)>
+
+r <int>
+
+c {
+    c1: [<int>, <int>],
+    c2: [<int>, <int>]
+}
+
+verifier_pub {
+    ecc: [<int>, <int>],
+    nacl: <str(hex)>
+}
+```
+
+<br>*output*
+```
+s_prf <str(hex)>
+
+proof {
+    c_r: {
+        c1: [<int>, <int>],
+        c2: [<int>, <int>]
+    },
+    decryptor: <str(hex)>,
+    nirenc: {
+        proof_c1: {
+            ddh: [
+                [<int>, <int>],
+                [<int>, <int>],
+                [<int>, <int>]
+            ],
+            proof: {
+                  u_comm: [<int>, <int>],
+                  v_comm: [<int>, <int>],
+                  s: <int>,
+                  d: [<int>, <int>],
+            }
+        },
+        proof_c2: {
+            ddh: [
+                [<int>, <int>],
+                [<int>, <int>],
+                [<int>, <int>]
+            ],
+            proof: {
+                  u_comm: [<int>, <int>],
+                  v_comm: [<int>, <int>],
+                  s: <int>,
+                  d: [<int>, <int>],
+            }
+        },
+    },
+    niddh: <str(hex)>
+}
+```
+
+#### `Verifier.publish_ack()`
+
+<br>*input*
+
+```
+s_prf <str(hex)>
+
+t <bytes>
+
+proof {
+  ...
+}
+
+issuer_pub {
+    ecc: [<int>, <int>],
+    nacl: <str(hex)>
+}
+```
+
+<br>*output*
+```
+s_ack <str(hex)>
+
+result <bool>
+```
+
 
 ## Dev
 
