@@ -91,7 +91,6 @@ class Party(KeySerializer, ElGamalSerializer):
             self._key = KeyGenerator(curve).generate_keys(serialized=False)
         else:
             self._key = self._deserialize_key(key)
-        # self._signer = self._create_signer(self._key)
 
     @classmethod
     def create_from_key(cls, key, curve='P-384'):
@@ -288,7 +287,6 @@ class Issuer(Party):
         c = self._serialize_cipher(c)
         r = self._serialize_scalar(r)
         payload = self.create_tag(AWARD, c=c)
-        # import pdb; pdb.set_trace()
         s_awd = self.sign(payload)
 
         return s_awd, c, r
