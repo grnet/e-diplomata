@@ -45,6 +45,20 @@ class KeySerializer(ElGamalKeySerializer):
     def _deserialize_nacl_public(self, pub):
         return _NaclPublicKey(bytes.fromhex(pub))
 
+    def _serialize_key(self, key):
+        ecc_key, nacl_key = extract_keys(key)
+        ecc_key  = self._serialize_ecc_key(ecc_key)
+        nacl_key = self._serialize_nacl_key(nacl_key)
+        key = set_keys(ecc_key, nacl_key)
+        return key
+
+    def _deserialize_key(self, key):
+        ecc_key, nacl_key = extract_keys(key)
+        ecc_key  = self._deserialize_ecc_key(ecc_key)
+        nacl_key = self._deserialize_nacl_key(nacl_key)
+        key = set_keys(ecc_key, nacl_key)
+        return key
+
 
 class KeyGenerator(KeySerializer):
 
@@ -60,10 +74,9 @@ class KeyGenerator(KeySerializer):
     def generate_keys(self, serialized=True):
         ecc_key  = self._generate_ecc_key()
         nacl_key = self._generate_nacl_key()
-        if serialized:
-            ecc_key  = self._serialize_ecc_key(ecc_key)
-            nacl_key = self._serialize_nacl_key(nacl_key)
         keys = set_keys(ecc_key, nacl_key)
+        if serialized is True:
+            keys = self._serialize_key(keys)
         return keys
 
 
@@ -72,15 +85,22 @@ class Party(KeySerializer, ElGamalSerializer):
     Common infrastructure for Holder, Issuer and Verifier
     """
 
-    def __init__(self, curve='P-384'):
+    def __init__(self, curve='P-384', key=None):
         self._cryptosys = ElGamalCrypto(curve)
-        self._key = KeyGenerator(curve).generate_keys(serialized=False)
+        if key is None:
+            self._key = KeyGenerator(curve).generate_keys(serialized=False)
+        else:
+            self._key = self._deserialize_key(key)
         self._signer = self._create_signer(self._key)
+
+    @classmethod
+    def create_from_key(cls, key, curve='P-384'):
+        return cls(curve=curve, key=key)
 
     def get_public_shares(self, serialized=True):
         ecc_pub, nacl_pub = _extract_public_keys(self._key)
         if serialized:
-            ecc_pub = self._serialize_ecc_public(ecc_pub)
+            ecc_pub  = self._serialize_ecc_public(ecc_pub)
             nacl_pub = self._serialize_nacl_public(nacl_pub)
         public_shares = set_keys(ecc_pub, nacl_pub)
         return public_shares
@@ -97,7 +117,7 @@ class Party(KeySerializer, ElGamalSerializer):
 
     def _get_elgamal_key(self, extracted=False):
         ecc_key, _ = self.keys
-        if extracted:
+        if extracted is True:
             return ecc_key.d, ecc_key.pointQ
         return ecc_key
 
@@ -195,8 +215,8 @@ class Party(KeySerializer, ElGamalSerializer):
 
 class Holder(Party):
 
-    def __init__(self, curve='P-386'):
-        super().__init__(curve)
+    def __init__(self, curve='P-386', key=None):
+        super().__init__(curve, key)
 
     def publish_request(self, s_awd, verifier_pub):
         pub = verifier_pub['ecc']
@@ -207,8 +227,8 @@ class Holder(Party):
 
 class Issuer(Party):
 
-    def __init__(self, curve='P-386'):
-        super().__init__(curve)
+    def __init__(self, curve='P-386', key=None):
+        super().__init__(curve, key)
         self._prover = _Prover(curve, key=self._get_elgamal_key())
 
     def commit_to_document(self, t):
@@ -271,13 +291,8 @@ class Issuer(Party):
 
         c_r, r_r = self.reencrypt_commitment(c)         # (r + r_r) * g, H(t) * g + (r + r_r) * I
 
-        # Create reencryption-decryptor
         decryptor = self.create_decryptor(r, r_r)       # (r + r_r) * I
-
-        # Create NIRENC for c, c_r
         nirenc = self.create_nirenc(c, c_r)             # NIRENC_I(c, c_r)
-
-        # Create NIDDH for reencryption-decryptor
         niddh = self.create_niddh(r, r_r)               # NIDDH_I(r + r_r)
 
         # Create proof and PROOF tag
@@ -296,8 +311,8 @@ class Issuer(Party):
 
 class Verifier(Party):
 
-    def __init__(self, curve='P-386'):
-        super().__init__(curve)
+    def __init__(self, curve='P-386', key=None):
+        super().__init__(curve, key)
         self._verifier = _Verifier(curve, key=self._get_elgamal_key())
 
     def _retrieve_decryptor(self, issuer_pub, enc_decryptor):

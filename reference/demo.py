@@ -6,18 +6,18 @@ if __name__ == '__main__':
     CURVE = 'P-384'             # Cryptosystem config
 
     kg = KeyGenerator(CURVE)
-    holder_key   = kg.generate_keys(CURVE)
-    issuer_key   = kg.generate_keys(CURVE)
-    verifier_key = kg.generate_keys(CURVE)
+    holder_key   = kg.generate_keys()
+    issuer_key   = kg.generate_keys()
+    verifier_key = kg.generate_keys()
 
     # Setup involved parties
-    holder = Holder(CURVE)
-    issuer = Issuer(CURVE)
-    verifier = Verifier(CURVE)
+    holder   = Holder.create_from_key(curve=CURVE, key=holder_key)
+    issuer   = Issuer.create_from_key(curve=CURVE, key=issuer_key)
+    verifier = Verifier.create_from_key(curve=CURVE, key=verifier_key)
 
     # Involved parties publish their keys
-    holder_pub = holder.get_public_shares()
-    issuer_pub = issuer.get_public_shares()
+    holder_pub   = holder.get_public_shares()
+    issuer_pub   = issuer.get_public_shares()
     verifier_pub = verifier.get_public_shares()
 
     # The document under verification
