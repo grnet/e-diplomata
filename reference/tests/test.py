@@ -1,6 +1,6 @@
-from util import *
-from protocol import *
-from elgamal import *
+from diplomata.util import *
+from diplomata.protocol import *
+from diplomata.elgamal import *
 
 CURVE = 'P-384'
 

@@ -7,11 +7,11 @@ from nacl.public import PrivateKey as _NaclKey
 from nacl.public import PublicKey as _NaclPublicKey
 from nacl.public import Box as _NaclBox
 from Cryptodome.PublicKey import ECC as _ECC
-from elgamal import ElGamalCrypto, ElGamalKeySerializer, ElGamalSerializer, \
+from diplomata.elgamal import ElGamalCrypto, ElGamalKeySerializer, ElGamalSerializer, \
     hash_into_scalar, _ecc_pub
-from primitives import Prover as _Prover
-from primitives import Verifier as _Verifier
-from util import *
+from diplomata.primitives import Prover as _Prover
+from diplomata.primitives import Verifier as _Verifier
+from diplomata.util import *
 
 AWARD   = 'AWARD'
 REQUEST = 'REQUEST'

@@ -2,8 +2,8 @@
 Basic Crypto Layer
 """
 
-from elgamal import ElGamalCrypto
-from util import *
+from diplomata.elgamal import ElGamalCrypto
+from diplomata.util import *
 
 
 class KeyOwner(object):

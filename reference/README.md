@@ -13,7 +13,7 @@ python3 demo.py
 ## Usage
 
 ```python
-from protocol import KeyGenerator, Holder, Issuer, Verifier
+from diplomata.protocol import KeyGenerator, Holder, Issuer, Verifier
 
 CURVE = 'P-384'
 

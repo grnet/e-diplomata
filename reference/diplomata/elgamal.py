@@ -7,7 +7,7 @@ from Cryptodome.PublicKey.ECC import EccPoint
 from Cryptodome.Math.Numbers import Integer
 from Cryptodome.PublicKey import ECC
 from Cryptodome.Hash import SHA384
-from util import *
+from diplomata.util import *
 
 
 def gen_curve(name):

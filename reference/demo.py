@@ -1,5 +1,5 @@
 import json
-from protocol import KeyGenerator, Holder, Issuer, Verifier
+from diplomata.protocol import KeyGenerator, Holder, Issuer, Verifier
 
 if __name__ == '__main__':
 
@@ -40,7 +40,7 @@ if __name__ == '__main__':
     # addressed to VERIFIER
 
     # TODO
-    from protocol import AWARD
+    from diplomata.protocol import AWARD
     payload = holder.create_tag(AWARD, c=c)
     assert holder.verify_signature(s_awd, issuer_pub, payload)
 
@@ -56,7 +56,7 @@ if __name__ == '__main__':
     # to generate it
 
     # TODO
-    from protocol import REQUEST
+    from diplomata.protocol import REQUEST
     payload = issuer.create_tag(REQUEST, s_awd=s_awd, verifier=verifier_pub)
     assert issuer.verify_signature(s_req, holder_pub, payload)
 
@@ -71,7 +71,7 @@ if __name__ == '__main__':
     # VERIFIER verifies proof against document and ISSUER's key
 
     # TODO
-    from protocol import PROOF
+    from diplomata.protocol import PROOF
     payload = verifier.create_tag(PROOF, s_req=s_req, **proof)
     assert verifier.verify_signature(s_prf, issuer_pub, payload)
 
