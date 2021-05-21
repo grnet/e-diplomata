@@ -30,85 +30,22 @@ holder = Holder.create_from_key(curve=CURVE, key=holder_key)
 issuer = Issuer.create_from_key(curve=CURVE, key=issuer_key)
 verifier = Verifier.create_from_key(curve=CURVE, key=verifier_key)
 
-t = "This is a qualification".encode('utf-8')
+title = "This is a qualification".encode('utf-8')
 
 # Protocol execution
 
-s_awd, c, r = issuer.publish_award(t)                               # step 1
-s_req = holder.publish_request(s_awd, verifier_pub)                 # step 2
-s_prf, proof = issuer.publish_proof(s_req, r, c, verifier_pub)      # step 3
-s_ack, result = verifier.publish_ack(s_prf, t, proof, issuer_pub)   # step 4
+s_awd, c, r = issuer.publish_award(title)                               # step 1
+s_req = holder.publish_request(s_awd, verifier_pub)                     # step 2
+s_prf, proof = issuer.publish_proof(s_req, r, c, verifier_pub)          # step 3
+s_ack, result = verifier.publish_ack(s_prf, title, proof, issuer_pub)   # step 4
 ```
 
 ## API
 
-### Types
+Refer to [TYPES.md](./TYPES.md) for a specification of the JSON structures
+appearing in the presentation layer.
 
-```
-key {
-    ecc: {
-        x: <int>,
-        y: <int>,
-        d: <int>
-    },
-    nacl: <str(hex)>
-}
-```
-
-```
-pub {
-    ecc: [<int>, <int>],
-    nacl: <str(hex)>
-}
-```
-
-```
-comm {
-    c1: [<int>, <int>],
-    c2: [<int>, <int>]
-}
-```
-
-```
-ddh [
-    [<int>, <int>], 
-    [<int>, <int>], 
-    [<int>, <int>]
-]
-```
-
-```
-chaum-pedersen {
-    u_comm: [<int>, <int>],
-    v_comm: [<int>, <int>],
-    s: <int>,
-    d: [<int>, <int>]
-}
-```
-
-```
-ddh-proof {
-    ddh: <ddh>.
-    proof: <chaum-pedersen>
-}
-```
-
-```
-proof {
-    c_r: {
-        c1: [<int>, <int>],
-        c2: [<int>, <int>]
-    },
-    decryptor: <str(hex)>,
-    nirenc: {
-        proof_c1: <ddh-proof>,
-        proof_c2: <ddh-proof>
-    },
-    niddh: <str(hex)>
-}
-```
-
-### Functions
+### Functions (TODO)
 
 ```
 Issuer.publish_award(t: <bytes>) -> (s_awd: <str(hex)>, c: <comm>, r: <int>)

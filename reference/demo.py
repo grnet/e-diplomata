@@ -21,12 +21,12 @@ if __name__ == '__main__':
     verifier_pub = verifier.get_public_shares()
 
     # The document under verification
-    t = "This is a message to be encrypted".encode('utf-8')
+    title = "This is a message to be encrypted".encode('utf-8')
 
     print('\nstep 1')                           # step 1
 
     # ISSUER commits to document t
-    s_awd, c, r = issuer.publish_award(t)
+    s_awd, c, r = issuer.publish_award(title)
 
     # ISSUER stores r privately, publishes the commitment c and
     # publishes s_awd (ledger) sending it also to HOLDER
@@ -75,7 +75,7 @@ if __name__ == '__main__':
     payload = verifier.create_tag(PROOF, s_req=s_req, **proof)
     assert verifier.verify_signature(s_prf, issuer_pub, payload)
 
-    s_ack, result = verifier.publish_ack(s_prf, t, proof, issuer_pub)
+    s_ack, result = verifier.publish_ack(s_prf, title, proof, issuer_pub)
 
     # VERIFIER publishes s_ack (ledger) and the verification result
     print('s_ack:', s_ack)
