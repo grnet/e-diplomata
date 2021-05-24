@@ -20,10 +20,14 @@ export default function Index() {
   const auth = useAuth();
   const demoLogin = useCallback(() => {
     window.setTimeout(() => {
-      window.localStorage.setItem("login-next", "/titles");
+      window.localStorage.setItem("login-next", "/shares");
       window.location.href = auth.config.loginURL + "?username=test";
     }, 1);
   }, [auth.config.loginURL]);
+  
+  const demoLogout = useCallback(
+    () => auth.logout("/")
+  );
 
   return (
     <VerifierLayout>
@@ -35,7 +39,7 @@ export default function Index() {
         {!auth.authenticated ? (
           <Button onClick={demoLogin}>Login</Button>
         ) : (
-          <Button onClick={() => auth.logout("/")}>Logout</Button>
+            <Button onClick={demoLogout}>Logout</Button>
         )}
       </Main>
     </VerifierLayout>
