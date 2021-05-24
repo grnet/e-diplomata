@@ -25,8 +25,8 @@ const CONFIG = {
   baseURL: '/api',
 };
 const AUTH_CONFIG = {};
-AUTH_CONFIG.userDataURL = CONFIG.baseURL + '/users/me/';
-AUTH_CONFIG.loginURL = CONFIG.baseURL + '/custom_login/';
+AUTH_CONFIG.userDataURL = CONFIG.baseURL + '/holder/me/';
+AUTH_CONFIG.loginURL = CONFIG.baseURL + '/holder/login/';
 AUTH_CONFIG.tokenURL = CONFIG.baseURL + '/token/';
 
 export const HandleError = ({ error }) => {

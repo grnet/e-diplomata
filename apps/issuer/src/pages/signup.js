@@ -19,19 +19,22 @@ const useStyles = makeStyles(
 export default function Index() {
   const styles = useStyles();
   const auth = useAuth();
-  const demoLogin = useCallback(async (user) => {
+
+
+  const demoSignup = useCallback(async (user) => {
     window.setTimeout(() => {
       window.localStorage.setItem("login-next", "/diplomas");
       // window.location.href = auth.config.loginURL + "?username=test";
     }, 1);
-    const response = await fetch('/api/issuer/login', {
-      method: 'POST',
-      body: JSON.stringify(user),
-      headers: {
-        'Content-Type': 'application/json'
-      }
-    }).then(res=>res.json());
-    auth.authenticate(response.token)
+    await fetch('/api/issuer/signup', {
+      
+        method: 'POST',
+        body: JSON.stringify(user),
+        headers: {
+          'Content-Type': 'application/json'
+        }
+      
+    });
   }, [auth.config.loginURL]);
 
   return (
@@ -40,35 +43,44 @@ export default function Index() {
         <PageTitle>
           <PageTitleHeading>Login Page</PageTitleHeading>
         </PageTitle>
+        <Paragraph>Welcome text</Paragraph>
         {!auth.authenticated ? (
-          <FormBuilder fields={[
-            {
-              key: 'password',
-              label: {
-                primary: 'Password'
-              },
-              type: 'string',
-              extra: {
-                type: 'password'
-              }
+        <FormBuilder fields={[
+          {
+            key: 'email',
+            label:{
+              primary: 'Email'
             },
-            {
-              key: 'email',
-              label: {
-                primary: 'Email'
-              },
-              type: 'string'
+            type: 'string'
+          },
+          {
+            key: 'password',
+            label:{
+              primary: 'Password'
             },
-          ]}
-            onSubmit={(data) => {
-              console.log(data);
-              demoLogin(data);
-            }}
-          >
-            <Field name={'email'} />
-            <Field name={'password'} />
-            <Button type='submit'>Login</Button>
-          </FormBuilder>
+            type: 'string',
+            extra: {
+              type: 'password'
+            }
+          },
+          {
+            key: 'username',
+            label:{
+              primary: 'Username'
+            },
+            type: 'string'
+          },
+        ]}
+          onSubmit={(data) => {
+            console.log(data);
+            demoSignup(data)
+          }}
+        >
+          <Field name={'email'} />
+          <Field name={'password'} />
+          <Field name={'username'} />
+          <Button type='submit'>Signup</Button>
+        </FormBuilder>
         ) : (
           <Button onClick={() => auth.logout("/")}>Logout</Button>
         )}

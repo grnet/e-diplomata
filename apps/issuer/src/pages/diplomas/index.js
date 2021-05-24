@@ -67,7 +67,7 @@ export default function Diplomas() {
 
   const styles = useStyles();
   const { data: datasets } = useResource("datasets");
-  const { data, fetch, ...rest } = useResourceMany("diplomas", searchForm);
+  const { data, fetch, ...rest } = useResourceMany("issuer/documents", searchForm);
   const delayedSearch = useCallback(
     debounce(
       (value) =>
