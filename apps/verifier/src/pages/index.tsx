@@ -13,7 +13,7 @@ export default function Index() {
           <PageTitleHeading>Verifier service</PageTitleHeading>
         </PageTitle>
         <Paragraph>You can issue diploma in the blockchain</Paragraph>
-        <CallToActionButton href="/login?next=/titles">Enter here</CallToActionButton>
+        <CallToActionButton href="/login?next=/shares">Start here</CallToActionButton>
       </Main>
     </VerifierLayout>
   )
