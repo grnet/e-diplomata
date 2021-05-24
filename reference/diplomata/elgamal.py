@@ -188,11 +188,11 @@ class ElGamalCrypto(object):
     def reencrypt(self, public, cipher):    
         g = self.generator                  # g
         r = self.random_scalar()            # r
-        c1, c2 = extract_cipher(cipher)     # r_1 * g, m * g + r_1 * y
+        c1, c2 = extract_cipher(cipher)     # r_1 * g, m + r_1 * y
         cipher = set_cipher(
             r * g + c1,                     
             c2 + r * public,
-        )                                   # (r1 + r2) * g, m * g + (r1 + r2) * y
+        )                                   # (r1 + r2) * g, m + (r1 + r2) * y
         return cipher, r
     
     def drenc(self, cipher, decryptor):

@@ -21,7 +21,7 @@ if __name__ == '__main__':
     verifier_pub = verifier.get_public_shares()
 
     # The document under verification
-    title = "This is a message to be encrypted".encode('utf-8')
+    title = "This is a qualification"
 
     print('\nstep 1')                           # step 1
 

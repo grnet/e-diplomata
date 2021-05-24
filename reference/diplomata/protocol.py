@@ -188,8 +188,8 @@ class Party(KeySerializer, ElGamalSerializer):
 
     # Document adaptment
 
-    def _algebraize_document(self, t):
-        ht = hash_into_scalar(t)                        # H(t)
+    def _hash_document(self, title):
+        ht = hash_into_scalar(title)                    # H(t)
         return self._cryptosys.ecc_point_from_scalar(
             ht)                                         # H(t) * g
 
@@ -249,7 +249,7 @@ class Issuer(Party):
         self._prover = _Prover(curve, key=self._get_elgamal_key())
 
     def commit_to_document(self, t):
-        elem = self._algebraize_document(t)             # H(t) * g
+        elem = self._hash_document(t)                   # H(t) * g
         pub = self.elgamal_pub                          # I
         c, r = self._prover.commit(elem, pub=pub)       # r * g, H(t) * g + r * I
         return c, r
@@ -288,8 +288,9 @@ class Issuer(Party):
         enc_niddh = self.encrypt(niddh, verifier_pub)
         return enc_niddh
 
-    def publish_award(self, t):
-        c, r = self.commit_to_document(t)               # r * g, H(t) * g + r * I
+    def publish_award(self, title):
+        title = title.encode('utf-8')                   # TODO
+        c, r = self.commit_to_document(title)           # r * g, H(t) * g + r * I
 
         # Serialize output and create AWARD tag
         c = self._serialize_cipher(c)
@@ -353,7 +354,7 @@ class Verifier(Party):
         return c
 
     def verify_document_integrity(self, t, c_dec):
-        return c_dec == self._algebraize_document(t)    # c_dec == H(t) * g?
+        return c_dec == self._hash_document(t)    # c_dec == H(t) * g?
 
     def verify_nirenc(self, nirenc, issuer_pub):
         pub = issuer_pub['ecc']
@@ -363,7 +364,8 @@ class Verifier(Party):
         pub = issuer_pub['ecc']
         return self._verifier.verify_niddh(niddh, pub)
 
-    def publish_ack(self, s_prf, t, proof, issuer_pub):
+    def publish_ack(self, s_prf, title, proof, issuer_pub):
+        title = title.encode('utf-8')                   # TODO
         issuer_pub = self._deserialize_public_shares(issuer_pub)
 
         # Deserialize and decrypt (if needed) proof components
@@ -374,7 +376,7 @@ class Verifier(Party):
         c_dec = self.decrypt_commitment(c_r, decryptor)
     
         # Verifications
-        check_integrity = self.verify_document_integrity(t, c_dec)
+        check_integrity = self.verify_document_integrity(title, c_dec)
         check_nirenc    = self.verify_nirenc(nirenc, issuer_pub)
         check_niddh     = self.verify_niddh(niddh, issuer_pub)
 
