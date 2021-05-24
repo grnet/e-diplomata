@@ -41,7 +41,7 @@ const diplomas = new Array(25).fill({}).map((item, index) => {
   };
 });
 
-const database = new Datastore("diplomas.db");
+const database = new Datastore("titles.db");
 /* database.persistence.compactDatafile();
 database.persistence.setAutocompactionInterval( 500); */
 database.loadDatabase(function (error) {
