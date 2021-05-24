@@ -1,6 +1,6 @@
 # Types
 
-Since the underlying El-Gamal cryptosystem elliptic, group elements
+Since the underlying El-Gamal cryptosystem is elliptic, group elements
 are modeled as pairs of integers:
 
 ```
@@ -30,7 +30,7 @@ chaum-pedersen {
 }
 ```
 
-The pair of a DDH along with an accalimed Chaum-Pedersen proof 
+The pair of a DDH along with an acclaimed Chaum-Pedersen proof 
 of knowledge is modeled by
 
 ### `ddh-proof`
@@ -42,7 +42,7 @@ ddh-proof {
 ```
 
 In the Diplomata protocol, two keys are needed: one El-Gamal key ("ecc") for
-commiting, producing proofs, signing etc., and one NaCl key for 
+commiting, signing etc., and one NaCl key ("nacl") for 
 symmetric encryption. These are organized in the following 
 extended key structure:
 
