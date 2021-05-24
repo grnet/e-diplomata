@@ -57,7 +57,13 @@ key {
     nacl: <str(hex)>
 }
 ```
-
+Proposed:
+```
+{
+  private: [ecc.x, ecc.y, ecc.d, nacl.priv],
+  public: [ecc.x, ecc.y, nacl.pub]
+}
+```
 Their public counterparts are organized in the following structure, serving
 also as public identity in the protocol context:
 
