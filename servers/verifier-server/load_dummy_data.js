@@ -11,7 +11,7 @@ const valuePool = {
   numberOfDegree: ["7", "8", "9"],
   rector: ["tuc", "assoe"],
   year: ["2005", "2006", "2007"],
-  status: ["unawarded"],
+  status: ["unawarded", "success", "failed"],
 };
 const diplomas = new Array(25).fill({}).map((item, index) => {
   return {
@@ -41,9 +41,7 @@ const diplomas = new Array(25).fill({}).map((item, index) => {
   };
 });
 
-const database = new Datastore("diplomas.db");
-/* database.persistence.compactDatafile();
-database.persistence.setAutocompactionInterval( 500); */
+const database = new Datastore("titles.db");
 database.loadDatabase(function (error) {
   if (error) {
     console.log(
