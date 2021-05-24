@@ -1,18 +1,18 @@
-# Holder-server app
+# Verifier-server app
 
-Backend server that communicates with two services, the one created for the Holder and the other one created for Holder and Verifier.
+Backend server that communicates with two services, the one created for the Verifier and the other one created for Verifier and Verifier.
 The backend server interacts with the blockchain using the library in the folder [libs\blockchain](https://gitlab.grnet.gr/devs/priviledge/ediplomas/-/tree/master/libs/blockchain).
 Ganache-cli is used to create a local blockchain network. The application can be adjusted to interact with a public testnet blockchain, like the Ethereum Ropsten Testnet.
 For now in the following section "Getting started" you can find information on how to start a local blockchain network with ganache-cli, that can be used during the development stage of the server.
 
-## Holder-server folder structure
+## Verifier-server folder structure
 
 The folder path 'pages/api' contains the pages for the api request that one can send to the server. In pages/api/blockchain one can request and execute the
 corresponding functions in "index.ts", inside the folder [libs\blockchain](https://gitlab.grnet.gr/devs/priviledge/ediplomas/-/blob/master/libs/blockchain/src/index.ts).
 
 ## Getting started
 
-We start Holder-server server:
+We start Verifier-server server:
 
 ```
 rushx dev
