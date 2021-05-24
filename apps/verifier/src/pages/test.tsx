@@ -7,12 +7,12 @@ import React, { Component } from "react";
 //
 import {deployContract, publishAward, publishProof} from '@diplomas/blockchain';
 
-class Holder extends Component {
+class Verifier extends Component {
 
   constructor(props) {
    super(props);
    this.state = {
-     txForHolder: '',
+     txForVerifier: '',
      // contractAdd is the deployed Contract's address
      contractAdd: '',
      // award and proof functions
@@ -44,7 +44,7 @@ class Holder extends Component {
   };
 
   componentDidMount(){
-    document.title = "Ypiresia gia ton Holder";
+    document.title = "Ypiresia gia ton Verifier";
     this.callApi()
       .then(res => console.log("connected"))
       .catch(err => console.log(err));
@@ -62,7 +62,7 @@ class Holder extends Component {
     this.setState({ [event.target.name]: event.target.value });
   }
 
-  //Holder provides his owner address
+  //Verifier provides his owner address
   handleDeploymentv2 = async(event) => {
     event.preventDefault();
     this.setState({willShowLoader: true}, () => {this.deployContractv2();});
@@ -82,7 +82,7 @@ class Holder extends Component {
     if (body == "error"){console.log("error");}
     else{
       this.setState( {
-      txForHolder: body.tranHash, contractAdd: body.contractAddress,
+      txForVerifier: body.tranHash, contractAdd: body.contractAddress,
       willShowLoader: false, reject: false
     });
     }
@@ -91,12 +91,12 @@ class Holder extends Component {
     let response = await deployContract();
     console.log(response);
     this.setState( {
-      txForHolder: response.tranHash, contractAdd: response.contractAddress,
+      txForVerifier: response.tranHash, contractAdd: response.contractAddress,
       willShowLoader: false, reject: false
     });
   }
 
-  //Holder provides his owner address
+  //Verifier provides his owner address
   handleAwardv2 = async(event) => {
     event.preventDefault();
     console.log(event.target.award.value);
@@ -126,7 +126,7 @@ class Holder extends Component {
     //the following code is for using the Blockchain Typescript Library
     let response = await publishAward({
       hashOfAwardFirstPart: hashAward1, hashOfAwardSecondPart: hashAward2,
-      contractAddressUsedByHolder: cAdd
+      contractAddressUsedByVerifier: cAdd
     });
     console.log(response);
     this.setState( {
@@ -134,7 +134,7 @@ class Holder extends Component {
     });
   }
 
-  //Holder provides his owner address
+  //Verifier provides his owner address
   handleProofv2 = async(event) => {
     event.preventDefault();
     let cAdd = event.target.conAdd2.value;
@@ -164,7 +164,7 @@ class Holder extends Component {
     */
     //the following code is for using the Blockchain Typescript Library
     let response = await publishProof({
-       contractAddressUsedByHolder: cAdd, sReq: sReq, c: c, c2: c2, nirenc: nirenc, ev: ev
+       contractAddressUsedByVerifier: cAdd, sReq: sReq, c: c, c2: c2, nirenc: nirenc, ev: ev
     });
     console.log(response);
     this.setState( {
@@ -173,17 +173,17 @@ class Holder extends Component {
   }
 
   render() {
-   let displayTxForHolder = ((this.state.txForHolder == "") ? (<p></p>) : (<p> Holder your transaction receipt is {this.state.txForHolder}</p>));
+   let displayTxForVerifier = ((this.state.txForVerifier == "") ? (<p></p>) : (<p> Verifier your transaction receipt is {this.state.txForVerifier}</p>));
    let displayContractAdd = ((this.state.contractAdd == "") ? (<p></p>) : (<p> and your contract is at address {this.state.contractAdd}</p>));
    let displayTxAward = ((this.state.receiptAward == "") ? (<p></p>) : (<p> Your transaction receipt is {this.state.receiptAward}</p>));
    let displayTxProof = ((this.state.receiptProof == "") ? (<p></p>) : (<p> Your transaction receipt is {this.state.receiptProof}.<br />Save this value and later display it with the coresponding verifier's public key in your website, so that the Verifier can see it</p>));
    //let text = ((this.state.receiptProof == "") ? (<p></p>) : (<p> Save this value and later display it with the coresponding verifier's public key in your website, so that the Verifier can see it</p>));
-   //in return we should also add a tab where Holder can see the Request published for him
-   //data will be retrieved from the database. When a Holder publishes a request for proof from the website,
-   //website will save the data. Another way is for the website actively listen to all events emited from an Holder's contract.
-   //If we have many Holder we should listen from all contracts. So if a Holder publishes a request without using the website
+   //in return we should also add a tab where Verifier can see the Request published for him
+   //data will be retrieved from the database. When a Verifier publishes a request for proof from the website,
+   //website will save the data. Another way is for the website actively listen to all events emited from an Verifier's contract.
+   //If we have many Verifier we should listen from all contracts. So if a Verifier publishes a request without using the website
    //using for example Remix, then in order our website to save the request, it should actively listen when the function request of a specific
-   //smart contract is emited so that it can be saved and later it could be displayed to the Holder through the website.
+   //smart contract is emited so that it can be saved and later it could be displayed to the Verifier through the website.
    //we should consider that only requests that are emitted from a valid holder are saved.
    return (
      <div className="MakeRequest">
@@ -192,12 +192,12 @@ class Holder extends Component {
           <button onClick={this.handleDeploymentv2}>
           Deploy a contract
           </button>
-          {displayTxForHolder}
+          {displayTxForVerifier}
           {displayContractAdd}
           <br />
           <form onSubmit={this.handleAwardv2}>
           <label>
-            Publish an award <br />Insert the Ethereum address of the contract that you use as an Holder and the hash value of the award you want to publish.<br />
+            Publish an award <br />Insert the Ethereum address of the contract that you use as an Verifier and the hash value of the award you want to publish.<br />
             <input type="text" placeholder="Input contract's address" value={this.state.conAdd} name="conAdd" onChange={this.handleChange} />
             <input type="text" placeholder="Input first value of the award" value={this.state.award} name="award" onChange={this.handleChange} />
             <input type="text" placeholder="Input second value of the award" value={this.state.award2} name="award2" onChange={this.handleChange} />
@@ -207,7 +207,7 @@ class Holder extends Component {
           {displayTxAward}
           <form onSubmit={this.handleProofv2}>
           <label>
-            Publish a proof <br />Insert the Ethereum address of the contract that you use as an Holder and all other necessary values.<br />
+            Publish a proof <br />Insert the Ethereum address of the contract that you use as an Verifier and all other necessary values.<br />
             <input type="text" placeholder="Input contract's address" value={this.state.conAdd2} name="conAdd2" onChange={this.handleChange} />
             <input type="text" placeholder="Input sreq" value={this.state.GivenSreq} name="GivenSreq" onChange={this.handleChange} />
             <input type="text" placeholder="Input c'" value={this.state.c} name="c" onChange={this.handleChange} />
@@ -225,4 +225,4 @@ class Holder extends Component {
   }
 }
 
-export default Holder;
+export default Verifier;
