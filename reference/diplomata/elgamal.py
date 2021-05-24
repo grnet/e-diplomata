@@ -54,6 +54,9 @@ class ElGamalCrypto(object):
     def order(self):
         return self.curve.order
 
+    def ecc_point_from_scalar(self, scalar):
+        return scalar * self.generator
+
     
     # Serialization/Deserialization
 
@@ -156,7 +159,7 @@ class ElGamalCrypto(object):
 
     # Generation
 
-    def generate_randomness(self):
+    def random_scalar(self):
         return Integer.random_range(
             min_inclusive=1, 
             max_exclusive=self.order
@@ -170,21 +173,21 @@ class ElGamalCrypto(object):
 
     def encrypt(self, pub, m):
         g = self.generator                  # g
-        r = self.generate_randomness()      # r
+        r = self.random_scalar()            # r
         cipher = set_cipher(
             r * g,
-            m * g + r * pub,
-        )                                   # r * g, m * g + r * y
+            m + r * pub,
+        )                                   # r * g, m + r * y
         return cipher, r
 
-    def decrypt(self, priv, cipher, table):
+    def decrypt(self, priv, cipher):
         a, b = extract_cipher(cipher)
-        v = b + priv * (-a)
-        return table[(str(v.x), str(v.y))]
+        m = -(a * priv) + b
+        return m
 
     def reencrypt(self, public, cipher):    
         g = self.generator                  # g
-        r = self.generate_randomness()      # r
+        r = self.random_scalar()            # r
         c1, c2 = extract_cipher(cipher)     # r_1 * g, m * g + r_1 * y
         cipher = set_cipher(
             r * g + c1,                     
@@ -203,7 +206,7 @@ class ElGamalCrypto(object):
     def generate_chaum_pedersen(self, ddh, z, *extras):
         g = self.generator
         p = self.order
-        r = self.generate_randomness()
+        r = self.random_scalar()
     
         u, v, w = ddh
         u_comm = r * u                                      # u commitment

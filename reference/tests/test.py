@@ -12,6 +12,11 @@ def make_table(curve, n):
         table[(str(elem.x), str(elem.y))] = i
     return table 
 
+def decrypt(priv, cipher, table):
+    a, b = extract_cipher(cipher)
+    v = b + priv * (-a)
+    return table[(str(v.x), str(v.y))]
+
 
 def test_elgamal_encdec():
 
@@ -29,7 +34,8 @@ def test_elgamal_encdec():
         verifier_pub  = pub_2['ecc']
         verifier_priv = party_2._verifier.private
         cryptosys = party_1._cryptosys
-        cipher, r = cryptosys.encrypt(verifier_pub, ps[i])
+        g = cryptosys.generator
+        cipher, r = cryptosys.encrypt(verifier_pub, ps[i] * g)
         cipher_r, r_r = cryptosys.reencrypt(verifier_pub, cipher)        
-        assert(cryptosys.decrypt(verifier_priv, cipher,   table) == ps[i])
-        assert(cryptosys.decrypt(verifier_priv, cipher_r, table) == ps[i])
+        assert(decrypt(verifier_priv, cipher,   table) == ps[i])
+        assert(decrypt(verifier_priv, cipher_r, table) == ps[i])

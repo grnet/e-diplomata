@@ -186,6 +186,14 @@ class Party(KeySerializer, ElGamalSerializer):
         return content
 
 
+    # Document adaptment
+
+    def _algebraize_document(self, t):
+        ht = hash_into_scalar(t)                        # H(t)
+        return self._cryptosys.ecc_point_from_scalar(
+            ht)                                         # H(t) * g
+
+
     # Tag creation
 
     @staticmethod
@@ -241,9 +249,9 @@ class Issuer(Party):
         self._prover = _Prover(curve, key=self._get_elgamal_key())
 
     def commit_to_document(self, t):
-        ht = hash_into_scalar(t)                        # H(t)
+        elem = self._algebraize_document(t)             # H(t) * g
         pub = self.elgamal_pub                          # I
-        c, r = self._prover.commit(ht, pub=pub)         # r * g, H(t) * g + r * I
+        c, r = self._prover.commit(elem, pub=pub)       # r * g, H(t) * g + r * I
         return c, r
 
     def reencrypt_commitment(self, c):
@@ -344,9 +352,8 @@ class Verifier(Party):
         c = self._cryptosys.drenc(c_r, decryptor)   # TODO
         return c
 
-    def verify_document_integrity(self, t, c):
-        ht = hash_into_scalar(t)
-        return self._verifier.verify_message_integrity(ht, c)
+    def verify_document_integrity(self, t, c_dec):
+        return c_dec == self._algebraize_document(t)    # c_dec == H(t) * g?
 
     def verify_nirenc(self, nirenc, issuer_pub):
         pub = issuer_pub['ecc']
@@ -363,11 +370,11 @@ class Verifier(Party):
         c_r, decryptor, nirenc, niddh = self._retrieve_from_proof(
             issuer_pub, proof)
 
-        # Retrieve the issuer's initial commitment to document
-        c = self.decrypt_commitment(c_r, decryptor)
+        # Decrypt the issuer's initial commitment to document
+        c_dec = self.decrypt_commitment(c_r, decryptor)
     
         # Verifications
-        check_integrity = self.verify_document_integrity(t, c)
+        check_integrity = self.verify_document_integrity(t, c_dec)
         check_nirenc    = self.verify_nirenc(nirenc, issuer_pub)
         check_niddh     = self.verify_niddh(niddh, issuer_pub)
 

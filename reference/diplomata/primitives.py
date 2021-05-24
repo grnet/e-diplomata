@@ -110,10 +110,6 @@ class Verifier(KeyOwner):
     def _verify_chaum_pedersen(self, ddh, proof, *extras):
         return self.cryptosys.verify_chaum_pedersen(ddh, proof, *extras)
 
-    def verify_message_integrity(self, m, c):
-        g = self.generator
-        return c == m * g
-
     def verify_nirenc(self, nirenc, prover_pub):
 
         proof_c1, proof_c2 = extract_nirenc(nirenc)
