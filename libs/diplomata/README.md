@@ -11,17 +11,17 @@ python3 demo.py
 ## Usage
 
 ```python
-from diplomata.protocol import KeyGenerator, Holder, Issuer, Verifier
+from diplomata.protocol import KeyManager, Holder, Issuer, Verifier
 
 CURVE = 'P-384'
 
 
 # Generate keys
 
-kg = KeyGenerator(CURVE)
-holder_key = kg.generate_keys()
-issuer_key = kg.generate_keys()
-verifier_key = kg.generate_keys()
+km = KeyManager(CURVE)
+holder_key = km.generate_keys()
+issuer_key = km.generate_keys()
+verifier_key = km.generate_keys()
 
 
 # Setup involved parties
@@ -53,9 +53,9 @@ s_ack, result = verifier.publish_ack(s_prf, title, proof, issuer_pub)   # step 4
 Refer to [TYPES.md](./TYPES.md) for a specification of the JSON structures
 appearing in the presentation layer.
 
-### `KeyGenerator`
+### `KeyManager`
 
-#### KeyGenerator(*curve='P-384'*)
+#### KeyManager(*curve='P-384'*)
 #### .generate_keys()
 
 ### `Party`

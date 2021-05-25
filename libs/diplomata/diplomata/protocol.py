@@ -86,7 +86,7 @@ class KeySerializer(ElGamalKeySerializer):
         return key
 
 
-class KeyGenerator(KeySerializer):
+class KeyManager(KeySerializer):
 
     def __init__(self, curve='P-384'):
         self._cryptosys = ElGamalCrypto(curve)
@@ -105,6 +105,40 @@ class KeyGenerator(KeySerializer):
             keys = self._serialize_key(keys)
         return keys
 
+    def _adapt_public_shares(self, public_shares):
+        ecc_key, nacl_key = extract_keys(public_shares)
+        hexify = lambda x: hex(x)
+        key = [
+            hexify(ecc_key[0]),
+            hexify(ecc_key[1]),
+            nacl_key,
+        ]
+        return key
+
+    def _radapt_public_shares(self, public_shares):
+        unhexify = lambda x: int(x, 16)
+        ecc_key = [
+            unhexify(public_shares[0]),
+            unhexify(public_shares[1]),
+        ]
+        nacl_key = public_shares[2]
+        public_shares = set_keys(ecc_key, nacl_key)
+        return public_shares
+
+    def get_public_from_key(self, key, serialized=True, 
+        from_adapted=True, to_adapted=True):
+        # import pdb; pdb.set_trace()
+        if from_adapted:
+            key = self._deserialize_key(key, from_adapted=True)
+        ecc_pub, nacl_pub = _extract_public_keys(key)
+        if serialized:
+            ecc_pub  = self._serialize_ecc_public(ecc_pub)
+            nacl_pub = self._serialize_nacl_public(nacl_pub)
+        public_shares = set_keys(ecc_pub, nacl_pub)
+        if to_adapted is True:
+            public_shares = self._adapt_public_shares(public_shares)
+        return public_shares
+
 
 class Party(KeySerializer, ElGamalSerializer):
     """
@@ -113,8 +147,9 @@ class Party(KeySerializer, ElGamalSerializer):
 
     def __init__(self, curve='P-384', key=None):
         self._cryptosys = ElGamalCrypto(curve)
+        self._key_manager = KeyManager(curve)
         if key is None:
-            self._key = KeyGenerator(curve).generate_keys(serialized=False)
+            self._key = self._key_manager.generate_keys(serialized=False)
         else:
             self._key = self._deserialize_key(key)
 
@@ -122,13 +157,12 @@ class Party(KeySerializer, ElGamalSerializer):
     def create_from_key(cls, key, curve='P-384'):
         return cls(curve=curve, key=key)
 
-    def get_public_shares(self, serialized=True):
-        ecc_pub, nacl_pub = _extract_public_keys(self._key)
-        if serialized:
-            ecc_pub  = self._serialize_ecc_public(ecc_pub)
-            nacl_pub = self._serialize_nacl_public(nacl_pub)
-        public_shares = set_keys(ecc_pub, nacl_pub)
-        return public_shares
+    def get_public_shares(self, serialized=True, adapted=True):
+        return self._key_manager.get_public_from_key(self._key,
+            serialized=serialized, 
+            from_adapted=False, 
+            to_adapted=adapted
+        )
 
     @property
     def keys(self):
@@ -154,7 +188,9 @@ class Party(KeySerializer, ElGamalSerializer):
 
     # Serialization/deserialization
 
-    def _deserialize_public_shares(self, public):
+    def _deserialize_public_shares(self, public, from_adapted=True):
+        if from_adapted is True:
+            public = self._key_manager._radapt_public_shares(public)
         ecc_pub, nacl_pub = extract_keys(public)
         ecc_pub = self._deserialize_ecc_public(ecc_pub)
         nacl_pub = self._deserialize_nacl_public(nacl_pub)
