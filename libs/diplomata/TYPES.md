@@ -57,13 +57,20 @@ key {
     nacl: <str(hex)>
 }
 ```
-Proposed:
+
+For the purpose of interacting with other systems (RPC, db APIs etc), this 
+can be further adapted as follows:
+
+### `adapted_key`
 ```
-{
-  private: [ecc.x, ecc.y, ecc.d, nacl.priv],
-  public: [ecc.x, ecc.y, nacl.pub]
-}
+adapted_key [
+    <str(hex)>, 
+    <str(hex)>, 
+    <str(hex)>, 
+    <str(hex)>, 
+]
 ```
+
 Their public counterparts are organized in the following structure, serving
 also as public identity in the protocol context:
 

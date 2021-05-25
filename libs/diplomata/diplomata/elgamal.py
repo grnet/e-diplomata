@@ -272,7 +272,7 @@ class ElGamalKeySerializer(EccPointSerializer):
     Serializer infrastructure for El-Gamal keys
     """
 
-    def _serialize_ecc_key(self, ecc_key):
+    def _serialize_ecc_key(self, ecc_key, hexified=False):
         return self._cryptosys.serialize_ecc_key(ecc_key)
     
     def _deserialize_ecc_key(self, ecc_key):

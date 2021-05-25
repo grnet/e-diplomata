@@ -45,14 +45,40 @@ class KeySerializer(ElGamalKeySerializer):
     def _deserialize_nacl_public(self, pub):
         return _NaclPublicKey(bytes.fromhex(pub))
 
-    def _serialize_key(self, key):
+    def _adapt_key(self, key):
+        ecc_key, nacl_key = extract_keys(key)
+        hexify = lambda x: hex(x)
+        key = [
+            hexify(ecc_key['x']),
+            hexify(ecc_key['y']),
+            hexify(ecc_key['d']),
+            nacl_key,
+        ]
+        return key
+
+    def _radapt_key(self, key):
+        unhexify = lambda x: int(x, 16)
+        ecc_key = {
+            'x': unhexify(key[0]),
+            'y': unhexify(key[1]),
+            'd': unhexify(key[2]),
+        }
+        nacl_key = key[3]
+        key = set_keys(ecc_key, nacl_key)
+        return key
+
+    def _serialize_key(self, key, adapted=True):
         ecc_key, nacl_key = extract_keys(key)
         ecc_key  = self._serialize_ecc_key(ecc_key)
         nacl_key = self._serialize_nacl_key(nacl_key)
         key = set_keys(ecc_key, nacl_key)
+        if adapted is True:
+            key = self._adapt_key(key)
         return key
 
-    def _deserialize_key(self, key):
+    def _deserialize_key(self, key, from_adapted=True):
+        if from_adapted:
+            key = self._radapt_key(key)
         ecc_key, nacl_key = extract_keys(key)
         ecc_key  = self._deserialize_ecc_key(ecc_key)
         nacl_key = self._deserialize_nacl_key(nacl_key)
