@@ -76,7 +76,7 @@ class KeySerializer(ElGamalKeySerializer):
             key = self._adapt_key(key)
         return key
 
-    def _deserialize_key(self, key, from_adapted=True):
+    def _deserialize_key(self, key, from_adapted=False):
         if from_adapted:
             key = self._radapt_key(key)
         ecc_key, nacl_key = extract_keys(key)
@@ -97,12 +97,12 @@ class KeyManager(KeySerializer):
     def _generate_nacl_key(self):
         return _NaclKey.generate()
 
-    def generate_keys(self, serialized=True):
+    def generate_keys(self, serialized=True, adapted=False):
         ecc_key  = self._generate_ecc_key()
         nacl_key = self._generate_nacl_key()
         keys = set_keys(ecc_key, nacl_key)
         if serialized is True:
-            keys = self._serialize_key(keys)
+            keys = self._serialize_key(keys, adapted=adapted)
         return keys
 
     def _adapt_public_shares(self, public_shares):
@@ -126,10 +126,10 @@ class KeyManager(KeySerializer):
         return public_shares
 
     def get_public_from_key(self, key, serialized=True, 
-        from_adapted=True, to_adapted=True):
-        # import pdb; pdb.set_trace()
+        from_adapted=False, to_adapted=False):
         if from_adapted:
-            key = self._deserialize_key(key, from_adapted=True)
+            key = self._deserialize_key(key, from_adapted=from_adapted)
+        # import pdb; pdb.set_trace()
         ecc_pub, nacl_pub = _extract_public_keys(key)
         if serialized:
             ecc_pub  = self._serialize_ecc_public(ecc_pub)
