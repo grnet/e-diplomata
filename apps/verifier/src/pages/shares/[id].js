@@ -136,17 +136,17 @@ export default function Title() {
           <Grid container direction="row" justify="space-between">
             {title && title.status == "unawarded"  && (<Grid item xs={4}>
               <Box component="span" mr={2}>
-                <Button onClick={() => { updateStatus("success") }}>Success</Button>
+                <Button onClick={() => { updateStatus("accepted") }}>Accept</Button>
               </Box>
               <Button onClick={() => { updateStatus("failed") }}>Dismiss</Button>
             </Grid>)
             }
-            {title && title.status == "success" && (<Grid item xs={4}>
+            {title && title.status == "accepted" && (<Grid item xs={4}>
               <CallToActionButton href="/titles">Ποιστοποήσεις</CallToActionButton>
             </Grid>)
             }
             {title && title.status == "failed" && (<Grid item xs={4}>
-              <Button onClick={() => { updateStatus("success") }}>Success</Button>
+              <Button onClick={() => { updateStatus("accepted") }}>Accept</Button>
             </Grid>)
             }
             <Grid item xs={4} style={{ textAlign: "right" }}><CallToActionButton href="/shares">Πίσω</CallToActionButton></Grid>

@@ -65,7 +65,7 @@ export default function Titles() {
   const router = useRouter();
   const [titles, setTitles] = useState([]);
   const [searchForm, setSearchForm] = useState({
-    status: "success",
+    status: "accepted",
     limit: 10,
     offset: 1,
   });
