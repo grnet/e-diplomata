@@ -11,7 +11,7 @@ const valuePool = {
   numberOfDegree: ["7", "8", "9"],
   rector: ["tuc", "assoe"],
   year: ["2005", "2006", "2007"],
-  status: ["unawarded", "success", "failed"],
+  status: ["unawarded", "accepted", "failed"],
 };
 const diplomas = new Array(25).fill({}).map((item, index) => {
   return {
