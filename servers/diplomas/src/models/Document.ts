@@ -13,7 +13,7 @@ const DocumentSchema = new mongoose.Schema({
     ref: 'Holder'
   },
   grade: Number,
-  degreeData: Date,
+  degreeDate: Date,
   dean: String,
   certificateNumber: String,
   supervisors: String,

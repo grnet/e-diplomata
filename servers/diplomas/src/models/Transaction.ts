@@ -1,4 +1,7 @@
-const TransactionSchema = mongoose.Schema({
+import mongoose from "mongoose";
+
+
+const TransactionSchema = new mongoose.Schema({
   hash: {
     type: String
   },

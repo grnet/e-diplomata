@@ -2,10 +2,7 @@ import mongoose from "mongoose";
 import KeysSchema from "./Keys";
 
 const VerifierSchema = new mongoose.Schema({
-  username: {
-    type: String,
-    required: true
-  },
+  title: String,
   email: {
     type: String,
     required: true

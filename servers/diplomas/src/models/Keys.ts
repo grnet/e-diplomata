@@ -2,18 +2,19 @@ import mongoose from "mongoose";
 
 const PrivatePublic = new mongoose.Schema({
   private: {
-    type: String
+    type: Array,
+    of: String
   },
   public: {
-    type: String
+    type: Array,
+    of: String
   }
 })
 
 
 const KeysSchema = new mongoose.Schema({
-  nacl: PrivatePublic,
+  crypto: PrivatePublic,
   wallet: PrivatePublic,
-  elgamal: PrivatePublic
 });
 
 // export model Document with DocumentSchema
