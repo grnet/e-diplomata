@@ -1,8 +1,14 @@
 import { ethers } from 'ethers';
+// import {
+//   Bytecode,
+//   CERTIFICATE_ABI
+// } from './contracts/Certificv2';
+
+// import dummyContract
 import {
-  Bytecode,
-  CERTIFICATE_ABI
-} from './contracts/Certificv2';
+     Bytecode,
+     CERTIFICATE_ABI
+} from './contracts/Award';
 
 const { Contract, utils, ContractFactory } = ethers;
 export type ProviderConfig = {
@@ -22,88 +28,54 @@ export interface DeployContractOutputInterface {
   error: string;
 }
 
-// publishAward
-export interface PublishAwardInputInterface {
-  hashOfAwardFirstPart: string;
-  hashOfAwardSecondPart: string;
+// call dummy function - publish
+export interface PublishInputInterface {
+  s_1: string;
+  s_2: string;
+  s_3: string;
   contractAddressUsedByIssuer: string;
   provider: ProviderConfig["provider"];
   accountIssuer: ProviderConfig["account"];
   addressIssuer: ProviderConfig["address"];
 }
 
-/* publishProof
-   the names of the variables are the same as the ones used in the protocol
-   and are defined in d4.2
-*/
-export interface PublishProofInputInterface {
-  contractAddressUsedByIssuer: string;
-  sReq: string;
-  c: string;
-  c2: string;
-  nirenc: string;
-  ev: string;
-  provider: ProviderConfig["provider"];
-  accountIssuer: ProviderConfig["account"];
-  addressIssuer: ProviderConfig["address"];
-}
-
-// publishAward and publishProof
-export interface PublishAwardOutputInterface {
+export interface PublishOutputInterface {
   transactionHash: string;
   error: string;
 }
 
-/* Holder-Verifier-Service
-    publishRequest
-    the variables VerifKeyPart1,VerifkeyPart2,VerifkeyPart3,VerifkeyPart4 hold
-    the Verifier's ElGamal public key which we suppose is 1024bits
-    Each variable in BC can hold up to 256bits so we need 4 
-    variables to save the key
-    the variable sawd is the one defined in d4.2
-*/
-export interface PublishRequestInputInterface {
-  contractAddressUsedByIssuer: string;
-  sAwd: string;
-  VerifKeyPart1: string;
-  VerifKeyPart2: string;
-  VerifKeyPart3: string;
-  VerifKeyPart4: string;
+export interface TransactionReceiptInfoInputInterface {
+  tHash: string;
   provider: ProviderConfig["provider"];
-  accountHolder: ProviderConfig["account"];
-  addressHolder: ProviderConfig["address"];
 }
 
-export interface PublishAckInputInterface {
-  contractAddressUsedByIssuer: string;
-  sPrf: string;
-  eI: string;
-  provider: ProviderConfig["provider"];
-  accountVerifier: ProviderConfig["account"];
-  addressVerifier: ProviderConfig["address"];
+export interface TransactionReceiptInfoOutputInterface {
+  transactionReceiptInfo?: ethers.providers.TransactionReceipt;
+  status: string;
 }
 
-export interface PublishFailInputInterface {
-  contractAddressUsedByIssuer: string;
-  sPrf: string;
-  provider: ProviderConfig["provider"];
-  accountVerifier: ProviderConfig["account"];
-  addressVerifier: ProviderConfig["address"];
+export interface GenerateWalletInputInterface {
+  //network: ganache or other public
+  networkType: string;
+  //party: Issuer or Holder or Verifier
+  party: string;
 }
 
-const deployContract = async (inputDeploy : DeployContractInputInterface) : Promise<DeployContractOutputInterface> => {
+export interface GenerateWalletOutputInterface {
+  newWalletObject?: ethers.Wallet | ethers.providers.JsonRpcSigner;
+  newWalletAddress?: string;
+  error?: string;
+}
+
+const deployContract = async (inputDeploy : DeployContractInputInterface) 
+: Promise<DeployContractOutputInterface> => {
   try {
     let newContract = new ContractFactory(CERTIFICATE_ABI, Bytecode, inputDeploy.accountIssuer);
     const contract = await newContract.deploy();
-    /* wait for contract creation transaction to be mined
-      Important
-      what if we have an error? How much time should we await if not mined?
-      maybe use try catch..
-    */
-    let receipt = await contract.deployTransaction.wait();
+    let receipt = contract.deployTransaction;
     return {
-      contractAddress: receipt.contractAddress,
-      tranHash: receipt.transactionHash,
+      contractAddress: contract.address,
+      tranHash: receipt.hash,
       error: ''
     };
   }
@@ -116,26 +88,20 @@ const deployContract = async (inputDeploy : DeployContractInputInterface) : Prom
   }
 }
 
-const publishAward = async (inputAward: PublishAwardInputInterface)
-  : Promise<PublishAwardOutputInterface> => {
-  // pass a provider when initiating a contract for read only queries
+const publish = async (inputData: PublishInputInterface)
+: Promise<PublishOutputInterface> => {
   let conInstance = new Contract(
-    inputAward.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAward.provider
-  );
-  let contract_owner = await conInstance.getOwner();
-  console.log(contract_owner);
-  //Call award function
-  let conInstanceAw = new Contract(
-    inputAward.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAward.accountIssuer
+    inputData.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputData.accountIssuer
   );
   //estimateGas
   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
   let gas;
   try{
-      gas = await conInstanceAw.estimateGas.award(
-      inputAward.hashOfAwardFirstPart,
-      inputAward.hashOfAwardSecondPart
-    );
+   gas = await conInstance.estimateGas.publish(
+      inputData.s_1,
+      inputData.s_2,
+      inputData.s_3
+  );
   }
   catch(err){
     return { 
@@ -143,214 +109,430 @@ const publishAward = async (inputAward: PublishAwardInputInterface)
       error: err.error.message
     };
   }
+  console.log(gas);
   const options = {
     gasLimit: gas, 
     gasPrice: gasPrice,
-    from: inputAward.addressIssuer
+    from: inputData.addressIssuer
   }
-  let tx = await conInstanceAw.award(
-    inputAward.hashOfAwardFirstPart,
-    inputAward.hashOfAwardSecondPart,
-    options
+  let receipt = await conInstance.publish(
+      inputData.s_1,
+      inputData.s_2,
+      inputData.s_3,
+      options
   );
-  // wait for the transaction to be mined
-  const receipt = await tx.wait();
   return { 
-    transactionHash: receipt.transactionHash,
+    transactionHash: receipt.hash,
     error: ''
   };
 }
 
-const publishProof = async (inputProof: PublishProofInputInterface)
-  : Promise<PublishAwardOutputInterface> => {
-  /*Important!!! To be implemented - We should check if cAdd is correct.
-    Maybe the Service has stored this address after deployment
-    so it is not necessary for the Issuer to submit it
-  */
-  let conInstance = new Contract(
-    inputProof.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputProof.provider
-  );
-  let contract_owner = await conInstance.getOwner();
-  console.log(contract_owner);
-  //Call proof function
-  let conInstancePr = new Contract(
-    inputProof.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputProof.accountIssuer
-  );
-  //estimateGas
-  let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
-  let gas;
-  try{
-    gas = await conInstancePr.estimateGas.proof(
-      inputProof.sReq, inputProof.c, inputProof.c2, inputProof.nirenc, inputProof.ev
-    );
+// returns the content of a transaction and informs whether it is mined
+const transactionReceiptInfo = async (inputTransactionReceiptInfo : TransactionReceiptInfoInputInterface) 
+: Promise<TransactionReceiptInfoOutputInterface> => {
+  let receipt = await inputTransactionReceiptInfo.provider.getTransactionReceipt(inputTransactionReceiptInfo.tHash);
+  if(receipt == null){
+    return {
+      status: "not mined yet"
+    }
   }
-  catch(err){
-    return { 
-      transactionHash: '',
-      error: err.error.message
-    };
-  }
-  let options = {
-    gasLimit: gas, 
-    gasPrice: gasPrice,
-    from: inputProof.addressIssuer
-  }
-  let tx = await conInstancePr.proof(
-    inputProof.sReq, inputProof.c, inputProof.c2, inputProof.nirenc, inputProof.ev,
-    options
-  );
-  // wait for the transaction to be mined
-  const receipt = await tx.wait();
-  return { 
-    transactionHash: receipt.transactionHash,
-    error: ''
+  return {
+    transactionReceiptInfo: receipt,
+    status: "mined"
   };
 }
 
-//* Holder-Verifier Service
-const publishRequest = async (inputRequest: PublishRequestInputInterface)
-  : Promise<PublishAwardOutputInterface> => {
-  let conInstance = new Contract(
-    inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputRequest.provider
-  );
-  let contract_owner = await conInstance.getOwner();
-  console.log(contract_owner);
-  //Call request function
-  let conInstanceReq = new Contract(
-    inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputRequest.accountHolder
-  );
-  //estimateGas
-  let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
-  let gas;
-  try {
-    gas= await conInstanceReq.estimateGas.request(
-      inputRequest.sAwd,
-      inputRequest.VerifKeyPart1,
-      inputRequest.VerifKeyPart2,
-      inputRequest.VerifKeyPart3,
-      inputRequest.VerifKeyPart4
-    );
+const generateWallet = function(inputGenerateWallet : GenerateWalletInputInterface) : GenerateWalletOutputInterface {
+  if(inputGenerateWallet.networkType == "ganache"){
+    let provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
+    if(inputGenerateWallet.party == "Issuer"){
+      let accountIssuer = provider.getSigner(0);
+      return { newWalletObject : accountIssuer, newWalletAddress: accountIssuer._address}; 
+    }
+    else if(inputGenerateWallet.party == "Holder"){
+      let accountHolder = provider.getSigner(1);
+      return { newWalletObject : accountHolder, newWalletAddress: accountHolder._address}; 
+    }
+    else if(inputGenerateWallet.party == "Verifier"){
+      let accountVerifier = provider.getSigner(2);
+      return { newWalletObject : accountVerifier, newWalletAddress: accountVerifier._address}; 
+    }
+    else{
+      return { error : "wrong string party" }; 
+    }
   }
-  catch(err){
-    return { 
-      transactionHash: '',
-      error: err.error.message
-    };
+  else{
+    //how we can generate new wallet
+    let newWallet = ethers.Wallet.createRandom();
+    console.log(newWallet);
+    return { newWalletObject : newWallet, newWalletAddress: newWallet.address}; 
+  //  // return dummy wallet based on party asked
+  //   if(inputGenerateWallet.party == "Issuer"){
+  //     let issuerWallet = new ethers.Wallet(`365c49f1e59341446c9b648505ee9fb5c538276ea6e42be0b53b76309aad27df`);
+  //     return { newWalletObject : issuerWallet, newWalletAddress: issuerWallet.address}; 
+  //   }
+  //   else if(inputGenerateWallet.party == "Holder"){
+  //     // the address for the following private key is 0x8749DeC19Ca10b48A35d7c69bF0b2a94b9FAFAeE
+  //     let holderWallet = new ethers.Wallet(`20ed15dc2080aa0c5acb0c9507bf845bfaafc35ff1968c5cbd000964ee0650fb`);
+  //     return { newWalletObject : holderWallet, newWalletAddress: holderWallet.address}; 
+  //   }
+  //   else if(inputGenerateWallet.party == "Verifier"){
+  //     // the address for the following private key is 0x4796EfEDE22C3bF86c5Bc7D28214f176b88e4298
+  //     let verifierWallet = new ethers.Wallet(`d58515b2e936790899c05f261c13eb76515d5cf71606b1789bba812ed496e183`);
+  //     return { newWalletObject : verifierWallet, newWalletAddress: verifierWallet.address}; 
+  //   }
+  //   else{
+  //     return { error : "wrong string party" }; 
+  //   }
   }
-  let options = {
-    gasLimit: gas, 
-    gasPrice: gasPrice,
-    from: inputRequest.addressHolder
-  }
-  let tx = await conInstanceReq.request(
-    inputRequest.sAwd,
-    inputRequest.VerifKeyPart1,
-    inputRequest.VerifKeyPart2,
-    inputRequest.VerifKeyPart3,
-    inputRequest.VerifKeyPart4,
-    options
-  );
-  // wait for the transaction to be mined
-  const receipt = await tx.wait();
-  return { 
-    transactionHash: receipt.transactionHash,
-    error: ''
-  };
-}
-
-const publishAck = async (inputAck: PublishAckInputInterface)
-  : Promise<PublishAwardOutputInterface> => {
-  let conInstance = new Contract(
-    inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAck.provider
-  );
-  let contract_owner = await conInstance.getOwner();
-  console.log(contract_owner);
-  //Call ack function
-  let conInstanceAck = new Contract(
-    inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAck.accountVerifier
-  );
-  //estimateGas
-  let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
-  let gas; 
-  try {
-    gas= await conInstanceAck.estimateGas.ack(
-      inputAck.sPrf,
-      inputAck.eI
-    );
-  }
-  catch(err){
-    return { 
-      transactionHash: '',
-      error: err.error.message
-    };
-  }
-  let options = {
-    gasLimit: gas, 
-    gasPrice: gasPrice,
-    //from we should specify verifiers ethereum key
-    from: inputAck.addressVerifier
-  }
-  let tx = await conInstanceAck.ack(
-    inputAck.sPrf,
-    inputAck.eI,
-    options
-  );
-  // wait for the transaction to be mined
-  const receipt = await tx.wait();
-  return { 
-    transactionHash: receipt.transactionHash,
-    error: ''
-  };
-}
-
-const publishFail = async (inputFail: PublishFailInputInterface)
-  : Promise<PublishAwardOutputInterface> => {
-  let conInstance = new Contract(
-    inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputFail.provider
-  );
-  let contract_owner = await conInstance.getOwner();
-  console.log(contract_owner);
-  //Call fail function
-  let conInstanceFail = new Contract(
-    inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputFail.accountVerifier
-  );
-  //estimateGas
-  let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
-  let gas; 
-  try{
-    gas= await conInstanceFail.estimateGas.fail(
-      inputFail.sPrf
-    );
-  }
-  catch(err){
-    return { 
-      transactionHash: '',
-      error: err.error.message
-    };
-  }
-  let options = {
-    gasLimit: gas,
-    gasPrice: gasPrice,
-    //from we should specify verifiers ethereum key
-    from: inputFail.addressVerifier
-  }
-  let tx = await conInstanceFail.fail(
-    inputFail.sPrf,
-    options
-  );
-  // wait for the transaction to be mined
-  const receipt = await tx.wait();
-  return { 
-    transactionHash: receipt.transactionHash,
-    error: ''
-  };
 }
 
 export {
   deployContract,
-  publishProof,
-  publishAward,
-  publishRequest,
-  publishAck,
-  publishFail
+  publish,
+  transactionReceiptInfo,
+  generateWallet
 }
+// // deployContract
+// export interface DeployContractInputInterface {
+//   accountIssuer: ProviderConfig["account"];
+// }
+
+// export interface DeployContractOutputInterface {
+//   contractAddress: string;
+//   tranHash: string;
+//   error: string;
+// }
+
+// // publishAward
+// export interface PublishAwardInputInterface {
+//   hashOfAwardFirstPart: string;
+//   hashOfAwardSecondPart: string;
+//   contractAddressUsedByIssuer: string;
+//   provider: ProviderConfig["provider"];
+//   accountIssuer: ProviderConfig["account"];
+//   addressIssuer: ProviderConfig["address"];
+// }
+
+// /* publishProof
+//    the names of the variables are the same as the ones used in the protocol
+//    and are defined in d4.2
+// */
+// export interface PublishProofInputInterface {
+//   contractAddressUsedByIssuer: string;
+//   sReq: string;
+//   c: string;
+//   c2: string;
+//   nirenc: string;
+//   ev: string;
+//   provider: ProviderConfig["provider"];
+//   accountIssuer: ProviderConfig["account"];
+//   addressIssuer: ProviderConfig["address"];
+// }
+
+// // publishAward and publishProof
+// export interface PublishAwardOutputInterface {
+//   transactionHash: string;
+//   error: string;
+// }
+
+// /* Holder-Verifier-Service
+//     publishRequest
+//     the variables VerifKeyPart1,VerifkeyPart2,VerifkeyPart3,VerifkeyPart4 hold
+//     the Verifier's ElGamal public key which we suppose is 1024bits
+//     Each variable in BC can hold up to 256bits so we need 4 
+//     variables to save the key
+//     the variable sawd is the one defined in d4.2
+// */
+// export interface PublishRequestInputInterface {
+//   contractAddressUsedByIssuer: string;
+//   sAwd: string;
+//   VerifKeyPart1: string;
+//   VerifKeyPart2: string;
+//   VerifKeyPart3: string;
+//   VerifKeyPart4: string;
+//   provider: ProviderConfig["provider"];
+//   accountHolder: ProviderConfig["account"];
+//   addressHolder: ProviderConfig["address"];
+// }
+
+// export interface PublishAckInputInterface {
+//   contractAddressUsedByIssuer: string;
+//   sPrf: string;
+//   eI: string;
+//   provider: ProviderConfig["provider"];
+//   accountVerifier: ProviderConfig["account"];
+//   addressVerifier: ProviderConfig["address"];
+// }
+
+// export interface PublishFailInputInterface {
+//   contractAddressUsedByIssuer: string;
+//   sPrf: string;
+//   provider: ProviderConfig["provider"];
+//   accountVerifier: ProviderConfig["account"];
+//   addressVerifier: ProviderConfig["address"];
+// }
+
+// const deployContract = async (inputDeploy : DeployContractInputInterface) : Promise<DeployContractOutputInterface> => {
+//   try {
+//     let newContract = new ContractFactory(CERTIFICATE_ABI, Bytecode, inputDeploy.accountIssuer);
+//     const contract = await newContract.deploy();
+//     /* wait for contract creation transaction to be mined
+//       Important
+//       what if we have an error? How much time should we await if not mined?
+//       maybe use try catch..
+//     */
+//     let receipt = await contract.deployTransaction.wait();
+//     return {
+//       contractAddress: receipt.contractAddress,
+//       tranHash: receipt.transactionHash,
+//       error: ''
+//     };
+//   }
+//   catch(err){
+//     return {
+//       contractAddress: '',
+//       tranHash: '',
+//       error: err.error.message
+//     };
+//   }
+// }
+
+// const publishAward = async (inputAward: PublishAwardInputInterface)
+//   : Promise<PublishAwardOutputInterface> => {
+//   // pass a provider when initiating a contract for read only queries
+//   let conInstance = new Contract(
+//     inputAward.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAward.provider
+//   );
+//   let contract_owner = await conInstance.getOwner();
+//   console.log(contract_owner);
+//   //Call award function
+//   let conInstanceAw = new Contract(
+//     inputAward.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAward.accountIssuer
+//   );
+//   //estimateGas
+//   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
+//   let gas;
+//   try{
+//       gas = await conInstanceAw.estimateGas.award(
+//       inputAward.hashOfAwardFirstPart,
+//       inputAward.hashOfAwardSecondPart
+//     );
+//   }
+//   catch(err){
+//     return { 
+//       transactionHash: '',
+//       error: err.error.message
+//     };
+//   }
+//   const options = {
+//     gasLimit: gas, 
+//     gasPrice: gasPrice,
+//     from: inputAward.addressIssuer
+//   }
+//   let tx = await conInstanceAw.award(
+//     inputAward.hashOfAwardFirstPart,
+//     inputAward.hashOfAwardSecondPart,
+//     options
+//   );
+//   // wait for the transaction to be mined
+//   const receipt = await tx.wait();
+//   return { 
+//     transactionHash: receipt.transactionHash,
+//     error: ''
+//   };
+// }
+
+// const publishProof = async (inputProof: PublishProofInputInterface)
+//   : Promise<PublishAwardOutputInterface> => {
+//   /*Important!!! To be implemented - We should check if cAdd is correct.
+//     Maybe the Service has stored this address after deployment
+//     so it is not necessary for the Issuer to submit it
+//   */
+//   let conInstance = new Contract(
+//     inputProof.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputProof.provider
+//   );
+//   let contract_owner = await conInstance.getOwner();
+//   console.log(contract_owner);
+//   //Call proof function
+//   let conInstancePr = new Contract(
+//     inputProof.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputProof.accountIssuer
+//   );
+//   //estimateGas
+//   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
+//   let gas;
+//   try{
+//     gas = await conInstancePr.estimateGas.proof(
+//       inputProof.sReq, inputProof.c, inputProof.c2, inputProof.nirenc, inputProof.ev
+//     );
+//   }
+//   catch(err){
+//     return { 
+//       transactionHash: '',
+//       error: err.error.message
+//     };
+//   }
+//   let options = {
+//     gasLimit: gas, 
+//     gasPrice: gasPrice,
+//     from: inputProof.addressIssuer
+//   }
+//   let tx = await conInstancePr.proof(
+//     inputProof.sReq, inputProof.c, inputProof.c2, inputProof.nirenc, inputProof.ev,
+//     options
+//   );
+//   // wait for the transaction to be mined
+//   const receipt = await tx.wait();
+//   return { 
+//     transactionHash: receipt.transactionHash,
+//     error: ''
+//   };
+// }
+
+// //* Holder-Verifier Service
+// const publishRequest = async (inputRequest: PublishRequestInputInterface)
+//   : Promise<PublishAwardOutputInterface> => {
+//   let conInstance = new Contract(
+//     inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputRequest.provider
+//   );
+//   let contract_owner = await conInstance.getOwner();
+//   console.log(contract_owner);
+//   //Call request function
+//   let conInstanceReq = new Contract(
+//     inputRequest.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputRequest.accountHolder
+//   );
+//   //estimateGas
+//   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
+//   let gas;
+//   try {
+//     gas= await conInstanceReq.estimateGas.request(
+//       inputRequest.sAwd,
+//       inputRequest.VerifKeyPart1,
+//       inputRequest.VerifKeyPart2,
+//       inputRequest.VerifKeyPart3,
+//       inputRequest.VerifKeyPart4
+//     );
+//   }
+//   catch(err){
+//     return { 
+//       transactionHash: '',
+//       error: err.error.message
+//     };
+//   }
+//   let options = {
+//     gasLimit: gas, 
+//     gasPrice: gasPrice,
+//     from: inputRequest.addressHolder
+//   }
+//   let tx = await conInstanceReq.request(
+//     inputRequest.sAwd,
+//     inputRequest.VerifKeyPart1,
+//     inputRequest.VerifKeyPart2,
+//     inputRequest.VerifKeyPart3,
+//     inputRequest.VerifKeyPart4,
+//     options
+//   );
+//   // wait for the transaction to be mined
+//   const receipt = await tx.wait();
+//   return { 
+//     transactionHash: receipt.transactionHash,
+//     error: ''
+//   };
+// }
+
+// const publishAck = async (inputAck: PublishAckInputInterface)
+//   : Promise<PublishAwardOutputInterface> => {
+//   let conInstance = new Contract(
+//     inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAck.provider
+//   );
+//   let contract_owner = await conInstance.getOwner();
+//   console.log(contract_owner);
+//   //Call ack function
+//   let conInstanceAck = new Contract(
+//     inputAck.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputAck.accountVerifier
+//   );
+//   //estimateGas
+//   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
+//   let gas; 
+//   try {
+//     gas= await conInstanceAck.estimateGas.ack(
+//       inputAck.sPrf,
+//       inputAck.eI
+//     );
+//   }
+//   catch(err){
+//     return { 
+//       transactionHash: '',
+//       error: err.error.message
+//     };
+//   }
+//   let options = {
+//     gasLimit: gas, 
+//     gasPrice: gasPrice,
+//     //from we should specify verifiers ethereum key
+//     from: inputAck.addressVerifier
+//   }
+//   let tx = await conInstanceAck.ack(
+//     inputAck.sPrf,
+//     inputAck.eI,
+//     options
+//   );
+//   // wait for the transaction to be mined
+//   const receipt = await tx.wait();
+//   return { 
+//     transactionHash: receipt.transactionHash,
+//     error: ''
+//   };
+// }
+
+// const publishFail = async (inputFail: PublishFailInputInterface)
+//   : Promise<PublishAwardOutputInterface> => {
+//   let conInstance = new Contract(
+//     inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputFail.provider
+//   );
+//   let contract_owner = await conInstance.getOwner();
+//   console.log(contract_owner);
+//   //Call fail function
+//   let conInstanceFail = new Contract(
+//     inputFail.contractAddressUsedByIssuer, CERTIFICATE_ABI, inputFail.accountVerifier
+//   );
+//   //estimateGas
+//   let gasPrice = utils.parseUnits('10', 'gwei').toNumber();
+//   let gas; 
+//   try{
+//     gas= await conInstanceFail.estimateGas.fail(
+//       inputFail.sPrf
+//     );
+//   }
+//   catch(err){
+//     return { 
+//       transactionHash: '',
+//       error: err.error.message
+//     };
+//   }
+//   let options = {
+//     gasLimit: gas,
+//     gasPrice: gasPrice,
+//     //from we should specify verifiers ethereum key
+//     from: inputFail.addressVerifier
+//   }
+//   let tx = await conInstanceFail.fail(
+//     inputFail.sPrf,
+//     options
+//   );
+//   // wait for the transaction to be mined
+//   const receipt = await tx.wait();
+//   return { 
+//     transactionHash: receipt.transactionHash,
+//     error: ''
+//   };
+// }
+
+// export {
+//   deployContract,
+//   publishProof,
+//   publishAward,
+//   publishRequest,
+//   publishAck,
+//   publishFail
+// }
