@@ -8,41 +8,22 @@ from Cryptodome.Math.Numbers import Integer
 from Cryptodome.PublicKey import ECC
 from Cryptodome.Hash import SHA384
 from diplomata.util import *
-from diplomata.adaptors import _ElGamalSerializer
 
-
-def gen_curve(name):
-    """
-    Elliptic-curve generation
-    """
-    return ECC._curves[name]
 
 def hash_into_scalar(bytes_seq, endianness='big'):
-    """
-    t -> H(t), where H(t) can act as scalar on elliptic points
-    """
     value = int.from_bytes(SHA384.new(bytes_seq).digest(), endianness)
     return Integer(value)
 
 def fiat_shamir(*points):
-    """
-    Fiat-Shamir heuristic over elliptic curve points
-    """
     payload = ' '.join(map(lambda p: f'{p.xy}', points)).encode('utf-8')
     out = hash_into_scalar(payload)
     return out
 
 def _ecc_pub(ecc_key):
-    """
-    Public part of provided key
-    """
     return ecc_key.pointQ
 
 
-class ElGamalCrypto(_ElGamalSerializer):
-    """
-    The cryptosystem
-    """
+class ElGamalCrypto(object):
 
     def __init__(self, curve='P-384'):
         self.curve = gen_curve(name=curve)
@@ -137,69 +118,3 @@ class ElGamalCrypto(_ElGamalSerializer):
         except ValueError:
             return False
         return True
-
-
-class EccPointSerializer(object):
-    """
-    Serializer infrastructure for elliptic points and scalars
-    """
-
-    def _serialize_ecc_point(self, pt):
-        return self._cryptosys.serialize_ecc_point(pt)
-    
-    def _deserialize_ecc_point(self, pt):
-        return self._cryptosys.deserialize_ecc_point(pt)
-    
-    def _serialize_scalar(self, scalar):
-        return self._cryptosys.serialize_scalar(scalar)
-    
-    def _deserialize_scalar(self, scalar):
-        return self._cryptosys.deserialize_scalar(scalar)
-
-
-class ElGamalKeySerializer(EccPointSerializer):
-    """
-    Serializer infrastructure for El-Gamal keys
-    """
-
-    def _serialize_ecc_key(self, ecc_key):
-        return self._cryptosys.serialize_ecc_key(ecc_key)
-    
-    def _deserialize_ecc_key(self, ecc_key):
-        return self._cryptosys.deserialize_ecc_key(ecc_key)
-
-    def _serialize_ecc_public(self, pub):
-        return self._cryptosys.serialize_ecc_public(pub)
-
-    def _deserialize_ecc_public(self, pub):
-        return self._cryptosys.deserialize_ecc_public(pub)
-
-
-class ElGamalSerializer(EccPointSerializer):
-    """
-    Serializer infrastructure for ElGamal structures
-    """
-
-    def _serialize_cipher(self, cipher):
-        return self._cryptosys.serialize_cipher(cipher)
-    
-    def _deserialize_cipher(self, cipher):
-        return self._cryptosys.deserialize_cipher(cipher)
-
-    def _serialize_ddh(self, ddh):
-        return self._cryptosys.serialize_ddh(ddh)
-    
-    def _deserialize_ddh(self, ddh):
-        return self._cryptosys.deserialize_ddh(ddh)
-
-    def _serialize_chaum_pedersen(self, proof):
-        return self._cryptosys.serialize_chaum_pedersen(proof)
-    
-    def _deserialize_chaum_pedersen(self, proof):
-        return self._cryptosys.deserialize_chaum_pedersen(proof)
-    
-    def _serialize_ddh_proof(self, ddh_proof):
-        return self._cryptosys.serialize_ddh_proof(ddh_proof)
-    
-    def _deserialize_ddh_proof(self, ddh_proof):
-        return self._cryptosys.deserialize_ddh_proof(ddh_proof)

@@ -1,6 +1,15 @@
 """
 """
 
+from Cryptodome.PublicKey import ECC
+
+def gen_curve(name):
+    """
+    Elliptic-curve generation
+    """
+    return ECC._curves[name]
+
+
 # El-Gamal Backend Layer Structures
 
 def set_cipher(c1, c2):
