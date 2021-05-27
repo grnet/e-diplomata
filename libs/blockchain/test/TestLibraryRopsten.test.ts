@@ -1,14 +1,17 @@
 import { 
    // deployContract,
-  //  publish,
+    publish,
     transactionReceiptInfo
 } from '../src/index';
 
 import { ethers } from 'ethers';
 import { CERTIFICATE_ABI } from '../src/contracts/Award';
-import { providerTest, /*accountTest, addressTest*/ } from '../src/Infura';
+import { providerTest, accountTest, addressTest } from '../src/Infura';
 jest.setTimeout(100000);
-//const dummyHash = '0xca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb';
+const dummyHash = '0xca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb';
+// const dummyHash = '0x81c1eee27c3af6b85037b7f2198130b1abcefcfba489a9a2d489c9aa4ab1a76b';
+// const dummyHash2 = '0x61faba9f8e8194846a70048a9ff1af8810a11981fc31411032fcf5e9a6c9b460';
+// const dummyHash3 = '0x9a584ee3f09e9a0198ea5e1c75a04e8715b25af7a1418800d0cfa4205e4b1576';
 
 describe('testing functions in index.ts ', () => {
 
@@ -38,7 +41,7 @@ describe('testing functions in index.ts ', () => {
       });
       console.log(status.transactionReceiptInfo);
     });
-
+//
     // it('should publish an s_*award to Ropsten and then check that the correct data where published', async () => {
     //     const transactionHashAward = await publish({
     //         s_1: dummyHash,
@@ -69,7 +72,7 @@ describe('testing functions in index.ts ', () => {
     //     if(data){
     //         let txInfo = interf.parseTransaction({ data })
     //         console.log(txInfo.args);
-    //         expect(txInfo.args[0]).toBe('0xca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb');
+    //         expect(txInfo.args[0]).toBe('0x81c1eee27c3af6b85037b7f2198130b1abcefcfba489a9a2d489c9aa4ab1a76b');
     //     }
     // });
     //
