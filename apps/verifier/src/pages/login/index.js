@@ -6,28 +6,41 @@ import { Main } from "@digigov/ui/layouts/Basic";
 import Paragraph from "@digigov/ui/typography/Paragraph";
 import useAuth from "@digigov/auth";
 import VerifierLayout from "verifier/components/VerifierLayout";
+import FormBuilder, { Field } from '@digigov/form';
+import { useResource } from "@digigov/ui/api";
+import Select from '@material-ui/core/NativeSelect';
 
-const useStyles = makeStyles(
-  {
-    main: {},
-    side: {},
+const useStyles = makeStyles((theme) => ({
+  main: {},
+  side: {},
+  formControl: {
+    margin: theme.spacing(2),
+    minWidth: 120,
+    marginLeft: theme.spacing(0),
   },
-  { name: "MuiSite" }
-);
+  selectEmpty: {
+    marginTop: theme.spacing(2),
+  },
+}/* ,{ name: "MuiSite" } */));
 
 export default function Index() {
   const styles = useStyles();
   const auth = useAuth();
-  const demoLogin = useCallback(() => {
+  const { data } = useResource('verifier/dummy_credentials');
+  const demoLogin = useCallback(async (user) => {
     window.setTimeout(() => {
-      window.localStorage.setItem("login-next", "/shares");
-      window.location.href = auth.config.loginURL + "?username=test";
+      /* window.localStorage.setItem("login-next", "/shares"); */
+      // window.location.href = auth.config.loginURL + "?username=test";
     }, 1);
+    const response = await fetch('/api/verifier/login', {
+      method: 'POST',
+      body: JSON.stringify(user),
+      headers: {
+        'Content-Type': 'application/json'
+      }
+    }).then(res => res.json());
+    auth.authenticate(response.token)
   }, [auth.config.loginURL]);
-  
-  const demoLogout = useCallback(
-    () => auth.logout("/")
-  );
 
   return (
     <VerifierLayout>
@@ -35,11 +48,53 @@ export default function Index() {
         <PageTitle>
           <PageTitleHeading>Login Page</PageTitleHeading>
         </PageTitle>
-        <Paragraph>Welcome text</Paragraph>
+
         {!auth.authenticated ? (
-          <Button onClick={demoLogin}>Login</Button>
+          <>
+            <FormBuilder fields={[
+              {
+                key: 'password',
+                label: {
+                  primary: 'Password'
+                },
+                type: 'string',
+                extra: {
+                  type: 'password'
+                }
+              },
+              {
+                key: 'email',
+                label: {
+                  primary: 'Email'
+                },
+                type: 'string'
+              },
+            ]}
+              onSubmit={(data) => {
+                console.log(data);
+                demoLogin(data);
+              }}
+            >
+              <Field name={'email'} />
+              <Field name={'password'} />
+              <Button type='submit'>Login</Button>
+            </FormBuilder>
+            {data &&
+              <Select
+                className={styles.formControl}
+                onChange={(e) => {
+                  const user = data[e.target.value];
+                  demoLogin(user);
+                }}
+              >
+                {data &&
+                  data.map((verifier, index) => (
+                    <option key={index} value={index}>{verifier.title}</option>
+                  ))}
+              </Select>}
+          </>
         ) : (
-            <Button onClick={demoLogout}>Logout</Button>
+          <Button onClick={() => auth.logout("/")}>Logout</Button>
         )}
       </Main>
     </VerifierLayout>
