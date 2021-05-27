@@ -37,7 +37,6 @@ export default function loginFactory(Model:any){
         const payload = {
           user: {
             id: user.id,
-            type: Model.modelName
           }
         };
   
