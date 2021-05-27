@@ -50,7 +50,7 @@ export interface TransactionReceiptInfoInputInterface {
 }
 
 export interface TransactionReceiptInfoOutputInterface {
-  transactionReceiptInfo?: ethers.providers.TransactionReceipt;
+  transactionReceiptInfo?: ethers.providers.TransactionResponse;
   status: string;
 }
 
@@ -130,16 +130,19 @@ const publish = async (inputData: PublishInputInterface)
 // returns the content of a transaction and informs whether it is mined
 const transactionReceiptInfo = async (inputTransactionReceiptInfo : TransactionReceiptInfoInputInterface) 
 : Promise<TransactionReceiptInfoOutputInterface> => {
-  let receipt = await inputTransactionReceiptInfo.provider.getTransactionReceipt(inputTransactionReceiptInfo.tHash);
-  if(receipt == null){
-    return {
-      status: "not mined yet"
+  let receiptR = await inputTransactionReceiptInfo.provider.getTransactionReceipt(inputTransactionReceiptInfo.tHash);
+    if(receiptR == null){
+      return {
+        status: "not mined yet"
+      }
     }
-  }
-  return {
-    transactionReceiptInfo: receipt,
-    status: "mined"
-  };
+    else{
+      let receipt = await inputTransactionReceiptInfo.provider.getTransaction(inputTransactionReceiptInfo.tHash);
+      return {
+        transactionReceiptInfo: receipt,
+        status: "mined"
+      };
+    }
 }
 
 const generateWallet = function(inputGenerateWallet : GenerateWalletInputInterface) : GenerateWalletOutputInterface {
