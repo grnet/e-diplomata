@@ -4,7 +4,7 @@ import GovGRLogo from "@digigov/ui/govgr/Logo";
 import Header, { HeaderTitle } from "@digigov/ui/app/Header";
 import ServiceBadge from "@digigov/ui/core/ServiceBadge";
 
-export default function HolderLayout({ children }) {
+export default function VerifierLayout({ children }) {
   return (
     <BasicLayout>
       <Top>
