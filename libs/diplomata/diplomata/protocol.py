@@ -129,7 +129,6 @@ class KeyManager(KeySerializer):
         from_adapted=False, to_adapted=False):
         if from_adapted:
             key = self._deserialize_key(key, from_adapted=from_adapted)
-        # import pdb; pdb.set_trace()
         ecc_pub, nacl_pub = _extract_public_keys(key)
         if serialized:
             ecc_pub  = self._serialize_ecc_public(ecc_pub)

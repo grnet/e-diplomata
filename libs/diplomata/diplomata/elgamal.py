@@ -8,6 +8,7 @@ from Cryptodome.Math.Numbers import Integer
 from Cryptodome.PublicKey import ECC
 from Cryptodome.Hash import SHA384
 from diplomata.util import *
+from diplomata.adaptors import _ElGamalSerializer
 
 
 def gen_curve(name):
@@ -38,7 +39,7 @@ def _ecc_pub(ecc_key):
     return ecc_key.pointQ
 
 
-class ElGamalCrypto(object):
+class ElGamalCrypto(_ElGamalSerializer):
     """
     The cryptosystem
     """
@@ -54,123 +55,18 @@ class ElGamalCrypto(object):
     def order(self):
         return self.curve.order
 
-    def ecc_point_from_scalar(self, scalar):
-        return scalar * self.generator
-
-    
-    # Serialization/Deserialization
-
-    def serialize_ecc_point(self, pt):
-        return [int(_) for _ in pt.xy]
-    
-    def deserialize_ecc_point(self, pt):
-        return EccPoint(*pt, curve=self.curve.desc)
- 
-    def serialize_scalar(self, scalar):
-        return int(scalar)
-    
-    def deserialize_scalar(self, scalar):
-        return Integer(scalar)
-
-    def serialize_ecc_key(self, ecc_key):
-        pub  = self.serialize_ecc_point(ecc_key.pointQ)
-        priv = self.serialize_scalar(ecc_key.d)
-        return {
-            'x': pub[0],
-            'y': pub[1],
-            'd': priv,
-        }
-
-    def deserialize_ecc_key(self, ecc_key):
-        return ECC.construct(
-            curve=self.curve.desc,
-            point_x=ecc_key['x'],
-            point_y=ecc_key['y'],
-            d=ecc_key['d'],
-        )
-
-    def serialize_ecc_public(self, pub):
-        return self.serialize_ecc_point(pub)
-
-    def deserialize_ecc_public(self, pub, for_signature=False):
-        if for_signature is True:
-            return ECC.construct(
-                curve=self.curve.desc, 
-                point_x=pub[0], 
-                point_y=pub[1],
-            )
-        return self.deserialize_ecc_point(pub)
-
-    def serialize_cipher(self, cipher):
-        c1, c2 = extract_cipher(cipher)
-        c1 = self.serialize_ecc_point(c1)
-        c2 = self.serialize_ecc_point(c2)
-        cipher = set_cipher(c1, c2)
-        return cipher
-
-    def deserialize_cipher(self, cipher):
-        c1, c2 = extract_cipher(cipher)
-        c1 = self.deserialize_ecc_point(c1)
-        c2 = self.deserialize_ecc_point(c2)
-        cipher = set_cipher(c1, c2)
-        return cipher
-
-    def serialize_ddh(self, ddh):
-        return list(map(self.serialize_ecc_point, ddh))
-    
-    def deserialize_ddh(self, ddh):
-        return tuple(map(
-            self.deserialize_ecc_point, 
-            ddh
-        ))
-
-    def serialize_chaum_pedersen(self, proof):
-        u_comm, v_comm, s, d = extract_chaum_pedersen(proof)
-        u_comm = self.serialize_ecc_point(u_comm)
-        v_comm = self.serialize_ecc_point(v_comm)
-        s = self.serialize_scalar(s)
-        d = self.serialize_ecc_point(d)
-        proof = set_chaum_pedersen(u_comm, v_comm, s, d)
-        return proof
-    
-    def deserialize_chaum_pedersen(self, proof):
-        u_comm, v_comm, s, d = extract_chaum_pedersen(proof)
-        u_comm = self.deserialize_ecc_point(u_comm)
-        v_comm = self.deserialize_ecc_point(v_comm)
-        s = self.deserialize_scalar(s)
-        d = self.deserialize_ecc_point(d)
-        proof = set_chaum_pedersen(u_comm, v_comm, s, d)
-        return proof
-    
-    def serialize_ddh_proof(self, ddh_proof):
-        ddh, proof = extract_ddh_proof(ddh_proof)
-        ddh = self.serialize_ddh(ddh)
-        proof = self.serialize_chaum_pedersen(proof)
-        ddh_proof = set_ddh_proof(ddh, proof)
-        return ddh_proof
-    
-    def deserialize_ddh_proof(self, ddh_proof):
-        ddh, proof = extract_ddh_proof(ddh_proof)
-        ddh = self.deserialize_ddh(ddh)
-        proof = self.deserialize_chaum_pedersen(proof)
-        ddh_proof = set_ddh_proof(ddh, proof)
-        return ddh_proof
-
-
-    # Generation
-
     def random_scalar(self):
         return Integer.random_range(
             min_inclusive=1, 
             max_exclusive=self.order
         )
 
+    def ecc_point_from_scalar(self, scalar):
+        return scalar * self.generator
+
     def generate_key(self, curve='P-384'):
         return ECC.generate(curve=curve)
     
-
-    # Encryption/Decryption
-
     def encrypt(self, pub, m):
         g = self.generator                  # g
         r = self.random_scalar()            # r
@@ -200,9 +96,6 @@ class ElGamalCrypto(object):
         m = c2 + (-decryptor)
         return m
 
-
-    # Chaum-Pedersen protocol
-
     def generate_chaum_pedersen(self, ddh, z, *extras):
         g = self.generator
         p = self.order
@@ -227,9 +120,6 @@ class ElGamalCrypto(object):
         c = fiat_shamir(u, v, w, u_comm, v_comm, *extras)   # challenge
         return (s * u == u_comm + c * d) and \
                (s * g == v_comm + c * v)
-
-
-    # Digital Signature Algorithm (DSA)
 
     def sign(self, key, message):
         signer = DSS.new(key, 'fips-186-3')
