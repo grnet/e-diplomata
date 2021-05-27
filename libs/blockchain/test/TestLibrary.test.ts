@@ -4,15 +4,17 @@ import {
   transactionReceiptInfo,
   generateWallet
 } from '../src/index';
-import { eventsABI } from '../src/eventsABI';
+import { ethers } from 'ethers';
+//import { eventsABI } from '../src/eventsABI';
+import { CERTIFICATE_ABI } from '../src/contracts/Award';
 /*Uncomment one of the following depending on the provider*/
 //gia ganache topika
 import { provider, account, address} from '../src/Ganache';
 //provider.getUncheckedSigner(0);
 //gia INFURA
-//import { providerTest, accountTest } from '../src/Infura';
-jest.setTimeout(30000);
-const abiDecoder = require('abi-decoder');
+//import { providerTest,/* accountTest, addressTest*/ } from '../src/Infura';
+jest.setTimeout(60000);
+//const abiDecoder = require('abi-decoder');
 const dummyHash = '0xca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb';
 
 let contractAddress = '';
@@ -25,17 +27,18 @@ let receiptHash = '';
        tHash: result.tranHash,
        provider: provider
      });
+     console.log(status.status);
      while(status.status == "not mined yet"){
        status = await transactionReceiptInfo({
          tHash: result.tranHash,
          provider: provider
        })
      }
-     const requestABI = eventsABI;
+     //const requestABI = eventsABI;
      /* use abiDecoder to decode the logs and find the parameters of the emited event
        when a function of the smart contract was executed successfully
      */
-     abiDecoder.addABI(requestABI);
+    // abiDecoder.addABI(requestABI);
    });
 
   describe('testing functions in index.ts ', () => {
@@ -77,14 +80,14 @@ let receiptHash = '';
       expect(status.status).toBe('not mined yet');
     });
 
-    // it('use infura return transaction receipt from ethereum ropsten', async () => {
-    //   let status = await transactionReceiptInfo({
-    //     tHash: "0x2a54e28913fbfb6fa926f28e264ab395924720a0289be635a28ee18cbe78aa78",
-    //     provider: providerTest
-    //   });
-    //   console.log("mm"+ status.status);
-    //   console.log(status.transactionReceiptInfo);
-    // });
+    // // it('use infura return transaction receipt from ethereum ropsten', async () => {
+    // //   let status = await transactionReceiptInfo({
+    // //     tHash: "0x2a54e28913fbfb6fa926f28e264ab395924720a0289be635a28ee18cbe78aa78",
+    // //     provider: providerTest
+    // //   });
+    // //   console.log("mm"+ status.status);
+    // //   console.log(status.transactionReceiptInfo);
+    // // });
   
      it('should generate accounts', async () => {
        let accountHolder = generateWallet({
@@ -118,12 +121,21 @@ let receiptHash = '';
       /*search the Blockchain to find the transaction receipt.
         the search is done using the transactionHash of a transaction
       */
-      let receipt = await provider.getTransactionReceipt(transactionHashAward.transactionHash);
+      let receipt = await transactionReceiptInfo({
+        tHash: transactionHashAward.transactionHash,
+        provider: provider
+      });
+      receiptHash = transactionHashAward.transactionHash;
       console.log(receipt);
-      receiptHash = receipt.transactionHash;
-      console.log(receiptHash);
-      const decodedLogs = abiDecoder.decodeLogs(receipt.logs);
-      expect(decodedLogs[0].events[0].value).toBe(dummyHash);
+      let data = receipt.transactionReceiptInfo?.data;
+      let interf = new ethers.utils.Interface( CERTIFICATE_ABI );
+      if(data){
+        const txInfo = interf.parseTransaction({ data })
+        console.log(txInfo.args);
+        expect(txInfo.args[0]).toBe('0xca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb');
+      }
+      // const decodedLogs = abiDecoder.decodeLogs(receipt.logs);
+      // expect(decodedLogs[0].events[0].value).toBe(dummyHash);
     });
 
     it('return transaction receipt retrieved in the previous step', async () => {
@@ -133,6 +145,73 @@ let receiptHash = '';
       });
       console.log(status.transactionReceiptInfo);
     });
+
+    it('test data ethereum Ropsten specific data', async () => {
+      let data = '0x155c4a4eca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bbca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bbca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb';
+      let interf = new ethers.utils.Interface( CERTIFICATE_ABI );
+      const txInfo = interf.parseTransaction({ data })
+      console.log(txInfo.args);
+      expect(txInfo.args[0]).toBe('0xca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb');
+    });
+
+    //Publish to Ropsten
+    // it('should publish an s_*award to Ropsten and then check that the correct data where published', async () => {
+    //   const transactionHashAward = await publish({
+    //     s_1: dummyHash,
+    //     s_2: dummyHash, 
+    //     s_3: dummyHash,
+    //     contractAddressUsedByIssuer: '0xc466220c018f76747a272d2416e93de8bbd37d6e',
+    //     provider: providerTest,
+    //     accountIssuer: accountTest,
+    //     addressIssuer: addressTest
+    //   });
+    //   let status = await transactionReceiptInfo({
+    //     tHash: transactionHashAward.transactionHash,
+    //     provider: providerTest
+    //   });
+    //   while(status.status == "not mined yet"){
+    //     status = await transactionReceiptInfo({
+    //       tHash: transactionHashAward.transactionHash,
+    //       provider: providerTest
+    //     })
+    //   }
+    //   expect(status.status).toBe('mined');
+    //   /*search the Blockchain to find the transaction receipt.
+    //     the search is done using the transactionHash of a transaction
+    //   */
+    //   let receipt = await providerTest.getTransactionReceipt(transactionHashAward.transactionHash);
+    //   console.log(receipt);
+    //   receiptHash = receipt.transactionHash;
+    //   console.log(receiptHash);
+    //   const decodedLogs = abiDecoder.decodeLogs(receipt.logs);
+    //   expect(decodedLogs[0].events[0].value).toBe(dummyHash);
+    // });
+    // //
+    // it('test data ethereum Ropsten', async () => {
+    //   //   let status = await providerTest.getTransaction("0x30b90bddfa1a1dbb94feecaa5301c840f7015e028d4657ef354e272582095d64");
+           
+    //   //   console.log(status.data);
+    //   //       let data = status.data;
+    //   //   //  //let data = '0x155c4a4eca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bbca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bbca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb';
+    //   //     let interf = new ethers.utils.Interface( CERTIFICATE_ABI );
+    //   // const txInfo = interf.parseTransaction({ data })
+    //   let status = await transactionReceiptInfo({
+    //          tHash: "0x30b90bddfa1a1dbb94feecaa5301c840f7015e028d4657ef354e272582095d64",
+    //          provider: providerTest
+    //       });
+    //       console.log("mm"+ status.status);
+    //       console.log(status.transactionReceiptInfo);
+           
+    //    console.log(status.transactionReceiptInfo?.data);
+    //        let data = status.transactionReceiptInfo?.data;
+    //   // //  //let data = '0x155c4a4eca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bbca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bbca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb';
+    //      let interf = new ethers.utils.Interface( CERTIFICATE_ABI );
+    //      if(data){
+    //      const txInfo = interf.parseTransaction({ data })
+    //      console.log(txInfo.args);
+    //      expect(txInfo.args[0]).toBe('0xca978112ca1bbdcafac231b39a23dc4da786eff8147c4e72b9807785afee48bb');
+    //      }
+    // });
 });  
 
 //older Code 
