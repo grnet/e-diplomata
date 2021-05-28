@@ -75,20 +75,27 @@ class _Adaptor(metaclass=ABCMeta):
 
 class _ElGamalSerializer(_Adaptor):
 
-    def __init__(self, curve):
+    def __init__(self, curve, hexifier=True):
         self.curve = gen_curve(curve)
+        self.hexifier = hexifier
+
+    def _hexify(self, x):
+        return hex(x) if self.hexifier else x
+
+    def _unhexify(self, x):
+        return int(x.lstrip('0x'), 16) if self.hexifier else x
 
     def _adapt_scalar(self, scalar, reverse):
         if not reverse:
-            return int(scalar)
+            return self._hexify(int(scalar))
         else:
-            return Integer(scalar)
+            return Integer(self._unhexify(scalar))
 
     def _adapt_ecc_point(self, pt, reverse):
         if not reverse:
-            return [int(_) for _ in pt.xy]
+            return [self._hexify(int(_)) for _ in pt.xy]
         else:
-            return EccPoint(*pt, curve=self.curve.desc)
+            return EccPoint(*map(self._unhexify, pt), curve=self.curve.desc)
 
     def serialize_scalar(self, scalar):
         return self._adapt_scalar(scalar, reverse=False)
@@ -165,9 +172,9 @@ class _ElGamalKeySerializer(_ElGamalSerializer):
     def deserialize_ecc_key(self, ecc_key):
         return ECC.construct(
             curve=self.curve.desc,
-            point_x=ecc_key['x'],
-            point_y=ecc_key['y'],
-            d=ecc_key['d'],
+            point_x=self._unhexify(ecc_key['x']),
+            point_y=self._unhexify(ecc_key['y']),
+            d=self._unhexify(ecc_key['d']),
         )
 
     def serialize_ecc_public(self, pub):
@@ -199,21 +206,19 @@ class _KeySerializer(_ElGamalKeySerializer):
 
     def _adapt_key(self, key):
         ecc_key, nacl_key = extract_keys(key)
-        hexify = lambda x: hex(x)
         key = [
-            hexify(ecc_key['x']),
-            hexify(ecc_key['y']),
-            hexify(ecc_key['d']),
+            ecc_key['x'],
+            ecc_key['y'],
+            ecc_key['d'],
             nacl_key,
         ]
         return key
 
     def _radapt_key(self, key):
-        unhexify = lambda x: int(x, 16)
         ecc_key = {
-            'x': unhexify(key[0]),
-            'y': unhexify(key[1]),
-            'd': unhexify(key[2]),
+            'x': key[0],
+            'y': key[1],
+            'd': key[2],
         }
         nacl_key = key[3]
         key = set_keys(ecc_key, nacl_key)

@@ -52,19 +52,17 @@ class KeyManager(_KeySerializer):
 
     def _adapt_public_shares(self, public_shares):
         ecc_key, nacl_key = extract_keys(public_shares)
-        hexify = lambda x: hex(x)
         key = [
-            hexify(ecc_key[0]),
-            hexify(ecc_key[1]),
+            ecc_key[0],
+            ecc_key[1],
             nacl_key,
         ]
         return key
 
     def _radapt_public_shares(self, public_shares):
-        unhexify = lambda x: int(x, 16)
         ecc_key = [
-            unhexify(public_shares[0]),
-            unhexify(public_shares[1]),
+            public_shares[0],
+            public_shares[1],
         ]
         nacl_key = public_shares[2]
         public_shares = set_keys(ecc_key, nacl_key)

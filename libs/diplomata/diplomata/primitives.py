@@ -7,9 +7,6 @@ from diplomata.util import *
 
 
 class KeyOwner(object):
-    """
-    ElGamal-key owner interface
-    """
 
     def __init__(self, cryptosys, key=None):
         self.key = key
@@ -28,9 +25,6 @@ class KeyOwner(object):
 
 
 class Prover(KeyOwner):
-    """
-    Proof-generator over an ElGamal cryptosystem
-    """
 
     def __init__(self, curve='P-384', key=None):
         self.cryptosys = ElGamalCrypto(curve)
