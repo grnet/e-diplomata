@@ -42,43 +42,22 @@ class KeyManager(_KeySerializer):
     def _generate_nacl_key(self):
         return _NaclKey.generate()
 
-    def generate_keys(self, serialized=True, adapted=False):
+    def generate_keys(self, serialized=True):
         ecc_key  = self._generate_ecc_key()
         nacl_key = self._generate_nacl_key()
         keys = set_keys(ecc_key, nacl_key)
         if serialized is True:
-            keys = self._serialize_key(keys, adapted=adapted)
+            keys = self._serialize_key(keys)
         return keys
 
-    def _adapt_public_shares(self, public_shares):
-        ecc_key, nacl_key = extract_keys(public_shares)
-        key = [
-            ecc_key[0],
-            ecc_key[1],
-            nacl_key,
-        ]
-        return key
-
-    def _radapt_public_shares(self, public_shares):
-        ecc_key = [
-            public_shares[0],
-            public_shares[1],
-        ]
-        nacl_key = public_shares[2]
-        public_shares = set_keys(ecc_key, nacl_key)
-        return public_shares
-
-    def get_public_from_key(self, key, serialized=True, 
-        from_adapted=False, to_adapted=False):
-        if from_adapted:
-            key = self._deserialize_key(key, from_adapted=from_adapted)
+    def get_public_from_key(self, key, serialized=True, from_serialized=True):
+        if from_serialized:
+            key = self._deserialize_key(key)
         ecc_pub, nacl_pub = _extract_public_keys(key)
         if serialized:
             ecc_pub  = self.serialize_ecc_public(ecc_pub)
             nacl_pub = self._serialize_nacl_public(nacl_pub)
         public_shares = set_keys(ecc_pub, nacl_pub)
-        if to_adapted is True:
-            public_shares = self._adapt_public_shares(public_shares)
         return public_shares
 
 
@@ -100,12 +79,9 @@ class Party(_ElGamalSerializer):
     def create_from_key(cls, key, curve='P-384'):
         return cls(curve=curve, key=key)
 
-    def get_public_shares(self, serialized=True, adapted=True):
+    def get_public_shares(self, serialized=True):
         return self._key_manager.get_public_from_key(self._key,
-            serialized=serialized, 
-            from_adapted=False, 
-            to_adapted=adapted
-        )
+            serialized=serialized, from_serialized=False)       # TODO
 
     @property
     def keys(self):
@@ -188,13 +164,14 @@ class Party(_ElGamalSerializer):
         return signature
 
     def verify_signature(self, sig, pub, message, from_serialized=True):
+        pub = pub['ecc']    # TODO
         if from_serialized is True:
+            # TODO
             sig = self.deserialize_signature(sig)
+            pub = self._key_manager.deserialize_ecc_public(
+                pub, for_signature=True)
         return self._cryptosys.verify_signature(
-            sig, 
-            pub=pub['ecc'], 
-            message=message
-        )
+            sig, pub, message)
 
 
 class Holder(Party):

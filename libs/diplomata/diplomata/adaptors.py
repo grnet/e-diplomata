@@ -184,8 +184,8 @@ class _ElGamalKeySerializer(_ElGamalSerializer):
         if for_signature is True:
             return ECC.construct(
                 curve=self.curve.desc, 
-                point_x=pub[0], 
-                point_y=pub[1],
+                point_x=self._unhexify(pub[0]), 
+                point_y=self._unhexify(pub[1]),
             )
         return self.deserialize_ecc_point(pub) 
 
@@ -204,47 +204,21 @@ class _KeySerializer(_ElGamalKeySerializer):
     def _deserialize_nacl_public(self, pub):
         return _NaclPublicKey(bytes.fromhex(pub))
 
-    def _adapt_key(self, key):
-        ecc_key, nacl_key = extract_keys(key)
-        key = [
-            ecc_key['x'],
-            ecc_key['y'],
-            ecc_key['d'],
-            nacl_key,
-        ]
-        return key
-
-    def _radapt_key(self, key):
-        ecc_key = {
-            'x': key[0],
-            'y': key[1],
-            'd': key[2],
-        }
-        nacl_key = key[3]
-        key = set_keys(ecc_key, nacl_key)
-        return key
-
-    def _serialize_key(self, key, adapted=True):
+    def _serialize_key(self, key):
         ecc_key, nacl_key = extract_keys(key)
         ecc_key  = self.serialize_ecc_key(ecc_key)
         nacl_key = self._serialize_nacl_key(nacl_key)
         key = set_keys(ecc_key, nacl_key)
-        if adapted is True:
-            key = self._adapt_key(key)
         return key
 
-    def _deserialize_key(self, key, from_adapted=False):
-        if from_adapted:
-            key = self._radapt_key(key)
+    def _deserialize_key(self, key):
         ecc_key, nacl_key = extract_keys(key)
         ecc_key  = self.deserialize_ecc_key(ecc_key)
         nacl_key = self._deserialize_nacl_key(nacl_key)
         key = set_keys(ecc_key, nacl_key)
         return key
 
-    def deserialize_public_shares(self, public, from_adapted=True):
-        if from_adapted is True:
-            public = self._radapt_public_shares(public)
+    def deserialize_public_shares(self, public):
         ecc_pub, nacl_pub = extract_keys(public)
         ecc_pub = self.deserialize_ecc_public(ecc_pub)
         nacl_pub = self._deserialize_nacl_public(nacl_pub)
