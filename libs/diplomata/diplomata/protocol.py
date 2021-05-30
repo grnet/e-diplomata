@@ -78,10 +78,10 @@ class Party(_ElGamalSerializer):
         super().__init__(curve, hexifier=hexifier, flattener=flattener)
 
     @classmethod
-    def create_from_key(cls, key, curve='P-384', hexifier=True, flattener=False):
+    def from_key(cls, key, curve='P-384', hexifier=True, flattener=False):
         return cls(key=key, curve=curve, hexifier=hexifier, flattener=flattener)
 
-    def get_public_shares(self, serialized=True):
+    def get_public(self, serialized=True):
         return self._key_manager.get_public_from_key(self._key,
             serialized=serialized, from_serialized=False)       # TODO
 

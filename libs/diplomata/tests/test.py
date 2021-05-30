@@ -25,8 +25,8 @@ def test_elgamal_encdec():
     party_1 = Issuer(CURVE)
     party_2 = Verifier(CURVE)
 
-    pub_1 = party_1.get_public_shares(serialized=False)
-    pub_2 = party_2.get_public_shares(serialized=False)
+    pub_1 = party_1.get_public(serialized=False)
+    pub_2 = party_2.get_public(serialized=False)
 
     import random
     ps = random.sample(range(1000), 100)

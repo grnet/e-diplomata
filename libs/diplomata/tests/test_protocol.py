@@ -33,7 +33,7 @@ def test_signature(config):
     m = b"This is a message"
     sig = s.sign(m)
 
-    pub = s.get_public_shares()
+    pub = s.get_public()
     pub = v._key_manager._unflatten_public(pub)                # TODO
 
     # success
@@ -46,7 +46,7 @@ def test_signature(config):
     assert not verified
 
     # wrong key
-    wrong_pub = Party(**config).get_public_shares()
+    wrong_pub = Party(**config).get_public()
     wrong_pub = v._key_manager._unflatten_public(wrong_pub)    # TODO
     verified = v.verify_signature(sig, wrong_pub, m)
     assert not verified
@@ -69,9 +69,9 @@ def test_flow(config):
     # issuer = Issuer(**config)
     # verifier = Verifier(**config)
 
-    # holder_pub = holder.get_public_shares()
-    # issuer_pub = issuer.get_public_shares()
-    # verifier_pub = verifier.get_public_shares()
+    # holder_pub = holder.get_public()
+    # issuer_pub = issuer.get_public()
+    # verifier_pub = verifier.get_public()
 
     km = KeyManager(**config)
 
@@ -79,18 +79,18 @@ def test_flow(config):
     issuer_key = km.generate_keys()
     verifier_key = km.generate_keys()
 
-    holder = Holder.create_from_key(key=holder_key, **config)
-    issuer = Issuer.create_from_key(key=issuer_key, **config)
-    verifier = Verifier.create_from_key(key=verifier_key, **config)
+    holder = Holder.from_key(key=holder_key, **config)
+    issuer = Issuer.from_key(key=issuer_key, **config)
+    verifier = Verifier.from_key(key=verifier_key, **config)
 
     holder_pub = km.get_public_from_key(holder_key)
     issuer_pub = km.get_public_from_key(issuer_key)
     verifier_pub = km.get_public_from_key(verifier_key)
 
     # import pdb; pdb.set_trace()
-    assert holder_pub == holder.get_public_shares()
-    assert issuer_pub == issuer.get_public_shares()
-    assert verifier_pub == verifier.get_public_shares()
+    assert holder_pub == holder.get_public()
+    assert issuer_pub == issuer.get_public()
+    assert verifier_pub == verifier.get_public()
 
     # Run protocol
 
