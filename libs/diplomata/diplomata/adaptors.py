@@ -75,9 +75,10 @@ class _Adaptor(metaclass=ABCMeta):
 
 class _ElGamalSerializer(_Adaptor):
 
-    def __init__(self, curve, hexifier=True):
+    def __init__(self, curve, hexifier=True, flattener=False):
         self.curve = gen_curve(curve)
         self.hexifier = hexifier
+        self.flattener = flattener
 
     def _hexify(self, x):
         return hex(x) if self.hexifier else x
@@ -192,6 +193,47 @@ class _ElGamalKeySerializer(_ElGamalSerializer):
 
 class _KeySerializer(_ElGamalKeySerializer):
 
+    def _flatten_key(self, key):
+        if self.flattener:
+            ecc_key, nacl_key = extract_keys(key)
+            key = [
+                ecc_key['x'],
+                ecc_key['y'],
+                ecc_key['d'],
+                nacl_key,
+            ]
+        return key
+
+    def _unflatten_key(self, key):
+        if self.flattener:
+            ecc_key = {
+                'x': key[0],
+                'y': key[1],
+                'd': key[2],
+            }
+            nacl_key = key[3]
+            key = set_keys(ecc_key, nacl_key)
+        return key
+
+    def _flatten_public(self, pub):
+        if self.flattener:
+            pub = [
+                pub['ecc'][0],
+                pub['ecc'][1],
+                pub['nacl'],
+            ]
+        return pub
+
+    def _unflatten_public(self, pub):
+        if self.flattener:
+            ecc_pub = [
+                pub[0],
+                pub[1],
+            ]
+            nacl_pub = pub[2]
+            pub = set_keys(ecc_pub, nacl_pub)
+        return pub
+
     def _serialize_nacl_key(self, nacl_key):
         return nacl_key._private_key.hex()
 
@@ -209,9 +251,11 @@ class _KeySerializer(_ElGamalKeySerializer):
         ecc_key  = self.serialize_ecc_key(ecc_key)
         nacl_key = self._serialize_nacl_key(nacl_key)
         key = set_keys(ecc_key, nacl_key)
+        key = self._flatten_key(key)
         return key
 
     def _deserialize_key(self, key):
+        key = self._unflatten_key(key)
         ecc_key, nacl_key = extract_keys(key)
         ecc_key  = self.deserialize_ecc_key(ecc_key)
         nacl_key = self._deserialize_nacl_key(nacl_key)
@@ -219,6 +263,7 @@ class _KeySerializer(_ElGamalKeySerializer):
         return key
 
     def deserialize_public_shares(self, public):
+        public = self._unflatten_public(public)
         ecc_pub, nacl_pub = extract_keys(public)
         ecc_pub = self.deserialize_ecc_public(ecc_pub)
         nacl_pub = self._deserialize_nacl_public(nacl_pub)

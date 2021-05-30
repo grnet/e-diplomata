@@ -103,16 +103,12 @@ class ElGamalCrypto(object):
                (s * g == v_comm + c * v)
 
     def sign(self, key, message):
-        # import pdb; pdb.set_trace()
-        # import pdb; pdb.set_trace()
         signer = DSS.new(key, 'fips-186-3')
         hmsg = SHA384.new(message)
         signature = signer.sign(hmsg)
         return signature
 
     def verify_signature(self, sig, pub, message):
-        # pub = self.deserialize_ecc_public(pub, 
-        #     for_signature=True)
         verifier = DSS.new(pub, 'fips-186-3')
         hmsg = SHA384.new(message)
         try:

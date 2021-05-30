@@ -39,7 +39,7 @@ class Prover(KeyOwner):
         c, r = self.cryptosys.encrypt(pub, elem)    # r * g, m * g + r * y
         return c, r
 
-    def reencrypt(self, pub, cipher):    
+    def reencrypt(self, pub, cipher):
         cipher, r = self.cryptosys.reencrypt(
             pub, cipher)
         return cipher, r                            # (r1 + r2) * g, m * g + (r1 + r2) * y
@@ -89,9 +89,6 @@ class Prover(KeyOwner):
 
 
 class Verifier(KeyOwner):
-    """
-    Proof-verifier over an ElGamal cryptosystem
-    """
 
     def __init__(self, curve='P-384', key=None):
         self.cryptosys = ElGamalCrypto(curve)
@@ -123,4 +120,3 @@ class Verifier(KeyOwner):
         ddh, proof = extract_ddh_proof(niddh)
         extras = (prover_pub,)                  # TODO: Maybe enchance extras?
         return self._verify_chaum_pedersen(ddh, proof, *extras)
-

@@ -32,9 +32,9 @@ def _extract_public_keys(key):
 
 class KeyManager(_KeySerializer):
 
-    def __init__(self, curve='P-384'):
+    def __init__(self, curve='P-384', hexifier=True, flattener=False):
         self._cryptosys = ElGamalCrypto(curve)
-        super().__init__(curve)
+        super().__init__(curve, hexifier=hexifier, flattener=flattener)
 
     def _generate_ecc_key(self):
         return self._cryptosys.generate_key()
@@ -58,6 +58,7 @@ class KeyManager(_KeySerializer):
             ecc_pub  = self.serialize_ecc_public(ecc_pub)
             nacl_pub = self._serialize_nacl_public(nacl_pub)
         public_shares = set_keys(ecc_pub, nacl_pub)
+        public_shares = self._flatten_public(public_shares)
         return public_shares
 
 
@@ -66,18 +67,19 @@ class Party(_ElGamalSerializer):
     Common infrastructure for Holder, Issuer and Verifier
     """
 
-    def __init__(self, curve='P-384', key=None):
+    def __init__(self, curve='P-384', key=None, hexifier=True, flattener=False):
         self._cryptosys = ElGamalCrypto(curve)
-        self._key_manager = KeyManager(curve)
+        self._key_manager = KeyManager(curve, hexifier=hexifier,
+                flattener=flattener)
         if key is None:
             self._key = self._key_manager.generate_keys(serialized=False)
         else:
             self._key = self._key_manager._deserialize_key(key)
-        super().__init__(curve)
+        super().__init__(curve, hexifier=hexifier, flattener=flattener)
 
     @classmethod
-    def create_from_key(cls, key, curve='P-384'):
-        return cls(curve=curve, key=key)
+    def create_from_key(cls, key, curve='P-384', hexifier=True, flattener=False):
+        return cls(key=key, curve=curve, hexifier=hexifier, flattener=flattener)
 
     def get_public_shares(self, serialized=True):
         return self._key_manager.get_public_from_key(self._key,
@@ -176,8 +178,8 @@ class Party(_ElGamalSerializer):
 
 class Holder(Party):
 
-    def __init__(self, curve='P-386', key=None):
-        super().__init__(curve, key)
+    def __init__(self, curve='P-384', key=None, hexifier=True, flattener=False):
+        super().__init__(curve, key, hexifier=hexifier, flattener=flattener)
 
     def publish_request(self, s_awd, verifier_pub):
         payload = self.create_tag(REQUEST, s_awd=s_awd, verifier=verifier_pub)
@@ -187,8 +189,8 @@ class Holder(Party):
 
 class Issuer(Party):
 
-    def __init__(self, curve='P-386', key=None):
-        super().__init__(curve, key)
+    def __init__(self, curve='P-384', key=None, hexifier=True, flattener=False):
+        super().__init__(curve, key, hexifier=hexifier, flattener=flattener)
         self._prover = _Prover(curve, key=self._get_elgamal_key())
 
     def commit_to_document(self, t):
@@ -270,8 +272,8 @@ class Issuer(Party):
 
 class Verifier(Party):
 
-    def __init__(self, curve='P-386', key=None):
-        super().__init__(curve, key)
+    def __init__(self, curve='P-384', key=None, hexifier=True, flattener=False):
+        super().__init__(curve, key, hexifier=hexifier, flattener=flattener)
         self._verifier = _Verifier(curve, key=self._get_elgamal_key())
 
     def _retrieve_decryptor(self, issuer_pub, enc_decryptor):
