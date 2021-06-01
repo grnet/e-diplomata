@@ -32,7 +32,7 @@ ComboBox.defaultProps = {
 };
 
 function checkSelected(option, value) {
-  return (option.value || null) === (value || null);
+  return (option || null) === (value || null);
 }
 
 export default function ComboBox(props) {
@@ -42,7 +42,7 @@ export default function ComboBox(props) {
     console.log("props value is ");
     if (props.onChange) {
       if (value === null) {
-        props.onChange({ value: props.value }, props.options, true);
+        props.onChange({ value: value }, props.options, true);
       } else {
         props.onChange(value, props.options, false);
       }
@@ -57,7 +57,7 @@ export default function ComboBox(props) {
         onChange={changeValue}
         options={props.options}
         getOptionSelected={checkSelected}
-        getOptionLabel={(option) => option.label || ""}
+        getOptionLabel={(option) => option || ""}
         style={{ width: "80%" }}
         renderInput={(params) => (
           <TextField
