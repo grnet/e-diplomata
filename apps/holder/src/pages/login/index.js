@@ -8,7 +8,8 @@ import useAuth from "@digigov/auth";
 import HolderLayout from "holder/components/HolderLayout";
 import FormBuilder, { Field } from '@digigov/form';
 import { useResource } from "@digigov/ui/api";
-import Select from '@material-ui/core/NativeSelect';
+import TextField from '@material-ui/core/TextField';
+import MenuItem from '@material-ui/core/MenuItem';
 
 
 const useStyles = makeStyles((theme) => ({
@@ -28,7 +29,7 @@ export default function Index() {
   const styles = useStyles();
   const auth = useAuth();
   const { data } = useResource('holder/dummy_credentials');
-
+  const [select, setSelect] = React.useState('');
   const demoLogin = useCallback(async (user) => {
     window.setTimeout(() => {
      /*  window.localStorage.setItem("login-next", "/titles"); */
@@ -81,18 +82,20 @@ export default function Index() {
               <Button type='submit'>Login</Button>
             </FormBuilder>
             {data &&
-              <Select
+              <TextField
+                select
+                value={select}
                 className={styles.formControl}
                 onChange={(e) => {
                   const user = data[e.target.value];
                   demoLogin(user);
-                }}
-              >
-                {data &&
-                  data.map((holder, index) => (
-                    <option key={index} value={index}>{holder.email}</option>
-                  ))}
-              </Select>}
+                }}>
+                {data && data.map((holder, index) => (
+                  <MenuItem key={index} value={index}>
+                    {holder.email}
+                  </MenuItem>
+                ))}
+              </TextField>}
           </>
         ) : (
           <Button onClick={() => auth.logout("/")}>Logout</Button>
