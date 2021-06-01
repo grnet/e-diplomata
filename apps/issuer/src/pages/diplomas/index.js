@@ -58,6 +58,8 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function Diplomas() {
+  const types = ['Bachelor', 'Master', 'Doctorate']
+  const departments = ['Main', 'Science']
   const router = useRouter();
   const [diplomas, setDiplomas] = useState([]);
   const [searchForm, setSearchForm] = useState({
@@ -66,8 +68,8 @@ export default function Diplomas() {
   });
 
   const styles = useStyles();
-  const { data: datasets } = useResource("datasets");
   const { data, fetch, ...rest } = useResourceMany("issuer/documents", searchForm);
+  console.log(data);
   const delayedSearch = useCallback(
     debounce(
       (value) =>
@@ -94,34 +96,18 @@ export default function Diplomas() {
     return Math.ceil(rest.totalPages);
   }
 
-  function handleChange({ value }, options, removeBoxItem) {
+  function handleChange( value, options, removeBoxItem) {
     if (removeBoxItem) {
-      if (options === datasets.degree) {
-        const deleteKeySearchForm = delete searchForm.degree;
+      if (options === types ) {
+        const deleteKeySearchForm = delete searchForm.type;
         setSearchForm((searchForm) => ({
           ...searchForm,
           ...deleteKeySearchForm,
           offset: 1,
         }));
       }
-      if (options === datasets.typeOfDegree) {
-        const deleteKeySearchForm = delete searchForm.typeOfDegree;
-        setSearchForm((searchForm) => ({
-          ...searchForm,
-          ...deleteKeySearchForm,
-          offset: 1,
-        }));
-      }
-      if (options === datasets.school) {
-        const deleteKeySearchForm = delete searchForm.school;
-        setSearchForm((searchForm) => ({
-          ...searchForm,
-          ...deleteKeySearchForm,
-          offset: 1,
-        }));
-      }
-      if (options === datasets.institution) {
-        const deleteKeySearchForm = delete searchForm.institution;
+      if (options === departments) {
+        const deleteKeySearchForm = delete searchForm.department;
         setSearchForm((searchForm) => ({
           ...searchForm,
           ...deleteKeySearchForm,
@@ -129,31 +115,17 @@ export default function Diplomas() {
         }));
       }
     } else {
-      if (options === datasets.degree) {
+      if (options === types) {
         setSearchForm((searchForm) => ({
           ...searchForm,
-          degree: value,
+          type: value,
           offset: 1,
         }));
       }
-      if (options === datasets.typeOfDegree) {
+      if (options === departments) {
         setSearchForm((searchForm) => ({
           ...searchForm,
-          typeOfDegree: value,
-          offset: 1,
-        }));
-      }
-      if (options === datasets.school) {
-        setSearchForm((searchForm) => ({
-          ...searchForm,
-          school: value,
-          offset: 1,
-        }));
-      }
-      if (options === datasets.institution) {
-        setSearchForm((searchForm) => ({
-          ...searchForm,
-          institution: value,
+          department: value,
           offset: 1,
         }));
       }
@@ -180,7 +152,7 @@ export default function Diplomas() {
             <Grid item xs={12} md={10} sm={12}>
               <Title size="lg">Διπλώματα</Title>
             </Grid>
-            <Grid item md={5} sm={12} xs={12} style={{ marginBottom: "2vh" }}>
+            <Grid item xs={5} style={{ marginBottom: "2vh" }}>
               <SearchBar
                 onChange={handleSearch}
                 value={searchForm.search}
@@ -197,52 +169,26 @@ export default function Diplomas() {
                   <Title className={styles.title} size="md">
                     Φίλτρα αναζήτησης
                   </Title>
-                  <NormalText variant="body1">Τίτλος σπουδών</NormalText>
-                </Grid>
-                <Grid item xs={12}>
-                  {datasets && (
-                    <ComboBox
-                      options={datasets.degree}
-                      onChange={handleChange}
-                      variant="standard"
-                    ></ComboBox>
-                  )}
-                </Grid>
+                  </Grid>
                 <Grid item>
                   <NormalText variant="body1">Είδος τίτλου σπουδών</NormalText>
                 </Grid>
                 <Grid item xs={12}>
-                  {datasets && (
-                    <ComboBox
-                      options={datasets.typeOfDegree}
-                      onChange={handleChange}
-                      variant="standard"
-                    ></ComboBox>
-                  )}
-                </Grid>
-                <Grid item>
-                  <NormalText variant="body1">Σχολή/Τμήμα</NormalText>
-                </Grid>
-                <Grid item xs={12}>
-                  {datasets && (
-                    <ComboBox
-                      options={datasets.school}
-                      onChange={handleChange}
-                      variant="standard"
-                    ></ComboBox>
-                  )}
+                  {types && <ComboBox
+                    options={types}
+                    onChange={handleChange}
+                    variant="standard"
+                  ></ComboBox>}
                 </Grid>
                 <Grid item>
                   <NormalText variant="body1">Ίδρυμα</NormalText>
                 </Grid>
                 <Grid item xs={12}>
-                  {datasets && (
-                    <ComboBox
-                      options={datasets.institution}
-                      onChange={handleChange}
-                      variant="standard"
-                    ></ComboBox>
-                  )}
+                  <ComboBox
+                    options={departments}
+                    onChange={handleChange}
+                    variant="standard"
+                  ></ComboBox>
                 </Grid>
               </Grid>
               <Grid item xl={7} lg={7} md={7} sm={12} xs={12}>
