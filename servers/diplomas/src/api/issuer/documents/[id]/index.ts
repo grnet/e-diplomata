@@ -5,8 +5,8 @@ import Issuer from "@diplomas/core/models/Issuer";
 export default {
     get: [
         auth(Issuer), async function (req: any, res: any) {
-           const data = await Document.findOne({ _id: req.query.id });
-            res.status(200).json(data);
+           const response = await Document.findOne({ _id: req.params.id });
+            return res.status(200).json(response);
         }
     ]
 }
