@@ -1,6 +1,10 @@
-import { Holder, Issuer } from '../models';
+import { Holder, Issuer, Document } from '../models';
 import bcrypt from "bcryptjs";
 import { holderCredentials, verifierCredentials, issuerCredentials } from '@diplomas/core/utils/dummy_credentials';
+
+Document.collection.drop();
+Holder.collection.drop();
+Issuer.collection.drop();
 
 const InitiateMongoServer = require("../config/db");
 InitiateMongoServer();
@@ -18,6 +22,8 @@ const ledger = diplomata
 
 const titles = ['Mechanical Engineer', 'Accountant', 'Logistics', 'Doctor']
 const deans = ['Nikos Gryspos', 'Maria Lekousi', 'Avgerinos Lokos']
+const types = ['Bachelor','Master', 'Doctorate']
+const departments = ['Main', 'Science']
 const loadData = async () => {
   const salt = await bcrypt.genSalt(10);
 
@@ -62,10 +68,11 @@ const loadData = async () => {
   const issuers = await Issuer.insertMany(issuersData)
   for (const issuer of issuers) {
     for (const holder of holders) {
+      
       const qualification = await issuer.createQualification({
         title: titles[Math.floor(Math.random() * titles.length)],
-        type: 'Bsc',
-        department: 'Main',
+        type: types[Math.floor(Math.random() * types.length)],
+        department: departments[Math.floor(Math.random() * departments.length)],
         grade: Math.floor(Math.random() * 10),
         degreeDate: Date.now(),
         dean: deans[Math.floor(Math.random() * deans.length)],
