@@ -24,4 +24,5 @@ const DocumentSchema = new mongoose.Schema({
 });
 
 // export model Document with DocumentSchema
-export default mongoose.model("Document", DocumentSchema);
+const Document = mongoose.model("Document", DocumentSchema);
+export default Document;
