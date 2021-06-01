@@ -8,8 +8,8 @@ import useAuth from "@digigov/auth";
 import VerifierLayout from "verifier/components/VerifierLayout";
 import FormBuilder, { Field } from '@digigov/form';
 import { useResource } from "@digigov/ui/api";
-import Select from '@material-ui/core/NativeSelect';
-
+import TextField from '@material-ui/core/TextField';
+import MenuItem from '@material-ui/core/MenuItem';
 const useStyles = makeStyles((theme) => ({
   main: {},
   side: {},
@@ -26,6 +26,7 @@ const useStyles = makeStyles((theme) => ({
 export default function Index() {
   const styles = useStyles();
   const auth = useAuth();
+  const [select, setSelect] = React.useState('');
   const { data } = useResource('verifier/dummy_credentials');
   const demoLogin = useCallback(async (user) => {
     window.setTimeout(() => {
@@ -80,18 +81,20 @@ export default function Index() {
               <Button type='submit'>Login</Button>
             </FormBuilder>
             {data &&
-              <Select
+              <TextField
+                select
+                value={select}
                 className={styles.formControl}
                 onChange={(e) => {
                   const user = data[e.target.value];
                   demoLogin(user);
-                }}
-              >
-                {data &&
-                  data.map((verifier, index) => (
-                    <option key={index} value={index}>{verifier.title}</option>
-                  ))}
-              </Select>}
+                }}>
+                {data && data.map((verifier, index) => (
+                  <MenuItem key={index} value={index}>
+                    {verifier.email}
+                  </MenuItem>
+                ))}
+              </TextField>}
           </>
         ) : (
           <Button onClick={() => auth.logout("/")}>Logout</Button>
