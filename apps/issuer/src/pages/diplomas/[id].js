@@ -35,31 +35,11 @@ export default function Diploma() {
   const [diploma, setDiploma] = useState();
   const [status, setStatus] = useState();
   const id = router.query.id;
-  const { data, fetch:refetch, invalidate } = useResource("diplomas", id);
-  const { data: dataChanged, loaded, loading, fetch } = useResourceAction(
-    "award",
-    null,
-    "PUT",
-    status
-  );
-  console.log(dataChanged);
+  const { data, invalidate } = useResource("issuer/documents", id);
+
   useEffect(() => {
     setDiploma(data);
   }, [data]);
-
-  useEffect(() => {
-    if (status) {
-      fetch();
-    }
-  }, [status]);
-
-  useEffect(() => {
-    if (loaded) {
-      invalidate();
-        refetch(); 
-      
-    }
-  }, [loaded]);
 
   const updateStatus = function () {
     setStatus({
@@ -89,43 +69,23 @@ export default function Diploma() {
               <SummaryList>
                 <SummaryListItem>
                   <SummaryListItemKey>Τίτλος Σπουδών</SummaryListItemKey>
-                  <SummaryListItemValue>{diploma.degree}</SummaryListItemValue>
+                  <SummaryListItemValue>{diploma.title}</SummaryListItemValue>
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Είδος Τίτλου Σπουδών</SummaryListItemKey>
                   <SummaryListItemValue>
-                    {diploma.typeOfDegree}
+                    {diploma.type}
                   </SummaryListItemValue>
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Τμήμα/Σχολή</SummaryListItemKey>
-                  <SummaryListItemValue>{diploma.school}</SummaryListItemValue>
-                </SummaryListItem>
-                <SummaryListItem>
-                  <SummaryListItemKey>Ίδρυμα</SummaryListItemKey>
-                  <SummaryListItemValue>{diploma.institution}</SummaryListItemValue>
-                </SummaryListItem>
-                <SummaryListItem>
-                  <SummaryListItem>
-                    <SummaryListItemKey>Κατάσταση</SummaryListItemKey>
-                    {diploma.status && (<SummaryListItemValue>{diploma.status}</SummaryListItemValue>)}
-                  </SummaryListItem>
-                  <SummaryListItemKey>Ονοματεπώνυμο</SummaryListItemKey>
-                  <SummaryListItemValue>{diploma.userName}</SummaryListItemValue>
-                </SummaryListItem>
-                <SummaryListItem>
-                  <SummaryListItemKey>Ημερομηνία Έκδοσης</SummaryListItemKey>
-                  <SummaryListItemValue>{diploma.year}</SummaryListItemValue>
+                  <SummaryListItemValue>{diploma.department}</SummaryListItemValue>
                 </SummaryListItem>
               </SummaryList>
             )}
           </Grid>
           <Grid container direction="row">
             <Grid item xs={4}>
-              {diploma &&  (diploma.status === "fail") && (<Button onClick={updateStatus}>Retry</Button>)}
-              {diploma &&  (diploma.status === "pending") && (<Button>Wait..</Button>)}
-              {diploma && (diploma.status === "unawarded") && (<Button onClick={updateStatus}>Award</Button>)}
-              {diploma && diploma.status === "success" && (<Button onClick={goToAwards}>Προβολή</Button>)}
             </Grid>
             <Grid item xs={4}></Grid>
             <Grid item xs={4} style={{ textAlign: "right" }}><CallToActionButton href="/diplomas">Πίσω</CallToActionButton></Grid>
