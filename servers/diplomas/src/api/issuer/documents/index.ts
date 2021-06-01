@@ -7,24 +7,33 @@ export default {
         const limits = parseInt(req.query.limit) || 10;
         const offsets = parseInt(req.query.offset) || 0;
         const skip = (offsets - 1) * limits;
-        const searchValue = req.query.search || "";
+        const searchValue = req.query.search || ""; 
         const { limit, offset, search, ...queries } = req.query;
-        Document.createIndexes({ "$**": "text" });
-        const counter = await Document.countDocuments(
+        console.log(queries);
+        queries.issuer = req.user.id; 
+        
+        const counter = await Document.countDocuments({ ...queries }).where(
             {
-                ...queries,
-                $text: { $search: searchValue }
-            }
-        );
-        const docs = await Document.find({
-            ...queries,
-            $text: { $search: searchValue }
-        })
-            .skip(skip)
+                $or:[
+                    { title: { $regex: new RegExp(searchValue, 'i') } },
+                    { type: { $regex: new RegExp(searchValue, 'i') } },
+                    { department: { $regex: new RegExp(searchValue, 'i') } }
+                ]
+            });
+        const response = await Document.find({ ...queries }).where(
+            {
+                $or:[
+                    { title: { $regex: new RegExp(searchValue, 'i') } },
+                    { type: { $regex: new RegExp(searchValue, 'i') } },
+                    { department: { $regex: new RegExp(searchValue, 'i') } }
+                ]
+            })
+            .populate("holder", "firstName lastName", )
+        .skip(skip)
             .limit(limits)
             .exec();
-        res.send({
-            data: docs,
+        return res.send({
+            data: response,
             meta: {
                 total: counter / limits,
                 count: counter,
