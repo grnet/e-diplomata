@@ -390,6 +390,11 @@
    */
   "projects": [
     {
+      "packageName": "@diplomas/design-system",
+      "projectFolder": "libs/design-system",
+      "shouldPublish": false
+    },
+    {
       "packageName": "issuer",
       "projectFolder": "apps/issuer",
       "shouldPublish": false

@@ -12,6 +12,7 @@ dependencies:
   '@material-ui/lab': 4.0.0-alpha.57_0d762b53e6ef0e32f5c62d92bee63937
   '@rush-temp/blockchain': file:projects/blockchain.tgz_ts-node@9.1.1
   '@rush-temp/core': file:projects/core.tgz
+  '@rush-temp/design-system': file:projects/design-system.tgz_@types+react@16.9.56+clsx@1.1.1
   '@rush-temp/holder': file:projects/holder.tgz_ts-node@9.1.1
   '@rush-temp/holder-server': file:projects/holder-server.tgz_ts-node@9.1.1
   '@rush-temp/issuer': file:projects/issuer.tgz_ts-node@9.1.1
@@ -17233,6 +17234,24 @@ packages:
       integrity: sha512-bAgr+FUZw8AfwMEOZHwEhZRoJy7Z2rvhXJajOG9smgp3l4dSoyUx0x3lU8C9i6yZrgdxYxr9IH81fd6oNU7nOQ==
       tarball: file:projects/core.tgz
     version: 0.0.0
+  file:projects/design-system.tgz_@types+react@16.9.56+clsx@1.1.1:
+    dependencies:
+      '@digigov/ui': 0.4.1_9927b3c065f6acb466335db19dbdd22b
+      '@material-ui/core': 4.11.3_9f48369ed4321469d5d721870f4dbdbc
+      '@material-ui/icons': 4.11.2_0d762b53e6ef0e32f5c62d92bee63937
+      '@material-ui/lab': 4.0.0-alpha.57_0d762b53e6ef0e32f5c62d92bee63937
+      react: 16.14.0
+      react-dom: 16.14.0_react@16.14.0
+    dev: false
+    id: file:projects/design-system.tgz
+    name: '@rush-temp/design-system'
+    peerDependencies:
+      '@types/react': '*'
+      clsx: '*'
+    resolution:
+      integrity: sha512-8HypBTHSOdPO2kFHxJMjIr6jzhY/rTQcQEBXX0TxMeifNQGmIStduDMlS6M4FWIlfL2QB08a80dd/7NUqMLjWQ==
+      tarball: file:projects/design-system.tgz
+    version: 0.0.0
   file:projects/holder-server.tgz_ts-node@9.1.1:
     dependencies:
       '@digigov/cli': 0.5.3-beta-1
@@ -17288,7 +17307,7 @@ packages:
     peerDependencies:
       ts-node: '*'
     resolution:
-      integrity: sha512-uA0t7HVU3m5AAPhpJyuHwWCk25r1IxqzXKiZgy35O5yg8VwdbQn0bQZAsukdyABTMUr54ehSWzi+OP+waiTWQg==
+      integrity: sha512-a6kOj2xPXpLSlDzOa0IgHrsZHVPPqDbei3WjrYATRMHXnMyBcOiTcNua51pq2om3Fiv39PmmOnNpNs9yRBT65g==
       tarball: file:projects/holder.tgz
     version: 0.0.0
   file:projects/issuer-server.tgz_ts-node@9.1.1:
@@ -17422,6 +17441,7 @@ specifiers:
   '@material-ui/lab': ~4.0.0-alpha.57
   '@rush-temp/blockchain': file:./projects/blockchain.tgz
   '@rush-temp/core': file:./projects/core.tgz
+  '@rush-temp/design-system': file:./projects/design-system.tgz
   '@rush-temp/holder': file:./projects/holder.tgz
   '@rush-temp/holder-server': file:./projects/holder-server.tgz
   '@rush-temp/issuer': file:./projects/issuer.tgz
