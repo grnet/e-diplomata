@@ -50,41 +50,41 @@ class Prover(KeyOwner):
     def _generate_chaum_pedersen(self, ddh, z, *extras):
         return self.cryptosys.generate_chaum_pedersen(ddh, z, *extras)
 
-    def generate_nirenc(self, c, c_r, keypair=None):
-        c1  , c2   = extract_cipher(c)
-        c1_r, c2_r = extract_cipher(c_r)
+    def generate_nirenc(self, c, c_r, r_r, keypair=None):
+        c1  , c2   = extract_cipher(c)                      # r * g, m + r * y
+        c1_r, c2_r = extract_cipher(c_r)                    # s * g, m + s * y
 
-        priv, pub = self.keypair if not keypair \
+        _, y = self.keypair if not keypair \
             else keypair
-        extras = (pub,)                         # TODO: Maybe enhance extras
+        extras = (y,)
 
-        proof_c1 = set_ddh_proof(
-            (c1, pub, c1_r),
-            self._generate_chaum_pedersen((c1, pub, c1_r), priv, *extras)
+        ddh = (
+            y,                      # x * g 
+            c1_r + (-c1),           # r' * g
+            c2_r + (-c2),           # r' * y = r' * x * g
         )
-        proof_c2 = set_ddh_proof(
-            (c2, pub, c2_r),
-            self._generate_chaum_pedersen((c2, pub, c2_r), priv, *extras)
+        nirenc = set_ddh_proof(
+            ddh,
+            self._generate_chaum_pedersen(ddh, r_r, *extras)
         )
-
-        nirenc = set_nirenc(proof_c1, proof_c2)
         return nirenc
 
-    def generate_niddh(self, r1, r2, keypair=None):
-        g = self.generator
+    def generate_niddh(self, c_r, decryptor, s, keypair=None):
+        c_r_1, _ = extract_cipher(c_r)                      # s * g
 
-        g_r   = r1 * g
-        g_r_r = r2 * g
-
-        priv, pub = self.keypair if not keypair \
+        _, y = self.keypair if not keypair \
             else keypair
-        extras = (pub,)                         # TODO: Maybe enhance extras
+        extras = (y,)
 
-        niddh = set_ddh_proof(
-            (g_r, pub, g_r_r),
-            self._generate_chaum_pedersen((g_r, pub, g_r_r), priv, *extras)
+        ddh = (
+            y,                      # x * g
+            c_r_1,                  # s * g
+            decryptor,              # s * y = s * x * g
         )
-
+        niddh = set_ddh_proof(
+            ddh,
+            self._generate_chaum_pedersen(ddh, s, *extras)
+        )
         return niddh
 
 
@@ -94,29 +94,17 @@ class Verifier(KeyOwner):
         self.cryptosys = ElGamalCrypto(curve)
         super().__init__(self.cryptosys, key=key)
 
-    @property
-    def generator(self):
-        return self.cryptosys.generator
-
     def _verify_chaum_pedersen(self, ddh, proof, *extras):
         return self.cryptosys.verify_chaum_pedersen(ddh, proof, *extras)
 
     def verify_nirenc(self, nirenc, prover_pub):
-
-        proof_c1, proof_c2 = extract_nirenc(nirenc)
+        ddh, proof = extract_nirenc(nirenc)
         extras = (prover_pub,)                  # TODO: Maybe enhance extras?
-
-        ddh, proof = extract_ddh_proof(proof_c1)
-        check_proof_c1 = self._verify_chaum_pedersen(ddh, proof, *extras)
-        assert check_proof_c1                   # TODO: Remove
-
-        ddh, proof = extract_ddh_proof(proof_c2)
-        check_proof_c2 = self._verify_chaum_pedersen(ddh, proof, *extras)
-        assert check_proof_c2                   # TODO: Remove
-
-        return check_proof_c1 and check_proof_c2
+        verified = self._verify_chaum_pedersen(ddh, proof, *extras)
+        return verified
 
     def verify_niddh(self, niddh, prover_pub):
         ddh, proof = extract_ddh_proof(niddh)
         extras = (prover_pub,)                  # TODO: Maybe enchance extras?
-        return self._verify_chaum_pedersen(ddh, proof, *extras)
+        verified = self._verify_chaum_pedersen(ddh, proof, *extras)
+        return verified

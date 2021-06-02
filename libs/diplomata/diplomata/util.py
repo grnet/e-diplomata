@@ -24,20 +24,20 @@ def extract_cipher(cipher):
     c2 = cipher['c2']
     return c1, c2
 
-def set_chaum_pedersen(u_comm, v_comm, s, d):
+def set_chaum_pedersen(g_comm, u_comm, challenge, response):
     return {
+        'g_comm': g_comm,
         'u_comm': u_comm,
-        'v_comm': v_comm,
-        's': s,
-        'd': d,
+        'challenge': challenge,
+        'response': response,
     }
 
 def extract_chaum_pedersen(proof):
+    g_comm = proof['g_comm']
     u_comm = proof['u_comm']
-    v_comm = proof['v_comm']
-    s = proof['s']
-    d = proof['d']
-    return u_comm, v_comm, s, d
+    challenge = proof['challenge']
+    response = proof['response']
+    return g_comm, u_comm, challenge, response
 
 def set_ddh_proof(ddh, proof):
     return {
@@ -53,16 +53,13 @@ def extract_ddh_proof(ddh_proof):
 
 # Basic Crypto Layer Structures
 
-def set_nirenc(proof_c1, proof_c2):
-    return {
-        'proof_c1': proof_c1,
-        'proof_c2': proof_c2,
-    }
+def set_nirenc(ddh, proof):
+    nirenc = set_ddh_proof(ddh, proof)
+    return nirenc
 
 def extract_nirenc(nirenc):
-    proof_c1 = nirenc['proof_c1']
-    proof_c2 = nirenc['proof_c2']
-    return proof_c1, proof_c2
+    ddh, proof = extract_ddh_proof(nirenc)
+    return ddh, proof
 
 
 # Transaction Layer Structures

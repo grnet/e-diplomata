@@ -219,13 +219,13 @@ class Issuer(Party):
         )                                               # E_V((r1 + r2) * I)
         return enc_decryptor
 
-    def create_nirenc(self, c, c_r):
+    def create_nirenc(self, c, c_r, r_r):
         keypair = self._get_elgamal_key(extracted=True)
-        return self._prover.generate_nirenc(c, c_r, keypair)
+        return self._prover.generate_nirenc(c, c_r, r_r, keypair)
 
-    def create_niddh(self, r1, r2):
+    def create_niddh(self, c_r, decryptor, r, r_r):
         keypair = self._get_elgamal_key(extracted=True)
-        return self._prover.generate_niddh(r1, r2, keypair)
+        return self._prover.generate_niddh(c_r, decryptor, r + r_r, keypair)
 
     def encrypt_niddh(self, niddh, verifier_pub):
         niddh = self.encode(niddh, serializer=self.serialize_niddh)
@@ -256,8 +256,9 @@ class Issuer(Party):
         decryptor = self.create_decryptor(r, r_r)       # (r + r_r) * I
         enc_decryptor = self.encrypt_decryptor(
             decryptor, verifier_pub)                    # E_V((r + r_r) * I)
-        nirenc = self.create_nirenc(c, c_r)             # NIRENC_I(c, c_r)
-        niddh = self.create_niddh(r, r_r)               # NIDDH_I(r + r_r)
+        nirenc = self.create_nirenc(c, c_r, r_r)        # NIRENC_I(c, c_r)
+        niddh = self.create_niddh(c_r, decryptor, 
+            r, r_r)                                     # NIDDH_I(r + r_r)
         enc_niddh = self.encrypt_niddh(
             niddh, verifier_pub)                        # E_V(NIDDH_I(r + r_r))
 

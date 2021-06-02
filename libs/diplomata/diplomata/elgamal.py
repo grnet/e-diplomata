@@ -80,27 +80,31 @@ class ElGamalCrypto(object):
     def generate_chaum_pedersen(self, ddh, z, *extras):
         g = self.generator
         p = self.order
-        r = self.random_scalar()
-    
+
         u, v, w = ddh
-        u_comm = r * u                                      # u commitment
-        v_comm = r * g                                      # g commitment
-    
-        c = fiat_shamir(u, v, w, u_comm, v_comm, *extras)   # challenge
-    
-        s = (r + z * c) % p                                 # response
-        d = z * u
-    
-        proof = set_chaum_pedersen(u_comm, v_comm, s, d)
+
+        r = self.random_scalar()
+
+        g_comm = r * g
+        u_comm = r * u
+
+        challenge = fiat_shamir(u, v, w, g_comm, u_comm, *extras)
+        response = (r + z * challenge) % p
+
+        proof = set_chaum_pedersen(g_comm, u_comm, challenge, response)
         return proof
     
     def verify_chaum_pedersen(self, ddh, proof, *extras):
         g = self.generator
+
         u, v, w = ddh
-        u_comm, v_comm, s, d = extract_chaum_pedersen(proof)
-        c = fiat_shamir(u, v, w, u_comm, v_comm, *extras)   # challenge
-        return (s * u == u_comm + c * d) and \
-               (s * g == v_comm + c * v)
+        g_comm, u_comm, challenge, response = extract_chaum_pedersen(proof)
+
+        return all((
+            challenge == fiat_shamir(u, v, w, g_comm, u_comm, *extras),
+            response * g == g_comm + challenge * v,
+            response * u == u_comm + challenge * w,
+        ))
 
     def sign(self, key, message):
         signer = DSS.new(key, 'fips-186-3')

@@ -34,12 +34,12 @@ class _Adaptor(metaclass=ABCMeta):
         return ddh
 
     def _adapt_chaum_pedersen(self, proof, reverse):
-        u_comm, v_comm, s, d = extract_chaum_pedersen(proof)
+        g_comm, u_comm, challenge, response = extract_chaum_pedersen(proof)
+        g_comm = self._adapt_ecc_point(g_comm, reverse=reverse)
         u_comm = self._adapt_ecc_point(u_comm, reverse=reverse)
-        v_comm = self._adapt_ecc_point(v_comm, reverse=reverse)
-        s = self._adapt_scalar(s, reverse=reverse)
-        d = self._adapt_ecc_point(d, reverse=reverse)
-        proof = set_chaum_pedersen(u_comm, v_comm, s, d)
+        challenge = self._adapt_scalar(challenge, reverse=reverse)
+        response = self._adapt_scalar(response, reverse=reverse)
+        proof = set_chaum_pedersen(g_comm, u_comm, challenge, response)
         return proof
 
     def _adapt_ddh_proof(self, ddh_proof, reverse):
@@ -50,11 +50,7 @@ class _Adaptor(metaclass=ABCMeta):
         return ddh_proof
 
     def _adapt_nirenc(self, nirenc, reverse):
-        proof_c1, proof_c2 = extract_nirenc(nirenc)
-        proof_c1 = self._adapt_ddh_proof(proof_c1, reverse=reverse)
-        proof_c2 = self._adapt_ddh_proof(proof_c2, reverse=reverse)
-        nirenc = set_nirenc(proof_c1, proof_c2)
-        return nirenc
+        return self._adapt_ddh_proof(nirenc, reverse=reverse)
 
     def _adapt_niddh(self, niddh, reverse):
         return self._adapt_ddh_proof(niddh, reverse=reverse)
