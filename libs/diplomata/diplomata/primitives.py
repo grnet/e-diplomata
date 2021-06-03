@@ -6,36 +6,16 @@ from diplomata.elgamal import ElGamalCrypto
 from diplomata.util import *
 
 
-class KeyOwner(object):
+class Prover(object):
 
-    def __init__(self, cryptosys, key=None):
-        self.key = key
-
-    @property
-    def private(self):
-        return self.key.d
-
-    @property
-    def public(self):
-        return self.key.pointQ
-
-    @property
-    def keypair(self):
-        return self.private, self.public
-
-
-class Prover(KeyOwner):
-
-    def __init__(self, curve='P-384', key=None):
+    def __init__(self, curve='P-384'):
         self.cryptosys = ElGamalCrypto(curve)
-        super().__init__(self.cryptosys, key=key)
 
     @property
     def generator(self):
         return self.cryptosys.generator
 
-    def commit(self, elem, pub=None):
-        pub = self.public if not pub else pub       # y
+    def commit(self, elem, pub):
         c, r = self.cryptosys.encrypt(pub, elem)    # r * g, m * g + r * y
         return c, r
 
@@ -50,12 +30,11 @@ class Prover(KeyOwner):
     def _generate_chaum_pedersen(self, ddh, z, *extras):
         return self.cryptosys.generate_chaum_pedersen(ddh, z, *extras)
 
-    def generate_nirenc(self, c, c_r, r_r, keypair=None):
+    def generate_nirenc(self, c, c_r, r_r, pub):
         c1  , c2   = extract_cipher(c)                      # r * g, m + r * y
         c1_r, c2_r = extract_cipher(c_r)                    # s * g, m + s * y
 
-        _, y = self.keypair if not keypair \
-            else keypair
+        y = pub
         extras = (y,)
 
         ddh = (
@@ -69,11 +48,10 @@ class Prover(KeyOwner):
         )
         return nirenc
 
-    def generate_niddh(self, c_r, decryptor, s, keypair=None):
+    def generate_niddh(self, c_r, decryptor, s, pub):
         c_r_1, _ = extract_cipher(c_r)                      # s * g
 
-        _, y = self.keypair if not keypair \
-            else keypair
+        y = pub
         extras = (y,)
 
         ddh = (
@@ -88,11 +66,10 @@ class Prover(KeyOwner):
         return niddh
 
 
-class Verifier(KeyOwner):
+class Verifier(object):
 
-    def __init__(self, curve='P-384', key=None):
+    def __init__(self, curve='P-384'):
         self.cryptosys = ElGamalCrypto(curve)
-        super().__init__(self.cryptosys, key=key)
 
     def _verify_chaum_pedersen(self, ddh, proof, *extras):
         return self.cryptosys.verify_chaum_pedersen(ddh, proof, *extras)

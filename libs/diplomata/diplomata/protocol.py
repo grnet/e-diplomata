@@ -86,7 +86,7 @@ class Party(_ElGamalSerializer):
             serialized=serialized, from_serialized=False)       # TODO
 
     @property
-    def keys(self):
+    def _keys(self):
         ecc_key, nacl_key = extract_keys(self._key)
         return ecc_key, nacl_key
 
@@ -95,16 +95,25 @@ class Party(_ElGamalSerializer):
         ecc_pub, nacl_pub = _extract_public_keys(self._key)
         return ecc_pub, nacl_pub
 
-    def _get_elgamal_key(self, extracted=False):
-        ecc_key, _ = self.keys
-        if extracted is True:
-            return ecc_key.d, ecc_key.pointQ
+    @property
+    def _elgamal_key(self):
+        ecc_key, _ = self._keys
         return ecc_key
 
     @property
     def elgamal_pub(self):
         ecc_pub, _ = self.public_keys
         return ecc_pub
+
+    @property
+    def _nacl_key(self):
+        _, nacl_key = self._keys
+        return nacl_key
+
+    @property
+    def nacl_pub(self):
+        _, nacl_pub = self.public_keys
+        return nacl_pub
 
 
     # Encoding for symmetric encryption
@@ -124,7 +133,7 @@ class Party(_ElGamalSerializer):
         """
         Encrypt using common secret
         """
-        box = _NaclBox(self._key['nacl'], receiver_pub['nacl'])
+        box = _NaclBox(self._nacl_key, receiver_pub['nacl'])
         cipher = box.encrypt(content).hex()
         return cipher
 
@@ -132,7 +141,7 @@ class Party(_ElGamalSerializer):
         """
         Decrypt using common secret
         """
-        box = _NaclBox(self._key['nacl'], sender_pub['nacl'])
+        box = _NaclBox(self._nacl_key, sender_pub['nacl'])
         content = box.decrypt(bytes.fromhex(cipher))
         return content
 
@@ -191,12 +200,12 @@ class Issuer(Party):
 
     def __init__(self, curve='P-384', key=None, hexifier=True, flattener=False):
         super().__init__(curve, key, hexifier=hexifier, flattener=flattener)
-        self._prover = _Prover(curve, key=self._get_elgamal_key())
+        self._prover = _Prover(curve)
 
     def commit_to_document(self, t):
         elem = self._hash_document(t)                   # H(t) * g
         pub = self.elgamal_pub                          # I
-        c, r = self._prover.commit(elem, pub=pub)       # r * g, H(t) * g + r * I
+        c, r = self._prover.commit(elem, pub)           # r * g, H(t) * g + r * I
         return c, r
 
     def reencrypt_commitment(self, c):
@@ -220,12 +229,14 @@ class Issuer(Party):
         return enc_decryptor
 
     def create_nirenc(self, c, c_r, r_r):
-        keypair = self._get_elgamal_key(extracted=True)
-        return self._prover.generate_nirenc(c, c_r, r_r, keypair)
+        pub = self.elgamal_pub
+        nirenc = self._prover.generate_nirenc(c, c_r, r_r, pub)
+        return nirenc
 
     def create_niddh(self, c_r, decryptor, r, r_r):
-        keypair = self._get_elgamal_key(extracted=True)
-        return self._prover.generate_niddh(c_r, decryptor, r + r_r, keypair)
+        pub = self.elgamal_pub
+        niddh = self._prover.generate_niddh(c_r, decryptor, r + r_r, pub)
+        return niddh
 
     def encrypt_niddh(self, niddh, verifier_pub):
         niddh = self.encode(niddh, serializer=self.serialize_niddh)
@@ -275,7 +286,7 @@ class Verifier(Party):
 
     def __init__(self, curve='P-384', key=None, hexifier=True, flattener=False):
         super().__init__(curve, key, hexifier=hexifier, flattener=flattener)
-        self._verifier = _Verifier(curve, key=self._get_elgamal_key())
+        self._verifier = _Verifier(curve)
 
     def _retrieve_decryptor(self, issuer_pub, enc_decryptor):
         decryptor = self.decrypt(enc_decryptor, issuer_pub)

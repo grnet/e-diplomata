@@ -32,7 +32,7 @@ def test_elgamal_encdec():
     ps = random.sample(range(1000), 100)
     for i in range(100):
         verifier_pub  = pub_2['ecc']
-        verifier_priv = party_2._verifier.private
+        verifier_priv = party_2._elgamal_key.d
         cryptosys = party_1._cryptosys
         g = cryptosys.generator
         cipher, r = cryptosys.encrypt(verifier_pub, ps[i] * g)
