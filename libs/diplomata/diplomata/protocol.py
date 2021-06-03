@@ -117,9 +117,6 @@ class Party(_ElGamalSerializer):
         _, nacl_pub = self.public_keys
         return nacl_pub
 
-
-    # Encoding for symmetric encryption
-
     def encode(self, entity, serializer):
         return json.dumps(serializer(
             entity)).encode('utf-8')
@@ -128,12 +125,9 @@ class Party(_ElGamalSerializer):
         return deserializer(json.loads(
             entity.decode('utf-8')))
 
-
-    # Symmetrict encryption
-
     def encrypt(self, content, receiver_pub):
         """
-        Encrypt using common secret
+        Symmetric encryption (nacl common secret)
         """
         box = _NaclBox(self._nacl_key, receiver_pub['nacl'])
         cipher = box.encrypt(content).hex()
@@ -141,22 +135,17 @@ class Party(_ElGamalSerializer):
 
     def decrypt(self, cipher, sender_pub):
         """
-        Decrypt using common secret
+        Symmetric decryption (nacl common secret)
         """
         box = _NaclBox(self._nacl_key, sender_pub['nacl'])
         content = box.decrypt(bytes.fromhex(cipher))
         return content
 
-
-    # Document hashing
-
-    def _hash_document(self, title):
-        ht = hash_into_scalar(title)                    # H(t)
-        out = self._cryptosys.ecc_point_from_scalar(ht) # H(t) * g
+    def hash_document(self, title):
+        payload = title.encode('utf-8') if \
+            isinstance(title, str) else title
+        out = self._cryptosys.hash_into_element(payload)  # H(t) * g
         return out
-
-
-    # Tag creation
 
     @staticmethod
     def create_tag(label, *args, **kwargs):
@@ -166,9 +155,6 @@ class Party(_ElGamalSerializer):
         for (key, value) in kwargs.items():
             out += f' {key}={value}'
         return out.encode('utf-8')
-
-
-    # Signatures
 
     def sign(self, message, serialized=True):
         signature = self._signer.sign(self._elgamal_key, message)
@@ -205,10 +191,10 @@ class Issuer(Party):
         super().__init__(curve, key, hexifier=hexifier, flattener=flattener)
         self._prover = _Prover(curve)
 
-    def commit_to_document(self, t):
-        ht = self._hash_document(t)                 # H(t) * g
-        pub = self.elgamal_pub                      # I
-        c, r  = self._cryptosys.encrypt(pub, ht)    # r * g, H(t) * g + r * I
+    def commit_to_document(self, title):
+        ht = self.hash_document(title)                  # H(t) * g
+        pub = self.elgamal_pub                          # I
+        c, r = self._cryptosys.encrypt(pub, ht)         # r * g, H(t) * g + r * I
         return c, r
 
     def reencrypt_commitment(self, c):
@@ -217,9 +203,9 @@ class Issuer(Party):
         return c_r, r_r
 
     def create_decryptor(self, r):
-        pub = self.elgamal_pub                          # I
-        decryptor = self._cryptosys.create_decryptor(r, pub)    # TODO
-        return decryptor                                # r * I
+        pub = self.elgamal_pub                                  # I
+        decryptor = self._cryptosys.create_decryptor(r, pub)    # r * I
+        return decryptor
 
     def encrypt_decryptor(self, decryptor, verifier_pub):
         decryptor = self.encode(decryptor, 
@@ -310,7 +296,7 @@ class Verifier(Party):
         return c_dec
 
     def verify_document_integrity(self, t, c_dec):
-        return c_dec == self._hash_document(t)    # c_dec == H(t) * g?
+        return c_dec == self.hash_document(t)       # c_dec == H(t) * g?
 
     def verify_nirenc(self, nirenc, issuer_pub):
         pub = issuer_pub['ecc']

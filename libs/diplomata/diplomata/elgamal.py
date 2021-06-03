@@ -9,8 +9,8 @@ from Cryptodome.Hash import SHA384
 from diplomata.util import *
 
 
-def hash_into_scalar(bytes_seq, endianness='big'):
-    value = int.from_bytes(SHA384.new(bytes_seq).digest(), endianness)
+def hash_into_scalar(payload, endianness='big'):
+    value = int.from_bytes(SHA384.new(payload).digest(), endianness)
     out = Integer(value)
     return out
 
@@ -43,8 +43,10 @@ class ElGamalCrypto(object):
         )
         return rand
 
-    def ecc_point_from_scalar(self, scalar):
-        return scalar * self.generator
+    def hash_into_element(self, payload):
+        g = self.generator
+        s = hash_into_scalar(payload)
+        return s * g
 
     def generate_key(self, curve='P-384'):
         return ECC.generate(curve=curve)
