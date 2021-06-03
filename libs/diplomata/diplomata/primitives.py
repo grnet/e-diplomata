@@ -6,117 +6,77 @@ from diplomata.elgamal import ElGamalCrypto
 from diplomata.util import *
 
 
-class KeyOwner(object):
+class ElGamalWrapper(object):
 
-    def __init__(self, cryptosys, key=None):
-        self.key = key
+    def __init__(self, curve='P-384'):
+        self._cryptosys = ElGamalCrypto(curve)
 
-    @property
-    def private(self):
-        return self.key.d
+    def _encrypt(self, pub, elem):
+        cipher = self._cryptosys.encrypt(pub, elem)
+        return cipher
+    
+    def _reencrypt(self, pub, cipher):
+        c, r = self._cryptosys.reencrypt(pub, cipher)
+        return c, r
 
-    @property
-    def public(self):
-        return self.key.pointQ
+    def _generate_chaum_pedersen(self, ddh, z, *extras):
+        proof = self._cryptosys.generate_chaum_pedersen(ddh, z, *extras)
+        return proof
 
-    @property
-    def keypair(self):
-        return self.private, self.public
+    def _verify_chaum_pedersen(self, ddh, proof, *extras):
+        verified = self._cryptosys.verify_chaum_pedersen(ddh, proof, *extras)
+        return verified
 
 
-class Prover(KeyOwner):
+class Prover(ElGamalWrapper):
 
-    def __init__(self, curve='P-384', key=None):
-        self.cryptosys = ElGamalCrypto(curve)
-        super().__init__(self.cryptosys, key=key)
-
-    @property
-    def generator(self):
-        return self.cryptosys.generator
-
-    def commit(self, elem, pub=None):
-        pub = self.public if not pub else pub       # y
-        c, r = self.cryptosys.encrypt(pub, elem)    # r * g, m * g + r * y
+    def commit(self, elem, pub):
+        c, r = self._encrypt(pub, elem)             # r * g, m * g + r * y
         return c, r
 
     def reencrypt(self, pub, cipher):
-        cipher, r = self.cryptosys.reencrypt(
-            pub, cipher)
+        cipher, r = self._reencrypt(pub, cipher)
         return cipher, r                            # (r1 + r2) * g, m * g + (r1 + r2) * y
 
     def generate_decryptor(self, r1, r2, pub):
         return (r1 + r2) * pub
 
-    def _generate_chaum_pedersen(self, ddh, z, *extras):
-        return self.cryptosys.generate_chaum_pedersen(ddh, z, *extras)
+    def prove_reencryption(self, c, c_r, r_r, pub):
+        c1  , c2   = extract_cipher(c)                      # r * g, m + r * y
+        c1_r, c2_r = extract_cipher(c_r)                    # s * g, m + s * y
 
-    def generate_nirenc(self, c, c_r, keypair=None):
-        c1  , c2   = extract_cipher(c)
-        c1_r, c2_r = extract_cipher(c_r)
+        y = pub
+        extras = (y,)
 
-        priv, pub = self.keypair if not keypair \
-            else keypair
-        extras = (pub,)                         # TODO: Maybe enhance extras
-
-        proof_c1 = set_ddh_proof(
-            (c1, pub, c1_r),
-            self._generate_chaum_pedersen((c1, pub, c1_r), priv, *extras)
+        ddh = (
+            y,                      # x * g 
+            c1_r + (-c1),           # r' * g
+            c2_r + (-c2),           # r' * y = r' * x * g
         )
-        proof_c2 = set_ddh_proof(
-            (c2, pub, c2_r),
-            self._generate_chaum_pedersen((c2, pub, c2_r), priv, *extras)
-        )
-
-        nirenc = set_nirenc(proof_c1, proof_c2)
+        proof = self._generate_chaum_pedersen(ddh, r_r, *extras)
+        nirenc = set_ddh_proof(ddh, proof)
         return nirenc
 
-    def generate_niddh(self, r1, r2, keypair=None):
-        g = self.generator
+    def prove_decryption(self, c, decryptor, r, pub):
+        c_1, _ = extract_cipher(c)                          # r * g
 
-        g_r   = r1 * g
-        g_r_r = r2 * g
+        y = pub
+        extras = (y,)
 
-        priv, pub = self.keypair if not keypair \
-            else keypair
-        extras = (pub,)                         # TODO: Maybe enhance extras
-
-        niddh = set_ddh_proof(
-            (g_r, pub, g_r_r),
-            self._generate_chaum_pedersen((g_r, pub, g_r_r), priv, *extras)
+        ddh = (
+            y,                      # x * g
+            c_1,                    # r * g
+            decryptor,              # r * y = r * x * g
         )
-
+        proof = self._generate_chaum_pedersen(ddh, r, *extras)
+        niddh = set_ddh_proof(ddh, proof)
         return niddh
 
 
-class Verifier(KeyOwner):
+class Verifier(ElGamalWrapper):
 
-    def __init__(self, curve='P-384', key=None):
-        self.cryptosys = ElGamalCrypto(curve)
-        super().__init__(self.cryptosys, key=key)
-
-    @property
-    def generator(self):
-        return self.cryptosys.generator
-
-    def _verify_chaum_pedersen(self, ddh, proof, *extras):
-        return self.cryptosys.verify_chaum_pedersen(ddh, proof, *extras)
-
-    def verify_nirenc(self, nirenc, prover_pub):
-
-        proof_c1, proof_c2 = extract_nirenc(nirenc)
+    def verify_ddh_proof(self, ddh_proof, prover_pub):
+        ddh, proof = extract_ddh_proof(ddh_proof)
         extras = (prover_pub,)                  # TODO: Maybe enhance extras?
-
-        ddh, proof = extract_ddh_proof(proof_c1)
-        check_proof_c1 = self._verify_chaum_pedersen(ddh, proof, *extras)
-        assert check_proof_c1                   # TODO: Remove
-
-        ddh, proof = extract_ddh_proof(proof_c2)
-        check_proof_c2 = self._verify_chaum_pedersen(ddh, proof, *extras)
-        assert check_proof_c2                   # TODO: Remove
-
-        return check_proof_c1 and check_proof_c2
-
-    def verify_niddh(self, niddh, prover_pub):
-        ddh, proof = extract_ddh_proof(niddh)
-        extras = (prover_pub,)                  # TODO: Maybe enchance extras?
-        return self._verify_chaum_pedersen(ddh, proof, *extras)
+        verified = self._verify_chaum_pedersen(ddh, proof, *extras)
+        return verified

@@ -14,6 +14,46 @@ def test_encryption():
     c, r = cryptosys.encrypt(y, m)
     assert m == cryptosys.decrypt(x, c)
 
+def test_chaum_pedersen():
+    g = cryptosys.generator
+
+    x = cryptosys.random_scalar()
+    z = cryptosys.random_scalar()
+
+    # success
+    ddh = (x * g, z * g, x * (z * g))
+    proof = cryptosys.generate_chaum_pedersen(ddh, z)
+    verified = cryptosys.verify_chaum_pedersen(ddh, proof)
+    assert verified
+
+    # corrupt witness
+    ddh = (x * g, z * g, x * (z * g))
+    proof = cryptosys.generate_chaum_pedersen(ddh, z + 1)
+    ddh = (x * g, z * g, x * (z * g))
+    verified = cryptosys.verify_chaum_pedersen(ddh, proof)
+    assert not verified
+
+    # corrupt ddh
+    ddh = (x * g, z * g, x * (z * g))
+    proof = cryptosys.generate_chaum_pedersen(ddh, z)
+    ddh = (x * g, (z + 1) * g, x * (z * g))
+    verified = cryptosys.verify_chaum_pedersen(ddh, proof)
+    assert not verified
+
+    # corrupt proof/challenge
+    ddh = (x * g, z * g, x * (z * g))
+    proof = cryptosys.generate_chaum_pedersen(ddh, z)
+    proof['challenge'] += 1
+    verified = cryptosys.verify_chaum_pedersen(ddh, proof)
+    assert not verified
+
+    # corrupt proof/response
+    ddh = (x * g, z * g, x * (z * g))
+    proof = cryptosys.generate_chaum_pedersen(ddh, z)
+    proof['response'] += 1
+    verified = cryptosys.verify_chaum_pedersen(ddh, proof)
+    assert not verified
+
 def test_signature():
     x = cryptosys.generate_key()
     y = x.public_key()
