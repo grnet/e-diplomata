@@ -2,7 +2,6 @@
 ElGamal Backend
 """
 
-from Cryptodome.Signature import DSS
 from Cryptodome.PublicKey.ECC import EccPoint
 from Cryptodome.Math.Numbers import Integer
 from Cryptodome.PublicKey import ECC
@@ -12,7 +11,8 @@ from diplomata.util import *
 
 def hash_into_scalar(bytes_seq, endianness='big'):
     value = int.from_bytes(SHA384.new(bytes_seq).digest(), endianness)
-    return Integer(value)
+    out = Integer(value)
+    return out
 
 def fiat_shamir(*points):
     payload = ' '.join(map(lambda p: f'{p.xy}', points)).encode('utf-8')
@@ -37,10 +37,11 @@ class ElGamalCrypto(object):
         return self.curve.order
 
     def random_scalar(self):
-        return Integer.random_range(
+        rand = Integer.random_range(
             min_inclusive=1, 
             max_exclusive=self.order
         )
+        return rand
 
     def ecc_point_from_scalar(self, scalar):
         return scalar * self.generator
@@ -105,18 +106,3 @@ class ElGamalCrypto(object):
             response * g == g_comm + challenge * v,
             response * u == u_comm + challenge * w,
         ))
-
-    def sign(self, key, message):
-        signer = DSS.new(key, 'fips-186-3')
-        hmsg = SHA384.new(message)
-        signature = signer.sign(hmsg)
-        return signature
-
-    def verify_signature(self, sig, pub, message):
-        verifier = DSS.new(pub, 'fips-186-3')
-        hmsg = SHA384.new(message)
-        try:
-            verifier.verify(hmsg, sig)
-        except ValueError:
-            return False
-        return True

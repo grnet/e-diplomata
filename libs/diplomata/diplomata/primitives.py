@@ -2,6 +2,8 @@
 Basic Crypto Layer
 """
 
+from Cryptodome.Signature import DSS
+from Cryptodome.Hash import SHA384
 from diplomata.elgamal import ElGamalCrypto
 from diplomata.util import *
 
@@ -80,3 +82,24 @@ class Verifier(ElGamalWrapper):
         extras = (prover_pub,)                  # TODO: Maybe enhance extras?
         verified = self._verify_chaum_pedersen(ddh, proof, *extras)
         return verified
+
+
+class Signer(object):
+
+    def __init__(self, spec='fips-186-3'):
+        self.spec = spec
+
+    def sign(self, key, message):
+        signer = DSS.new(key, self.spec)
+        hmsg = SHA384.new(message)
+        signature = signer.sign(hmsg)
+        return signature
+
+    def verify_signature(self, sig, pub, message):
+        verifier = DSS.new(pub, self.spec)
+        hmsg = SHA384.new(message)
+        try:
+            verifier.verify(hmsg, sig)
+        except ValueError:
+            return False
+        return True

@@ -54,27 +54,3 @@ def test_chaum_pedersen():
     verified = cryptosys.verify_chaum_pedersen(ddh, proof)
     assert not verified
 
-def test_signature():
-    x = cryptosys.generate_key()
-    y = x.public_key()
-    m = b"This is a message"
-
-    # success
-    sig = cryptosys.sign(x, m)
-    verified = cryptosys.verify_signature(sig, y, m)
-    assert verified
-
-    # corrupt signature
-    corrupt_sig = sig + b"\x00"
-    verified = cryptosys.verify_signature(corrupt_sig, y, m)
-    assert not verified
-
-    # use wrong key
-    wrong_y = cryptosys.generate_key().public_key()
-    verified = cryptosys.verify_signature(sig, wrong_y, m)
-    assert not verified
-
-    # tamper message
-    corrupt_m = m + b"\x00"
-    verified = cryptosys.verify_signature(sig, y, corrupt_m)
-    assert not verified

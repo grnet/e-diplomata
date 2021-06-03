@@ -8,7 +8,8 @@ from nacl.public import Box as _NaclBox
 from Cryptodome.PublicKey import ECC as _ECC
 from diplomata.elgamal import ElGamalCrypto, \
     hash_into_scalar, _ecc_pub, gen_curve
-from diplomata.primitives import Prover as _Prover, Verifier as _Verifier
+from diplomata.primitives import Prover as _Prover, \
+        Verifier as _Verifier, Signer as _Signer
 from diplomata.adaptors import _ElGamalSerializer, _KeySerializer
 from diplomata.util import *
 
@@ -36,14 +37,14 @@ class KeyManager(_KeySerializer):
         self._cryptosys = ElGamalCrypto(curve)
         super().__init__(curve, hexifier=hexifier, flattener=flattener)
 
-    def _generate_ecc_key(self):
+    def _generate_elgamal_key(self):
         return self._cryptosys.generate_key()
 
     def _generate_nacl_key(self):
         return _NaclKey.generate()
 
     def generate_keys(self, serialized=True):
-        ecc_key  = self._generate_ecc_key()
+        ecc_key  = self._generate_elgamal_key()
         nacl_key = self._generate_nacl_key()
         keys = set_keys(ecc_key, nacl_key)
         if serialized is True:
@@ -76,6 +77,7 @@ class Party(_ElGamalSerializer):
         else:
             self._key = self._key_manager._deserialize_key(key)
         super().__init__(curve, hexifier=hexifier, flattener=flattener)
+        self._signer = _Signer()
 
     @classmethod
     def from_key(cls, key, curve='P-384', hexifier=True, flattener=False):
@@ -150,8 +152,8 @@ class Party(_ElGamalSerializer):
 
     def _hash_document(self, title):
         ht = hash_into_scalar(title)                    # H(t)
-        return self._cryptosys.ecc_point_from_scalar(
-            ht)                                         # H(t) * g
+        out = self._cryptosys.ecc_point_from_scalar(ht) # H(t) * g
+        return out
 
 
     # Tag creation
@@ -169,19 +171,19 @@ class Party(_ElGamalSerializer):
     # Signatures
 
     def sign(self, message, serialized=True):
-        signature = self._cryptosys.sign(self._key['ecc'], message)
+        signature = self._signer.sign(self._elgamal_key, message)
         if serialized is True:
             signature = self.serialize_signature(signature)
         return signature
 
-    def verify_signature(self, sig, pub, message, from_serialized=True):
-        pub = pub['ecc']    # TODO
+    def verify_signature(self, sig, signer_pub, message, from_serialized=True):
+        pub = signer_pub['ecc']    # TODO
         if from_serialized is True:
             # TODO
             sig = self.deserialize_signature(sig)
             pub = self._key_manager.deserialize_ecc_public(
                 pub, for_signature=True)
-        return self._cryptosys.verify_signature(
+        return self._signer.verify_signature(
             sig, pub, message)
 
 
