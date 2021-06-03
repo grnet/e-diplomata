@@ -198,7 +198,7 @@ SearchBar.propTypes = {
   /** Whether to clear search on escape */
   cancelOnEscape: PropTypes.bool,
   /** Override or extend the styles applied to the component. */
-  classes: PropTypes.object.isRequired,
+/*   classes: PropTypes.object.isRequired, */
   /** Custom top-level class */
   className: PropTypes.string,
   /** Override the close icon. */
