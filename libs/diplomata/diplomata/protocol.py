@@ -230,12 +230,12 @@ class Issuer(Party):
 
     def create_nirenc(self, c, c_r, r_r):
         pub = self.elgamal_pub
-        nirenc = self._prover.generate_nirenc(c, c_r, r_r, pub)
+        nirenc = self._prover.prove_reencryption(c, c_r, r_r, pub)
         return nirenc
 
     def create_niddh(self, c_r, decryptor, r, r_r):
         pub = self.elgamal_pub
-        niddh = self._prover.generate_niddh(c_r, decryptor, r + r_r, pub)
+        niddh = self._prover.prove_decryption(c_r, decryptor, r + r_r, pub)
         return niddh
 
     def encrypt_niddh(self, niddh, verifier_pub):
@@ -312,11 +312,11 @@ class Verifier(Party):
 
     def verify_nirenc(self, nirenc, issuer_pub):
         pub = issuer_pub['ecc']
-        return self._verifier.verify_nirenc(nirenc, pub)
+        return self._verifier.verify_ddh_proof(nirenc, pub)
 
     def verify_niddh(self, niddh, issuer_pub):
         pub = issuer_pub['ecc']
-        return self._verifier.verify_niddh(niddh, pub)
+        return self._verifier.verify_ddh_proof(niddh, pub)
 
     def publish_ack(self, s_prf, title, proof, issuer_pub):
         title = title.encode('utf-8')                   # TODO
