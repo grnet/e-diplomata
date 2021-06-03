@@ -16,7 +16,7 @@ import {
   SummaryListItemValue,
   SummaryListItemAction,
 } from "@digigov/ui/core/SummaryList";
-import IssuerLayout from "src/components/IssuerLayout";
+import Layout from "@diplomas/design-system/Layout"
 import { useResourceAction } from "@digigov/ui/api";
 import Grid from "@material-ui/core/Grid";
 
@@ -53,7 +53,7 @@ export default function Diploma() {
   }
 
   return (
-    <IssuerLayout>
+    <Layout>
       <Main className={styles.main}>
         <Grid container direction="column">
           <Grid item xs={12}>
@@ -92,6 +92,6 @@ export default function Diploma() {
           </Grid>
         </Grid>
       </Main>
-    </IssuerLayout>
+    </Layout>
   );
 }
