@@ -183,8 +183,9 @@ class Party(_ElGamalSerializer):
             sig = self.deserialize_signature(sig)
             pub = self._key_manager.deserialize_ecc_public(
                 pub, for_signature=True)
-        return self._signer.verify_signature(
+        verified = self._signer.verify_signature(
             sig, pub, message)
+        return verified
 
 
 class Holder(Party):
@@ -205,21 +206,20 @@ class Issuer(Party):
         self._prover = _Prover(curve)
 
     def commit_to_document(self, t):
-        elem = self._hash_document(t)                   # H(t) * g
-        pub = self.elgamal_pub                          # I
-        c, r = self._prover.commit(elem, pub)           # r * g, H(t) * g + r * I
+        ht = self._hash_document(t)                 # H(t) * g
+        pub = self.elgamal_pub                      # I
+        c, r  = self._cryptosys.encrypt(pub, ht)    # r * g, H(t) * g + r * I
         return c, r
 
     def reencrypt_commitment(self, c):
         pub = self.elgamal_pub                          # I
-        c_r, r_r = self._prover.reencrypt(pub, c)       # (r1 + r2) * g, H(t) * g + (r1 + r2) * I
+        c_r, r_r = self._cryptosys.reencrypt(pub, c)    # (r1 + r2) * g, H(t) * g + (r1 + r2) * I
         return c_r, r_r
 
-    def create_decryptor(self, r1, r2):
+    def create_decryptor(self, r):
         pub = self.elgamal_pub                          # I
-        decryptor = self._prover.generate_decryptor(
-            r1, r2, pub)
-        return decryptor                                # (r1 + r2) * I
+        decryptor = self._cryptosys.create_decryptor(r, pub)    # TODO
+        return decryptor                                # r * I
 
     def encrypt_decryptor(self, decryptor, verifier_pub):
         decryptor = self.encode(decryptor, 
@@ -266,7 +266,7 @@ class Issuer(Party):
 
         c_r, r_r = self.reencrypt_commitment(c)         # (r + r_r) * g, H(t) * g + (r + r_r) * I
 
-        decryptor = self.create_decryptor(r, r_r)       # (r + r_r) * I
+        decryptor = self.create_decryptor(r + r_r)      # (r + r_r) * I
         enc_decryptor = self.encrypt_decryptor(
             decryptor, verifier_pub)                    # E_V((r + r_r) * I)
         nirenc = self.create_nirenc(c, c_r, r_r)        # NIRENC_I(c, c_r)
@@ -306,8 +306,8 @@ class Verifier(Party):
         return c_r, decryptor, nirenc, niddh
 
     def decrypt_commitment(self, c_r, decryptor):
-        c = self._cryptosys.drenc(c_r, decryptor)   # TODO
-        return c
+        c_dec = self._cryptosys.decrypt_with_decryptor(c_r, decryptor)   # TODO
+        return c_dec
 
     def verify_document_integrity(self, t, c_dec):
         return c_dec == self._hash_document(t)    # c_dec == H(t) * g?

@@ -72,8 +72,11 @@ class ElGamalCrypto(object):
             c2 + r * public,
         )                                   # (r1 + r2) * g, m + (r1 + r2) * y
         return cipher, r
+
+    def create_decryptor(self, r, pub):
+        return r * pub                      # r * y = r * x * g
     
-    def drenc(self, cipher, decryptor):
+    def decrypt_with_decryptor(self, cipher, decryptor):
         _, c2 = extract_cipher(cipher)
         m = c2 + (-decryptor)
         return m

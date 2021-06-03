@@ -32,17 +32,6 @@ class ElGamalWrapper(object):
 
 class Prover(ElGamalWrapper):
 
-    def commit(self, elem, pub):
-        c, r = self._encrypt(pub, elem)             # r * g, m * g + r * y
-        return c, r
-
-    def reencrypt(self, pub, cipher):
-        cipher, r = self._reencrypt(pub, cipher)
-        return cipher, r                            # (r1 + r2) * g, m * g + (r1 + r2) * y
-
-    def generate_decryptor(self, r1, r2, pub):
-        return (r1 + r2) * pub
-
     def prove_reencryption(self, c, c_r, r_r, pub):
         c1  , c2   = extract_cipher(c)                      # r * g, m + r * y
         c1_r, c2_r = extract_cipher(c_r)                    # s * g, m + s * y
