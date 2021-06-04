@@ -40,11 +40,10 @@ class Prover(ElGamalWrapper):
         c1  , c2   = extract_cipher(c)                      # r * g, m + r * y
         c1_r, c2_r = extract_cipher(c_r)                    # s * g, m + s * y
 
-        y = pub
-        extras = (y,)
+        extras = (pub,)
 
         ddh = (
-            y,                      # x * g 
+            pub,                    # x * g 
             c1_r + (-c1),           # r' * g
             c2_r + (-c2),           # r' * y = r' * x * g
         )
@@ -55,11 +54,10 @@ class Prover(ElGamalWrapper):
     def prove_decryption(self, c, decryptor, r, pub):
         c_1, _ = extract_cipher(c)                          # r * g
 
-        y = pub
-        extras = (y,)
+        extras = (pub,)
 
         ddh = (
-            y,                      # x * g
+            pub,                    # x * g
             c_1,                    # r * g
             decryptor,              # r * y = r * x * g
         )

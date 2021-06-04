@@ -60,6 +60,14 @@ class ElGamalCrypto(object):
         )                                   # r * g, m + r * y
         return cipher, r
 
+    def create_decryptor(self, r, pub):
+        return r * pub                      # r * y = r * x * g
+    
+    def decrypt_with_decryptor(self, cipher, decryptor):
+        _, c2 = extract_cipher(cipher)
+        m = c2 + (-decryptor)
+        return m
+
     def decrypt(self, priv, cipher):
         a, b = extract_cipher(cipher)
         m = -(a * priv) + b
@@ -74,14 +82,6 @@ class ElGamalCrypto(object):
             c2 + r * pub,
         )                                   # (r1 + r2) * g, m + (r1 + r2) * y
         return cipher, r
-
-    def create_decryptor(self, r, pub):
-        return r * pub                      # r * y = r * x * g
-    
-    def decrypt_with_decryptor(self, cipher, decryptor):
-        _, c2 = extract_cipher(cipher)
-        m = c2 + (-decryptor)
-        return m
 
     def generate_chaum_pedersen(self, ddh, z, *extras):
         g = self.generator

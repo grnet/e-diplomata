@@ -14,6 +14,34 @@ def test_encryption():
     c, r = cryptosys.encrypt(y, m)
     assert m == cryptosys.decrypt(x, c)
 
+def test_decryption_with_decryptor():
+    g = cryptosys.generator
+    x = cryptosys.random_scalar()       # private
+    y = x * g                           # public
+    m = cryptosys.random_scalar() * g   # message
+    c, r = cryptosys.encrypt(y, m)
+    d = cryptosys.create_decryptor(r, y)
+    assert cryptosys.decrypt_with_decryptor(c, d) == \
+        cryptosys.decrypt(x, c)
+
+def test_reencryption():
+    g = cryptosys.generator
+    p = cryptosys.order
+    x = cryptosys.random_scalar()       # private
+    y = x * g                           # public
+    m = cryptosys.random_scalar() * g   # message
+
+    c  , r   = cryptosys.encrypt(y, m)
+    c_r, r_r = cryptosys.reencrypt(y, c)
+    
+    assert c_r == set_cipher(
+        (r + r_r) % p * g,
+        (r + r_r) % p * y + m
+    )
+    assert m == cryptosys.decrypt(x, c_r)
+    d = cryptosys.create_decryptor((r + r_r) % p, y)
+    assert m == cryptosys.decrypt_with_decryptor(c_r, d)
+
 def test_chaum_pedersen():
     g = cryptosys.generator
 
