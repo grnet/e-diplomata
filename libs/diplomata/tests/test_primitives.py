@@ -5,6 +5,58 @@ CURVE = 'P-384'
 
 cryptosys = ElGamalCrypto(curve=CURVE)
 
+def test_reencryption_proof():
+
+    # setup
+    prover = Prover()
+    verifier = Verifier()
+    g = cryptosys.generator
+    x = cryptosys.random_scalar()       # private
+    y = x * g                           # public
+    m = cryptosys.random_scalar() * g   # message
+    c  , r   = prover._encrypt(y, m)
+    c_r, r_r = prover._reencrypt(y, c)
+
+    # success
+    nirenc = prover.prove_reencryption(c, c_r, r_r, y)
+    verified = verifier.verify_ddh_proof(nirenc, y)
+    assert verified
+
+    # prove with wrong public
+    y_corrupt = (x + 1) * g
+    nirenc = prover.prove_reencryption(c, c_r, r_r, y_corrupt)
+    verified = verifier.verify_ddh_proof(nirenc, y)
+    assert not verified
+
+    # verify with wrong public
+    y_corrupt = (x + 1) * g
+    nirenc = prover.prove_reencryption(c, c_r, r_r, y)
+    verified = verifier.verify_ddh_proof(nirenc, y_corrupt)
+    assert not verified
+
+    # prove with wrong randomness
+    r_r_corrupt = r_r + 1
+    nirenc = prover.prove_reencryption(c, c_r, r_r_corrupt, y)
+    verified = verifier.verify_ddh_proof(nirenc, y) # y_corrupt
+    assert not verified
+
+    # prove for different initial cipher
+    c_corrupt, _ = prover._encrypt(y, m)
+    nirenc = prover.prove_reencryption(c_corrupt, c_r, r_r, y)
+    verified = verifier.verify_ddh_proof(nirenc, y)
+    assert not verified
+
+    # prove for different re-encryption
+    c_r_corrupt, _ = prover._reencrypt(y, c)
+    nirenc = prover.prove_reencryption(c, c_r_corrupt, r_r, y)
+    verified = verifier.verify_ddh_proof(nirenc, y)
+    assert not verified
+   
+
+def test_decryption_proof():
+    prover = Prover()
+    verifier = Verifier()
+
 def test_signature():
     signer = Signer()
 

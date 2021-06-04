@@ -65,13 +65,13 @@ class ElGamalCrypto(object):
         m = -(a * priv) + b
         return m
 
-    def reencrypt(self, public, cipher):    
+    def reencrypt(self, pub, cipher):    
         g = self.generator                  # g
         r = self.random_scalar()            # r
         c1, c2 = extract_cipher(cipher)     # r_1 * g, m + r_1 * y
         cipher = set_cipher(
             r * g + c1,                     
-            c2 + r * public,
+            c2 + r * pub,
         )                                   # (r1 + r2) * g, m + (r1 + r2) * y
         return cipher, r
 

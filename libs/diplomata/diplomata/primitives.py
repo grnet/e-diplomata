@@ -17,8 +17,8 @@ class ElGamalWrapper(object):
         cipher = self._cryptosys.encrypt(pub, elem)
         return cipher
     
-    def _reencrypt(self, pub, cipher):
-        c, r = self._cryptosys.reencrypt(pub, cipher)
+    def _reencrypt(self, pub, c):
+        c, r = self._cryptosys.reencrypt(pub, c)
         return c, r
 
     def _generate_chaum_pedersen(self, ddh, z, *extras):
