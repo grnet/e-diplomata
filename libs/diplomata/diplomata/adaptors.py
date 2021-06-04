@@ -177,13 +177,7 @@ class _ElGamalKeySerializer(_ElGamalSerializer):
     def serialize_ecc_public(self, pub):
         return self.serialize_ecc_point(pub)
 
-    def deserialize_ecc_public(self, pub, for_signature=False):
-        if for_signature is True:
-            return ECC.construct(
-                curve=self.curve.desc, 
-                point_x=self._unhexify(pub[0]), 
-                point_y=self._unhexify(pub[1]),
-            )
+    def deserialize_ecc_public(self, pub):
         return self.deserialize_ecc_point(pub) 
 
 

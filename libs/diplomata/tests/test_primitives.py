@@ -101,10 +101,11 @@ def test_decryption_proof():
 
 
 def test_signature():
-    signer = Signer()
+    signer = Signer(curve=CURVE)
 
+    g = cryptosys.generator
     x = cryptosys.generate_key()    # private
-    y = x.public_key()              # public
+    y = x.d * g                       # public
     m = b"This is a message"        # message
 
     # success
@@ -113,16 +114,16 @@ def test_signature():
     assert verified
 
     # corrupt signature
-    corrupt_sig = sig + b"\x00"
-    verified = signer.verify_signature(corrupt_sig, y, m)
+    sig_corrupt = sig + b"\x00"
+    verified = signer.verify_signature(sig_corrupt, y, m)
     assert not verified
 
     # use wrong key
-    wrong_y = cryptosys.generate_key().public_key()
-    verified = signer.verify_signature(sig, wrong_y, m)
+    y_corrupt = (x.d + 1) * g
+    verified = signer.verify_signature(sig, y_corrupt, m)
     assert not verified
 
     # tamper message
-    corrupt_m = m + b"\x00"
-    verified = signer.verify_signature(sig, y, corrupt_m)
+    m_corrupt = m + b"\x00"
+    verified = signer.verify_signature(sig, y, m_corrupt)
     assert not verified

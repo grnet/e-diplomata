@@ -77,7 +77,7 @@ class Party(_ElGamalSerializer):
         else:
             self._key = self._key_manager._deserialize_key(key)
         super().__init__(curve, hexifier=hexifier, flattener=flattener)
-        self._signer = _Signer()
+        self._signer = _Signer(curve)
 
     @classmethod
     def from_key(cls, key, curve='P-384', hexifier=True, flattener=False):
@@ -165,10 +165,8 @@ class Party(_ElGamalSerializer):
     def verify_signature(self, sig, signer_pub, message, from_serialized=True):
         pub = signer_pub['ecc']    # TODO
         if from_serialized is True:
-            # TODO
             sig = self.deserialize_signature(sig)
-            pub = self._key_manager.deserialize_ecc_public(
-                pub, for_signature=True)
+            pub = self._key_manager.deserialize_ecc_public(pub)
         verified = self._signer.verify_signature(
             sig, pub, message)
         return verified
@@ -276,19 +274,19 @@ class Verifier(Party):
         super().__init__(curve, key, hexifier=hexifier, flattener=flattener)
         self._verifier = _Verifier(curve)
 
-    def _retrieve_decryptor(self, issuer_pub, enc_decryptor):
+    def _decrypt_decryptor(self, issuer_pub, enc_decryptor):
         decryptor = self.decrypt(enc_decryptor, issuer_pub)
         return self.decode(decryptor, self.deserialize_ecc_point)
 
-    def _retrieve_niddh(self, issuer_pub, enc_niddh):
+    def _decrypt_niddh(self, issuer_pub, enc_niddh):
         niddh = self.decrypt(enc_niddh, issuer_pub)
         return self.decode(niddh, self.deserialize_niddh)
 
     def _retrieve_from_proof(self, issuer_pub, proof):
         proof = self.deserialize_proof(proof)
         c_r, enc_decryptor, nirenc, enc_niddh = extract_proof(proof)
-        decryptor = self._retrieve_decryptor(issuer_pub, enc_decryptor)
-        niddh = self._retrieve_niddh(issuer_pub, enc_niddh)
+        decryptor = self._decrypt_decryptor(issuer_pub, enc_decryptor)
+        niddh = self._decrypt_niddh(issuer_pub, enc_niddh)
         return c_r, decryptor, nirenc, niddh
 
     def decrypt_commitment(self, c_r, decryptor):
