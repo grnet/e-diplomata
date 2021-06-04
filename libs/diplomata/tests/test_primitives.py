@@ -2,14 +2,13 @@ from diplomata.elgamal import ElGamalCrypto
 from diplomata.primitives import *
 
 CURVE = 'P-384'
-
 cryptosys = ElGamalCrypto(curve=CURVE)
 
 def test_reencryption_proof():
 
     # setup
-    prover = Prover()
-    verifier = Verifier()
+    prover = Prover(curve=CURVE)
+    verifier = Verifier(curve=CURVE)
     g = cryptosys.generator
     x = cryptosys.random_scalar()       # private
     y = x * g                           # public
@@ -51,11 +50,55 @@ def test_reencryption_proof():
     nirenc = prover.prove_reencryption(c, c_r_corrupt, r_r, y)
     verified = verifier.verify_ddh_proof(nirenc, y)
     assert not verified
-   
 
+   
 def test_decryption_proof():
-    prover = Prover()
-    verifier = Verifier()
+
+    # setup
+    prover = Prover(curve=CURVE)
+    verifier = Verifier(curve=CURVE)
+    g = cryptosys.generator
+    x = cryptosys.random_scalar()       # private
+    y = x * g                           # public
+    m = cryptosys.random_scalar() * g   # message
+    c, r = prover._encrypt(y, m)
+    d = prover._create_decryptor(r, y)
+
+    # success
+    niddh = prover.prove_decryption(c, d, r, y)
+    verified = verifier.verify_ddh_proof(niddh, y)
+    assert verified
+
+    # prove with wrong public
+    y_corrupt = (x + 1) * g
+    niddh = prover.prove_decryption(c, d, r, y_corrupt)
+    verified = verifier.verify_ddh_proof(niddh, y)
+    assert not verified
+
+    # verify with wrong public
+    y_corrupt = (x + 1) * g
+    niddh = prover.prove_decryption(c, d, r, y)
+    verified = verifier.verify_ddh_proof(niddh, y_corrupt)
+    assert not verified
+
+    # prove with wrong randomness
+    r_corrupt = r + 1
+    niddh = prover.prove_decryption(c, d, r_corrupt, y)
+    verified = verifier.verify_ddh_proof(niddh, y)
+    assert not verified
+
+    # prove for different cipher
+    c_corrupt, _ = prover._encrypt(y, m)
+    niddh = prover.prove_decryption(c_corrupt, d, r, y)
+    verified = verifier.verify_ddh_proof(niddh, y)
+    assert not verified
+
+    # prove for different decryptor
+    d_corrupt = prover._create_decryptor(r + 1, y)
+    niddh = prover.prove_decryption(c, d_corrupt, r, y)
+    verified = verifier.verify_ddh_proof(niddh, y)
+    assert not verified
+
 
 def test_signature():
     signer = Signer()

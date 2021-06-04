@@ -21,6 +21,10 @@ class ElGamalWrapper(object):
         c, r = self._cryptosys.reencrypt(pub, c)
         return c, r
 
+    def _create_decryptor(self, r, pub):
+        decryptor = self._cryptosys.create_decryptor(r, pub)
+        return decryptor
+
     def _generate_chaum_pedersen(self, ddh, z, *extras):
         proof = self._cryptosys.generate_chaum_pedersen(ddh, z, *extras)
         return proof
@@ -66,9 +70,9 @@ class Prover(ElGamalWrapper):
 
 class Verifier(ElGamalWrapper):
 
-    def verify_ddh_proof(self, ddh_proof, prover_pub):
+    def verify_ddh_proof(self, ddh_proof, pub):
         ddh, proof = extract_ddh_proof(ddh_proof)
-        extras = (prover_pub,)                  # TODO: Maybe enhance extras?
+        extras = (pub,)                  # TODO: Maybe enhance extras?
         verified = self._verify_chaum_pedersen(ddh, proof, *extras)
         return verified
 
