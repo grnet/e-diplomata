@@ -16,7 +16,7 @@ import {
   SummaryListItemValue,
   SummaryListItemAction,
 } from "@digigov/ui/core/SummaryList";
-import Layout from "@diplomas/design-system/Layout"
+import Layout from "@diplomas/design-system/Layout";
 import { useResourceAction } from "@digigov/ui/api";
 import Grid from "@material-ui/core/Grid";
 
