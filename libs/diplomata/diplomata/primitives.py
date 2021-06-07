@@ -17,7 +17,7 @@ class ElGamalWrapper(object):
     def _encrypt(self, pub, elem):
         cipher = self._cryptosys.encrypt(pub, elem)
         return cipher
-    
+
     def _reencrypt(self, pub, c):
         c, r = self._cryptosys.reencrypt(pub, c)
         return c, r
@@ -44,7 +44,7 @@ class Prover(ElGamalWrapper):
         extras = (pub,)
 
         ddh = (
-            pub,                    # x * g 
+            pub,                    # x * g
             c1_r + (-c1),           # r' * g
             c2_r + (-c2),           # r' * y = r' * x * g
         )
@@ -63,8 +63,8 @@ class Prover(ElGamalWrapper):
             decryptor,              # r * y = r * x * g
         )
         proof = self._generate_chaum_pedersen(ddh, r, *extras)
-        niddh = set_ddh_proof(ddh, proof)
-        return niddh
+        nidec = set_ddh_proof(ddh, proof)
+        return nidec
 
 
 class Verifier(ElGamalWrapper):
@@ -84,8 +84,8 @@ class Signer(object):
 
     def _adjust_public(self, pub):
         return ECC.construct(
-            curve=self.curve, 
-            point_x=pub.xy[0], 
+            curve=self.curve,
+            point_x=pub.xy[0],
             point_y=pub.xy[1],
         )
 

@@ -221,15 +221,15 @@ class Issuer(Party):
         nirenc = self._prover.prove_reencryption(c, c_r, r_r, pub)
         return nirenc
 
-    def create_niddh(self, c_r, decryptor, r, r_r):
+    def create_nidec(self, c_r, decryptor, r, r_r):
         pub = self.elgamal_pub
-        niddh = self._prover.prove_decryption(c_r, decryptor, r + r_r, pub)
-        return niddh
+        nidec = self._prover.prove_decryption(c_r, decryptor, r + r_r, pub)
+        return nidec
 
-    def nacl_encrypt_niddh(self, niddh, pub):
-        niddh = self.encode(niddh, serializer=self.serialize_niddh)
-        enc_niddh = self.nacl_encrypt(niddh, pub)
-        return enc_niddh
+    def nacl_encrypt_nidec(self, nidec, pub):
+        nidec = self.encode(nidec, serializer=self.serialize_nidec)
+        enc_nidec = self.nacl_encrypt(nidec, pub)
+        return enc_nidec
 
     def publish_award(self, title):
         title = title.encode('utf-8')                   # TODO
@@ -256,13 +256,13 @@ class Issuer(Party):
         enc_decryptor = self.nacl_encrypt_decryptor(
             decryptor, verifier_pub)                    # E_V((r + r_r) * I)
         nirenc = self.create_nirenc(c, c_r, r_r)        # NIRENC_I(c, c_r)
-        niddh = self.create_niddh(c_r, decryptor, 
-            r, r_r)                                     # NIDDH_I(r + r_r)
-        enc_niddh = self.nacl_encrypt_niddh(
-            niddh, verifier_pub)                        # E_V(NIDDH_I(r + r_r))
+        nidec = self.create_nidec(c_r, decryptor, 
+            r, r_r)                                     # nidec_I(r + r_r)
+        enc_nidec = self.nacl_encrypt_nidec(
+            nidec, verifier_pub)                        # E_V(nidec_I(r + r_r))
 
         # Create proof and PROOF tag
-        proof = set_proof(c_r, enc_decryptor, nirenc, enc_niddh)
+        proof = set_proof(c_r, enc_decryptor, nirenc, enc_nidec)
         proof = self.serialize_proof(proof)
         payload = self.create_tag(PROOF, s_req=s_req, **proof)
         s_prf = self.sign(payload)
@@ -280,16 +280,16 @@ class Verifier(Party):
         decryptor = self.nacl_decrypt(enc_decryptor, issuer_pub)
         return self.decode(decryptor, self.deserialize_ecc_point)
 
-    def nacl_decrypt_niddh(self, issuer_pub, enc_niddh):
-        niddh = self.nacl_decrypt(enc_niddh, issuer_pub)
-        return self.decode(niddh, self.deserialize_niddh)
+    def nacl_decrypt_nidec(self, issuer_pub, enc_nidec):
+        nidec = self.nacl_decrypt(enc_nidec, issuer_pub)
+        return self.decode(nidec, self.deserialize_nidec)
 
     def _retrieve_from_proof(self, issuer_pub, proof):
         proof = self.deserialize_proof(proof)
-        c_r, enc_decryptor, nirenc, enc_niddh = extract_proof(proof)
+        c_r, enc_decryptor, nirenc, enc_nidec = extract_proof(proof)
         decryptor = self.nacl_decrypt_decryptor(issuer_pub, enc_decryptor)
-        niddh = self.nacl_decrypt_niddh(issuer_pub, enc_niddh)
-        return c_r, decryptor, nirenc, niddh
+        nidec = self.nacl_decrypt_nidec(issuer_pub, enc_nidec)
+        return c_r, decryptor, nirenc, nidec
 
     def decrypt_commitment(self, c_r, decryptor):
         c_dec = self.elgamal_decrypt(c_r, decryptor)
@@ -302,16 +302,16 @@ class Verifier(Party):
         pub = issuer_pub['ecc']
         return self._verifier.verify_ddh_proof(nirenc, pub)
 
-    def verify_niddh(self, niddh, issuer_pub):
+    def verify_nidec(self, nidec, issuer_pub):
         pub = issuer_pub['ecc']
-        return self._verifier.verify_ddh_proof(niddh, pub)
+        return self._verifier.verify_ddh_proof(nidec, pub)
 
     def publish_ack(self, s_prf, title, proof, issuer_pub):
         title = title.encode('utf-8')                   # TODO
         issuer_pub = self._key_manager.deserialize_public_shares(issuer_pub)
 
         # Deserialize and decrypt (if needed) proof components
-        c_r, decryptor, nirenc, niddh = self._retrieve_from_proof(
+        c_r, decryptor, nirenc, nidec = self._retrieve_from_proof(
             issuer_pub, proof)
 
         # Decrypt the issuer's initial commitment to document
@@ -320,13 +320,13 @@ class Verifier(Party):
         # Verifications
         check_integrity = self.verify_document_integrity(title, c_dec)
         check_nirenc    = self.verify_nirenc(nirenc, issuer_pub)
-        check_niddh     = self.verify_niddh(niddh, issuer_pub)
+        check_nidec     = self.verify_nidec(nidec, issuer_pub)
 
         # Create result and ACK tag
         result = all((
             check_integrity, 
             check_nirenc, 
-            check_niddh,
+            check_nidec,
         ))
         assert result   # TODO: Remove
         payload = self.create_tag(ACK if result else NACK,

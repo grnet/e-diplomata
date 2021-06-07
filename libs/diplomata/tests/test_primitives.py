@@ -65,38 +65,38 @@ def test_decryption_proof():
     d = prover._create_decryptor(r, y)
 
     # success
-    niddh = prover.prove_decryption(c, d, r, y)
-    verified = verifier.verify_ddh_proof(niddh, y)
+    nidec = prover.prove_decryption(c, d, r, y)
+    verified = verifier.verify_ddh_proof(nidec, y)
     assert verified
 
     # prove with wrong public
     y_corrupt = (x + 1) * g
-    niddh = prover.prove_decryption(c, d, r, y_corrupt)
-    verified = verifier.verify_ddh_proof(niddh, y)
+    nidec = prover.prove_decryption(c, d, r, y_corrupt)
+    verified = verifier.verify_ddh_proof(nidec, y)
     assert not verified
 
     # verify with wrong public
     y_corrupt = (x + 1) * g
-    niddh = prover.prove_decryption(c, d, r, y)
-    verified = verifier.verify_ddh_proof(niddh, y_corrupt)
+    nidec = prover.prove_decryption(c, d, r, y)
+    verified = verifier.verify_ddh_proof(nidec, y_corrupt)
     assert not verified
 
     # prove with wrong randomness
     r_corrupt = r + 1
-    niddh = prover.prove_decryption(c, d, r_corrupt, y)
-    verified = verifier.verify_ddh_proof(niddh, y)
+    nidec = prover.prove_decryption(c, d, r_corrupt, y)
+    verified = verifier.verify_ddh_proof(nidec, y)
     assert not verified
 
     # prove for different cipher
     c_corrupt, _ = prover._encrypt(y, m)
-    niddh = prover.prove_decryption(c_corrupt, d, r, y)
-    verified = verifier.verify_ddh_proof(niddh, y)
+    nidec = prover.prove_decryption(c_corrupt, d, r, y)
+    verified = verifier.verify_ddh_proof(nidec, y)
     assert not verified
 
     # prove for different decryptor
     d_corrupt = prover._create_decryptor(r + 1, y)
-    niddh = prover.prove_decryption(c, d_corrupt, r, y)
-    verified = verifier.verify_ddh_proof(niddh, y)
+    nidec = prover.prove_decryption(c, d_corrupt, r, y)
+    verified = verifier.verify_ddh_proof(nidec, y)
     assert not verified
 
 

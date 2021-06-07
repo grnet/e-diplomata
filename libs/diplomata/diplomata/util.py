@@ -75,18 +75,18 @@ def extract_keys(key):
     nacl_key = key['nacl']
     return ecc_key, nacl_key
 
-def set_proof(c_r, decryptor, nirenc, niddh):
+def set_proof(c_r, decryptor, nirenc, nidec):
     return {
         'c_r': c_r,
         'decryptor': decryptor, 
         'nirenc': nirenc, 
-        'niddh': niddh,
+        'nidec': nidec,
     }
 
 def extract_proof(proof):
     c_r = proof['c_r']
     decryptor = proof['decryptor']
     nirenc = proof['nirenc']
-    niddh = proof['niddh']
-    return c_r, decryptor, nirenc, niddh
+    nidec = proof['nidec']
+    return c_r, decryptor, nirenc, nidec
 

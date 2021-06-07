@@ -116,6 +116,6 @@ proof {
     c_r: <comm>,
     decryptor: <str(hex)>,
     nirenc: <ddh-proof>,
-    niddh: <str(hex)>
+    nidec: <str(hex)>
 }
 ```

@@ -52,14 +52,14 @@ class _Adaptor(metaclass=ABCMeta):
     def _adapt_nirenc(self, nirenc, reverse):
         return self._adapt_ddh_proof(nirenc, reverse=reverse)
 
-    def _adapt_niddh(self, niddh, reverse):
-        return self._adapt_ddh_proof(niddh, reverse=reverse)
+    def _adapt_nidec(self, nidec, reverse):
+        return self._adapt_ddh_proof(nidec, reverse=reverse)
 
     def _adapt_proof(self, proof, reverse):
-        c_r, decryptor, nirenc, niddh = extract_proof(proof)
+        c_r, decryptor, nirenc, nidec = extract_proof(proof)
         c_r = self._adapt_cipher(c_r, reverse=reverse)
         nirenc = self._adapt_nirenc(nirenc, reverse=reverse)
-        proof = set_proof(c_r, decryptor, nirenc, niddh)
+        proof = set_proof(c_r, decryptor, nirenc, nidec)
         return proof
 
     def _adapt_signature(self, signature, reverse):
@@ -136,11 +136,11 @@ class _ElGamalSerializer(_Adaptor):
     def deserialize_nirenc(self, nirenc):
         return self._adapt_nirenc(nirenc, reverse=True)
 
-    def serialize_niddh(self, niddh):
-        return self._adapt_niddh(niddh, reverse=False)
+    def serialize_nidec(self, nidec):
+        return self._adapt_nidec(nidec, reverse=False)
 
-    def deserialize_niddh(self, niddh):
-        return self._adapt_niddh(niddh, reverse=True)
+    def deserialize_nidec(self, nidec):
+        return self._adapt_nidec(nidec, reverse=True)
 
     def serialize_proof(self, proof):
         return self._adapt_proof(proof, reverse=False)
