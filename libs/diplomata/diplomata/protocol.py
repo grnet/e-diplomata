@@ -274,17 +274,17 @@ class Issuer(Party):
         return proof
 
     def publish_proof(self, s_req, r, c, ver_pub):
-        r = self.deserialize_scalar(r)
-        c = self.deserialize_cipher(c)
-        ver_pub = self.deserialize_public(ver_pub)
-
+        try:
+            r = self.deserialize_scalar(r)
+            c = self.deserialize_cipher(c)
+            ver_pub = self.deserialize_public(ver_pub)
+        except:
+            pass    # TODO: Handle deserialization error
         proof = self.generate_proof(c, r)
-
         proof = self.nacl_encrypt_proof(proof, ver_pub)
         proof = self.serialize_proof(proof)
         payload = self.create_tag(PROOF, s_req=s_req, **proof)
         s_prf = self.sign(payload)
-
         return s_prf, proof
 
 
@@ -348,17 +348,20 @@ class Verifier(Party):
         return result
 
     def publish_ack(self, s_prf, title, proof, issuer_pub):
-        title = self.deserialize_document(title)
-        proof = self.deserialize_proof(proof)
-        issuer_pub = self.deserialize_public(issuer_pub)
-
-        proof = self.nacl_decrypt_proof(proof, issuer_pub)
+        try:
+            title = self.deserialize_document(title)
+            proof = self.deserialize_proof(proof)
+            issuer_pub = self.deserialize_public(issuer_pub)
+        except:
+            pass    # TODO: Handle deserialization error
+        try:
+            proof = self.nacl_decrypt_proof(proof, issuer_pub)
+        except:
+            pass    # TODO: Handle nacl decryption error
         result = self.verify_proof(proof, title, issuer_pub)
-
         payload = self.create_tag(
             ACK if result else NACK,
             result=result,
             s_prf=s_prf)
         s_ack = self.sign(payload)
-
         return s_ack, result
