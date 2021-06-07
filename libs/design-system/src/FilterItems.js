@@ -22,7 +22,7 @@ export default function FilterItems({ handleChange, ...props }) {
                     </Title>
                 </Grid>
                 <Grid item>
-                    <NormalText variant="body1">Είδος τίτλου σπουδών</NormalText>
+                    <NormalText variant="body1">{props.filterTitles[1]}</NormalText>
                 </Grid>
                 <Grid item xs={12}>
                     {props.types && <ComboBox
@@ -32,7 +32,7 @@ export default function FilterItems({ handleChange, ...props }) {
                     ></ComboBox>}
                 </Grid>
                 <Grid item>
-                    <NormalText variant="body1">Ίδρυμα</NormalText>
+                    <NormalText variant="body1">{props.filterTitles[2]}</NormalText>
                 </Grid>
                 <Grid item xs={12}>
                     {props.departments && <ComboBox
