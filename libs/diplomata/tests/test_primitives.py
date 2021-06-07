@@ -13,8 +13,8 @@ def test_reencryption_proof():
     x = cryptosys.random_scalar()       # private
     y = x * g                           # public
     m = cryptosys.random_scalar() * g   # message
-    c  , r   = prover._encrypt(y, m)
-    c_r, r_r = prover._reencrypt(y, c)
+    c  , r   = cryptosys.encrypt(y, m)
+    c_r, r_r = cryptosys.reencrypt(y, c)
 
     # success
     nirenc = prover.prove_reencryption(c, c_r, r_r, y)
@@ -40,13 +40,13 @@ def test_reencryption_proof():
     assert not verified
 
     # prove for different initial cipher
-    c_corrupt, _ = prover._encrypt(y, m)
+    c_corrupt, _ = cryptosys.encrypt(y, m)
     nirenc = prover.prove_reencryption(c_corrupt, c_r, r_r, y)
     verified = verifier.verify_ddh_proof(nirenc, y)
     assert not verified
 
     # prove for different re-encryption
-    c_r_corrupt, _ = prover._reencrypt(y, c)
+    c_r_corrupt, _ = cryptosys.reencrypt(y, c)
     nirenc = prover.prove_reencryption(c, c_r_corrupt, r_r, y)
     verified = verifier.verify_ddh_proof(nirenc, y)
     assert not verified
@@ -61,8 +61,8 @@ def test_decryption_proof():
     x = cryptosys.random_scalar()       # private
     y = x * g                           # public
     m = cryptosys.random_scalar() * g   # message
-    c, r = prover._encrypt(y, m)
-    d = prover._create_decryptor(r, y)
+    c, r = cryptosys.encrypt(y, m)
+    d = cryptosys.create_decryptor(r, y)
 
     # success
     nidec = prover.prove_decryption(c, d, r, y)
@@ -88,13 +88,13 @@ def test_decryption_proof():
     assert not verified
 
     # prove for different cipher
-    c_corrupt, _ = prover._encrypt(y, m)
+    c_corrupt, _ = cryptosys.encrypt(y, m)
     nidec = prover.prove_decryption(c_corrupt, d, r, y)
     verified = verifier.verify_ddh_proof(nidec, y)
     assert not verified
 
     # prove for different decryptor
-    d_corrupt = prover._create_decryptor(r + 1, y)
+    d_corrupt = cryptosys.create_decryptor(r + 1, y)
     nidec = prover.prove_decryption(c, d_corrupt, r, y)
     verified = verifier.verify_ddh_proof(nidec, y)
     assert not verified
@@ -105,7 +105,7 @@ def test_signature():
 
     g = cryptosys.generator
     x = cryptosys.generate_key()    # private
-    y = x.d * g                       # public
+    y = x.d * g                     # public
     m = b"This is a message"        # message
 
     # success

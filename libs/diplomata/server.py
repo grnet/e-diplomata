@@ -38,7 +38,7 @@ class DiplomataRPC(object):
     def generate_keys(self):
         km = RpcKeyManager()
         key = km.generate_keys()
-        pub = km.get_public_from_key(key)
+        pub = km.get_public_shares(key)
         return {
           'private': key,
           'public': pub,
@@ -80,9 +80,9 @@ issuer_key = km.generate_keys()
 verifier_key = km.generate_keys()
 
 # Extract public counterparts to store in db
-holder_pub = km.get_public_from_key(holder_key)
-issuer_pub = km.get_public_from_key(issuer_key)
-verifier_pub = km.get_public_from_key(verifier_key)
+holder_pub = km.get_public_shares(holder_key)
+issuer_pub = km.get_public_shares(issuer_key)
+verifier_pub = km.get_public_shares(verifier_key)
 
 # Create parties
 holder = RpcHolder(holder_key)

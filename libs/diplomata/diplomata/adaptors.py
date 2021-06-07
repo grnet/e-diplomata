@@ -252,7 +252,7 @@ class _KeySerializer(_ElGamalKeySerializer):
         key = set_keys(ecc_key, nacl_key)
         return key
 
-    def deserialize_public_shares(self, public):
+    def deserialize_public(self, public):
         public = self._unflatten_public(public)
         ecc_pub, nacl_pub = extract_keys(public)
         ecc_pub = self.deserialize_ecc_public(ecc_pub)

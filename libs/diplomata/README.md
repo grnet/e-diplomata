@@ -71,7 +71,7 @@ appearing in the presentation layer.
 ### `KeyManager`
 
 #### .generate_keys()
-#### .get_public_from_key()
+#### .get_public_shares()
 
 ### `Party`
 

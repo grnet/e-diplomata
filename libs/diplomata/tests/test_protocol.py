@@ -83,9 +83,9 @@ def test_flow(config):
     issuer = Issuer.from_key(key=issuer_key, **config)
     verifier = Verifier.from_key(key=verifier_key, **config)
 
-    holder_pub = km.get_public_from_key(holder_key)
-    issuer_pub = km.get_public_from_key(issuer_key)
-    verifier_pub = km.get_public_from_key(verifier_key)
+    holder_pub = km.get_public_shares(holder_key)
+    issuer_pub = km.get_public_shares(issuer_key)
+    verifier_pub = km.get_public_shares(verifier_key)
 
     # import pdb; pdb.set_trace()
     assert holder_pub == holder.get_public()

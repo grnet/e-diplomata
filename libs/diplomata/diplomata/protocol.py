@@ -51,7 +51,7 @@ class KeyManager(_KeySerializer):
             keys = self._serialize_key(keys)
         return keys
 
-    def get_public_from_key(self, key, serialized=True, from_serialized=True):
+    def get_public_shares(self, key, serialized=True, from_serialized=True):
         if from_serialized:
             key = self._deserialize_key(key)
         ecc_pub, nacl_pub = _extract_public_keys(key)
@@ -59,8 +59,8 @@ class KeyManager(_KeySerializer):
             ecc_pub  = self.serialize_ecc_public(ecc_pub)
             nacl_pub = self._serialize_nacl_public(nacl_pub)
         public_shares = set_keys(ecc_pub, nacl_pub)
-        public_shares = self._flatten_public(public_shares)
-        return public_shares
+        public = self._flatten_public(public_shares)
+        return public
 
 
 class Party(_ElGamalSerializer):
@@ -84,7 +84,7 @@ class Party(_ElGamalSerializer):
         return cls(key=key, curve=curve, hexifier=hexifier, flattener=flattener)
 
     def get_public(self, serialized=True):
-        return self._key_manager.get_public_from_key(self._key,
+        return self._key_manager.get_public_shares(self._key,
             serialized=serialized, from_serialized=False)       # TODO
 
     @property
@@ -117,6 +117,9 @@ class Party(_ElGamalSerializer):
         _, nacl_pub = self.public_keys
         return nacl_pub
 
+    def deserialize_public(self, public):
+        return self._key_manager.deserialize_public(public)
+
     def encode(self, entity, serializer):
         return json.dumps(serializer(
             entity)).encode('utf-8')
@@ -143,10 +146,16 @@ class Party(_ElGamalSerializer):
         elem = self._cryptosys.decrypt_with_decryptor(cipher, decryptor)
         return elem
 
+    def serialize_document(self, title):
+        return title.decode('utf-8')
+
+    def deserialize_document(self, title):
+        return title.encode('utf-8')
+
     def hash_document(self, title):
-        payload = title.encode('utf-8') if \
+        title = self.deserialize_document(title) if \
             isinstance(title, str) else title
-        out = self._cryptosys.hash_into_element(payload)  # H(t) * g
+        out = self._cryptosys.hash_into_element(title)  # H(t) * g
         return out
 
     @staticmethod
@@ -179,8 +188,8 @@ class Holder(Party):
     def __init__(self, curve='P-384', key=None, hexifier=True, flattener=False):
         super().__init__(curve, key, hexifier=hexifier, flattener=flattener)
 
-    def publish_request(self, s_awd, verifier_pub):
-        payload = self.create_tag(REQUEST, s_awd=s_awd, verifier=verifier_pub)
+    def publish_request(self, s_awd, ver_pub):
+        payload = self.create_tag(REQUEST, s_awd=s_awd, verifier=ver_pub)
         s_req = self.sign(payload)
         return s_req
 
@@ -197,6 +206,18 @@ class Issuer(Party):
         c, r = self.elgamal_encrypt(pub, ht)    # r * g, H(t) * g + r * I
         return c, r
 
+    def publish_award(self, title):
+        title = self.deserialize_document(title)
+
+        c, r = self.commit_to_document(title)       # r * g, H(t) * g + r * I
+
+        c = self.serialize_cipher(c)
+        r = self.serialize_scalar(r)
+
+        payload = self.create_tag(AWARD, c=c)
+        s_awd = self.sign(payload)
+        return s_awd, c, r
+
     def elgamal_reencrypt(self, pub, c):
         c_r, r_r = self._cryptosys.reencrypt(pub, c)
         return c_r, r_r
@@ -206,63 +227,60 @@ class Issuer(Party):
         c_r, r_r = self.elgamal_reencrypt(pub, c)   # (r1 + r2) * g, H(t) * g + (r1 + r2) * I
         return c_r, r_r
 
+    def prove_renc(self, c, c_r, r_r):
+        pub = self.elgamal_pub
+        nirenc = self._prover.prove_reencryption(c, c_r, r_r, pub)
+        return nirenc
+
     def create_decryptor(self, r):
         pub = self.elgamal_pub                                  # I
         decryptor = self._cryptosys.create_decryptor(r, pub)    # r * I
         return decryptor
 
-    def nacl_encrypt_decryptor(self, decryptor, pub):
-        decryptor = self.encode(decryptor, serializer=self.serialize_ecc_point)
-        enc_decryptor = self.nacl_encrypt(decryptor, pub)   # E_V((r1 + r2) * I)
-        return enc_decryptor
-
-    def create_nirenc(self, c, c_r, r_r):
-        pub = self.elgamal_pub
-        nirenc = self._prover.prove_reencryption(c, c_r, r_r, pub)
-        return nirenc
-
-    def create_nidec(self, c_r, decryptor, r, r_r):
+    def prove_dec(self, c_r, decryptor, r, r_r):
         pub = self.elgamal_pub
         nidec = self._prover.prove_decryption(c_r, decryptor, r + r_r, pub)
         return nidec
 
+    def generate_proof(self, c, r):
+        c_r, r_r = self.reencrypt_commitment(c)             # (r + r') * g, H(t) * g + (r + r') * I
+        decryptor = self.create_decryptor(r + r_r)          # (r + r') * I
+        nirenc = self.prove_renc(c, c_r, r_r)               # NIRENC_I(c, c')
+        nidec = self.prove_dec(c_r, decryptor, r, r_r)      # NIDDH_I(r + r')
+        proof = set_proof(c_r, decryptor, nirenc, nidec)
+        return proof
+
+    def nacl_encrypt_decryptor(self, decryptor, pub):
+        decryptor = self.encode(decryptor, 
+            serializer=self.serialize_ecc_point)
+        enc_decryptor = self.nacl_encrypt(decryptor, pub)   # E_V((r1 + r2) * I)
+        return enc_decryptor
+
     def nacl_encrypt_nidec(self, nidec, pub):
-        nidec = self.encode(nidec, serializer=self.serialize_nidec)
+        nidec = self.encode(nidec, 
+            serializer=self.serialize_nidec)
         enc_nidec = self.nacl_encrypt(nidec, pub)
         return enc_nidec
 
-    def publish_award(self, title):
-        title = title.encode('utf-8')                   # TODO
-        c, r = self.commit_to_document(title)           # r * g, H(t) * g + r * I
+    def nacl_encrypt_proof(self, proof, ver_pub):
+        """
+        Symmetrically encrypt decryptor and proof of decryption
+        """
+        c_r, decryptor, nirenc, nidec = extract_proof(proof)
+        enc_decryptor = self.nacl_encrypt_decryptor(
+            decryptor, ver_pub)                                     # E_V((r + r') * I)
+        enc_nidec = self.nacl_encrypt_nidec(nidec, ver_pub)         # E_V(NIDDH_I(r + r'))
+        proof = set_proof(c_r, enc_decryptor, nirenc, enc_nidec)
+        return proof
 
-        # Serialize output and create AWARD tag
-        c = self.serialize_cipher(c)
-        r = self.serialize_scalar(r)
-        payload = self.create_tag(AWARD, c=c)
-        s_awd = self.sign(payload)
-
-        return s_awd, c, r
-
-    def publish_proof(self, s_req, r, c, verifier_pub):
-
-        # Deserialize input
+    def publish_proof(self, s_req, r, c, ver_pub):
         r = self.deserialize_scalar(r)
         c = self.deserialize_cipher(c)
-        verifier_pub = self._key_manager.deserialize_public_shares(verifier_pub)
+        ver_pub = self.deserialize_public(ver_pub)
 
-        c_r, r_r = self.reencrypt_commitment(c)         # (r + r_r) * g, H(t) * g + (r + r_r) * I
+        proof = self.generate_proof(c, r)
 
-        decryptor = self.create_decryptor(r + r_r)      # (r + r_r) * I
-        enc_decryptor = self.nacl_encrypt_decryptor(
-            decryptor, verifier_pub)                    # E_V((r + r_r) * I)
-        nirenc = self.create_nirenc(c, c_r, r_r)        # NIRENC_I(c, c_r)
-        nidec = self.create_nidec(c_r, decryptor, 
-            r, r_r)                                     # nidec_I(r + r_r)
-        enc_nidec = self.nacl_encrypt_nidec(
-            nidec, verifier_pub)                        # E_V(nidec_I(r + r_r))
-
-        # Create proof and PROOF tag
-        proof = set_proof(c_r, enc_decryptor, nirenc, enc_nidec)
+        proof = self.nacl_encrypt_proof(proof, ver_pub)
         proof = self.serialize_proof(proof)
         payload = self.create_tag(PROOF, s_req=s_req, **proof)
         s_prf = self.sign(payload)
@@ -284,19 +302,23 @@ class Verifier(Party):
         nidec = self.nacl_decrypt(enc_nidec, issuer_pub)
         return self.decode(nidec, self.deserialize_nidec)
 
-    def _retrieve_from_proof(self, issuer_pub, proof):
-        proof = self.deserialize_proof(proof)
+    def nacl_decrypt_proof(self, proof, issuer_pub):
+        """
+        Symmetrically decrypt decryptor and proof of decryption
+        """
         c_r, enc_decryptor, nirenc, enc_nidec = extract_proof(proof)
-        decryptor = self.nacl_decrypt_decryptor(issuer_pub, enc_decryptor)
-        nidec = self.nacl_decrypt_nidec(issuer_pub, enc_nidec)
-        return c_r, decryptor, nirenc, nidec
+        decryptor = self.nacl_decrypt_decryptor(
+            issuer_pub, enc_decryptor)                              # (r + r') * I
+        nidec = self.nacl_decrypt_nidec(issuer_pub, enc_nidec)      # NIDDH_I(r + r')
+        proof = set_proof(c_r, decryptor, nirenc, nidec)
+        return proof
 
     def decrypt_commitment(self, c_r, decryptor):
         c_dec = self.elgamal_decrypt(c_r, decryptor)
         return c_dec
 
     def verify_document_integrity(self, t, c_dec):
-        return c_dec == self.hash_document(t)       # c_dec == H(t) * g?
+        return c_dec == self.hash_document(t)                       # c_dec == H(t) * g?
 
     def verify_nirenc(self, nirenc, issuer_pub):
         pub = issuer_pub['ecc']
@@ -306,30 +328,37 @@ class Verifier(Party):
         pub = issuer_pub['ecc']
         return self._verifier.verify_ddh_proof(nidec, pub)
 
-    def publish_ack(self, s_prf, title, proof, issuer_pub):
-        title = title.encode('utf-8')                   # TODO
-        issuer_pub = self._key_manager.deserialize_public_shares(issuer_pub)
-
-        # Deserialize and decrypt (if needed) proof components
-        c_r, decryptor, nirenc, nidec = self._retrieve_from_proof(
-            issuer_pub, proof)
+    def verify_proof(self, proof, title, issuer_pub):
+        c_r, decryptor, nirenc, nidec = extract_proof(proof)
 
         # Decrypt the issuer's initial commitment to document
         c_dec = self.decrypt_commitment(c_r, decryptor)
-    
+
         # Verifications
-        check_integrity = self.verify_document_integrity(title, c_dec)
+        check_title     = self.verify_document_integrity(title, c_dec)
         check_nirenc    = self.verify_nirenc(nirenc, issuer_pub)
         check_nidec     = self.verify_nidec(nidec, issuer_pub)
 
-        # Create result and ACK tag
+        # Verification result
         result = all((
-            check_integrity, 
+            check_title, 
             check_nirenc, 
             check_nidec,
         ))
-        assert result   # TODO: Remove
-        payload = self.create_tag(ACK if result else NACK,
-            s_prf=s_prf, result=result)
+        return result
+
+    def publish_ack(self, s_prf, title, proof, issuer_pub):
+        title = self.deserialize_document(title)
+        proof = self.deserialize_proof(proof)
+        issuer_pub = self.deserialize_public(issuer_pub)
+
+        proof = self.nacl_decrypt_proof(proof, issuer_pub)
+        result = self.verify_proof(proof, title, issuer_pub)
+
+        payload = self.create_tag(
+            ACK if result else NACK,
+            result=result,
+            s_prf=s_prf)
         s_ack = self.sign(payload)
+
         return s_ack, result

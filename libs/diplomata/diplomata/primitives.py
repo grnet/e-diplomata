@@ -9,37 +9,17 @@ from diplomata.elgamal import ElGamalCrypto
 from diplomata.util import *
 
 
-class ElGamalWrapper(object):
+class Prover(object):
 
     def __init__(self, curve='P-384'):
         self._cryptosys = ElGamalCrypto(curve)
 
-    def _encrypt(self, pub, elem):
-        cipher = self._cryptosys.encrypt(pub, elem)
-        return cipher
-
-    def _reencrypt(self, pub, c):
-        c, r = self._cryptosys.reencrypt(pub, c)
-        return c, r
-
-    def _create_decryptor(self, r, pub):
-        decryptor = self._cryptosys.create_decryptor(r, pub)
-        return decryptor
-
     def _generate_chaum_pedersen(self, ddh, z, *extras):
-        proof = self._cryptosys.generate_chaum_pedersen(ddh, z, *extras)
-        return proof
-
-    def _verify_chaum_pedersen(self, ddh, proof, *extras):
-        verified = self._cryptosys.verify_chaum_pedersen(ddh, proof, *extras)
-        return verified
-
-
-class Prover(ElGamalWrapper):
+        return self._cryptosys.generate_chaum_pedersen(ddh, z, *extras)
 
     def prove_reencryption(self, c, c_r, r_r, pub):
-        c1  , c2   = extract_cipher(c)                      # r * g, m + r * y
-        c1_r, c2_r = extract_cipher(c_r)                    # s * g, m + s * y
+        c1  , c2   = extract_cipher(c)              # r * g, m + r * y
+        c1_r, c2_r = extract_cipher(c_r)            # (r + r') * g, m + (r + r') * y
 
         extras = (pub,)
 
@@ -67,7 +47,13 @@ class Prover(ElGamalWrapper):
         return nidec
 
 
-class Verifier(ElGamalWrapper):
+class Verifier(object):
+
+    def __init__(self, curve='P-384'):
+        self._cryptosys = ElGamalCrypto(curve)
+
+    def _verify_chaum_pedersen(self, ddh, proof, *extras):
+        return self._cryptosys.verify_chaum_pedersen(ddh, proof, *extras)
 
     def verify_ddh_proof(self, ddh_proof, pub):
         ddh, proof = extract_ddh_proof(ddh_proof)
