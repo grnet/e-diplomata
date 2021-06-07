@@ -16,7 +16,7 @@ import {
   SummaryListItemValue,
   SummaryListItemAction,
 } from "@digigov/ui/core/SummaryList";
-import HolderLayout from "src/components/HolderLayout";
+import Layout from "@diplomas/design-system/Layout";
 import { useResourceAction } from "@digigov/ui/api";
 import Grid from "@material-ui/core/Grid";
 
@@ -73,7 +73,7 @@ export default function Title() {
   }
 
   return (
-    <HolderLayout>
+    <Layout>
       <Main className={styles.main}>
         <Grid container direction="column">
           <Grid item xs={12}>
@@ -148,6 +148,6 @@ export default function Title() {
           </Grid>
         </Grid>
       </Main>
-    </HolderLayout>
+    </Layout>
   );
 }
