@@ -317,7 +317,8 @@ class Verifier(Party):
         c_dec = self.elgamal_decrypt(c_r, decryptor)
         return c_dec
 
-    def verify_document_integrity(self, t, c_dec):
+    def verify_document_integrity(self, t, c_r, decryptor):
+        c_dec = self.decrypt_commitment(c_r, decryptor)
         return c_dec == self.hash_document(t)                       # c_dec == H(t) * g?
 
     def verify_nirenc(self, nirenc, issuer_pub):
@@ -331,11 +332,8 @@ class Verifier(Party):
     def verify_proof(self, proof, title, issuer_pub):
         c_r, decryptor, nirenc, nidec = extract_proof(proof)
 
-        # Decrypt the issuer's initial commitment to document
-        c_dec = self.decrypt_commitment(c_r, decryptor)
-
         # Verifications
-        check_title     = self.verify_document_integrity(title, c_dec)
+        check_title     = self.verify_document_integrity(title, c_r, decryptor)
         check_nirenc    = self.verify_nirenc(nirenc, issuer_pub)
         check_nidec     = self.verify_nidec(nidec, issuer_pub)
 
