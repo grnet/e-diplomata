@@ -39,7 +39,7 @@ export default function Documents({ children, ...props }) {
     });
 
     const styles = useStyles();
-    const { data, fetch, ...rest } = useResourceMany("issuer/documents", searchForm);
+    const { data, fetch, ...rest } = useResourceMany(props.url, searchForm);
     
     const delayedSearch = useCallback(
         debounce(
@@ -128,6 +128,7 @@ export default function Documents({ children, ...props }) {
                             <FilterItems
                                 types={props.types}
                                 departments={props.departments}
+                                filterTitles={props.filterTitles}
                                 handleChange={handleChange}
                             />
                             <Grid item xl={7} lg={7} md={7} sm={12} xs={12}>
@@ -137,7 +138,7 @@ export default function Documents({ children, ...props }) {
                                     </NormalText>
                                 </Grid>
                                 <Grid item xs={12} style={{ textAlign: "center" }}>
-                                    <Title size="md">Τίτλοι Σπουδών</Title>
+                                    <Title size="md">{props.filterTitles[0]}</Title>
                                 </Grid>
                                 <List>
                                     {documents &&
