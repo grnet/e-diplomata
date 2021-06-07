@@ -125,21 +125,23 @@ class Party(_ElGamalSerializer):
         return deserializer(json.loads(
             entity.decode('utf-8')))
 
-    def encrypt(self, content, receiver_pub):
-        """
-        Symmetric encryption (nacl common secret)
-        """
+    def nacl_encrypt(self, content, receiver_pub):
         box = _NaclBox(self._nacl_key, receiver_pub['nacl'])
         cipher = box.encrypt(content).hex()
         return cipher
 
-    def decrypt(self, cipher, sender_pub):
-        """
-        Symmetric decryption (nacl common secret)
-        """
+    def nacl_decrypt(self, cipher, sender_pub):
         box = _NaclBox(self._nacl_key, sender_pub['nacl'])
-        content = box.decrypt(bytes.fromhex(cipher))
-        return content
+        plaintxt = box.decrypt(bytes.fromhex(cipher))
+        return plaintxt
+
+    def elgamal_encrypt(self, pub, m):
+        cipher, r = self._cryptosys.encrypt(pub, m)
+        return cipher, r
+
+    def elgamal_decrypt(self, cipher, decryptor):
+        elem = self._cryptosys.decrypt_with_decryptor(cipher, decryptor)
+        return elem
 
     def hash_document(self, title):
         payload = title.encode('utf-8') if \
@@ -162,8 +164,8 @@ class Party(_ElGamalSerializer):
             signature = self.serialize_signature(signature)
         return signature
 
-    def verify_signature(self, sig, signer_pub, message, from_serialized=True):
-        pub = signer_pub['ecc']    # TODO
+    def verify_signature(self, sig, pub, message, from_serialized=True):
+        pub = pub['ecc']
         if from_serialized is True:
             sig = self.deserialize_signature(sig)
             pub = self._key_manager.deserialize_ecc_public(pub)
@@ -190,14 +192,18 @@ class Issuer(Party):
         self._prover = _Prover(curve)
 
     def commit_to_document(self, title):
-        ht = self.hash_document(title)                  # H(t) * g
-        pub = self.elgamal_pub                          # I
-        c, r = self._cryptosys.encrypt(pub, ht)         # r * g, H(t) * g + r * I
+        ht = self.hash_document(title)          # H(t) * g
+        pub = self.elgamal_pub                  # I
+        c, r = self.elgamal_encrypt(pub, ht)    # r * g, H(t) * g + r * I
         return c, r
 
+    def elgamal_reencrypt(self, pub, c):
+        c_r, r_r = self._cryptosys.reencrypt(pub, c)
+        return c_r, r_r
+
     def reencrypt_commitment(self, c):
-        pub = self.elgamal_pub                          # I
-        c_r, r_r = self._cryptosys.reencrypt(pub, c)    # (r1 + r2) * g, H(t) * g + (r1 + r2) * I
+        pub = self.elgamal_pub                      # I
+        c_r, r_r = self.elgamal_reencrypt(pub, c)   # (r1 + r2) * g, H(t) * g + (r1 + r2) * I
         return c_r, r_r
 
     def create_decryptor(self, r):
@@ -205,13 +211,9 @@ class Issuer(Party):
         decryptor = self._cryptosys.create_decryptor(r, pub)    # r * I
         return decryptor
 
-    def encrypt_decryptor(self, decryptor, verifier_pub):
-        decryptor = self.encode(decryptor, 
-            serializer=self.serialize_ecc_point)
-        enc_decryptor = self.encrypt(
-            decryptor,
-            verifier_pub
-        )                                               # E_V((r1 + r2) * I)
+    def nacl_encrypt_decryptor(self, decryptor, pub):
+        decryptor = self.encode(decryptor, serializer=self.serialize_ecc_point)
+        enc_decryptor = self.nacl_encrypt(decryptor, pub)   # E_V((r1 + r2) * I)
         return enc_decryptor
 
     def create_nirenc(self, c, c_r, r_r):
@@ -224,9 +226,9 @@ class Issuer(Party):
         niddh = self._prover.prove_decryption(c_r, decryptor, r + r_r, pub)
         return niddh
 
-    def encrypt_niddh(self, niddh, verifier_pub):
+    def nacl_encrypt_niddh(self, niddh, pub):
         niddh = self.encode(niddh, serializer=self.serialize_niddh)
-        enc_niddh = self.encrypt(niddh, verifier_pub)
+        enc_niddh = self.nacl_encrypt(niddh, pub)
         return enc_niddh
 
     def publish_award(self, title):
@@ -251,12 +253,12 @@ class Issuer(Party):
         c_r, r_r = self.reencrypt_commitment(c)         # (r + r_r) * g, H(t) * g + (r + r_r) * I
 
         decryptor = self.create_decryptor(r + r_r)      # (r + r_r) * I
-        enc_decryptor = self.encrypt_decryptor(
+        enc_decryptor = self.nacl_encrypt_decryptor(
             decryptor, verifier_pub)                    # E_V((r + r_r) * I)
         nirenc = self.create_nirenc(c, c_r, r_r)        # NIRENC_I(c, c_r)
         niddh = self.create_niddh(c_r, decryptor, 
             r, r_r)                                     # NIDDH_I(r + r_r)
-        enc_niddh = self.encrypt_niddh(
+        enc_niddh = self.nacl_encrypt_niddh(
             niddh, verifier_pub)                        # E_V(NIDDH_I(r + r_r))
 
         # Create proof and PROOF tag
@@ -274,23 +276,23 @@ class Verifier(Party):
         super().__init__(curve, key, hexifier=hexifier, flattener=flattener)
         self._verifier = _Verifier(curve)
 
-    def _decrypt_decryptor(self, issuer_pub, enc_decryptor):
-        decryptor = self.decrypt(enc_decryptor, issuer_pub)
+    def nacl_decrypt_decryptor(self, issuer_pub, enc_decryptor):
+        decryptor = self.nacl_decrypt(enc_decryptor, issuer_pub)
         return self.decode(decryptor, self.deserialize_ecc_point)
 
-    def _decrypt_niddh(self, issuer_pub, enc_niddh):
-        niddh = self.decrypt(enc_niddh, issuer_pub)
+    def nacl_decrypt_niddh(self, issuer_pub, enc_niddh):
+        niddh = self.nacl_decrypt(enc_niddh, issuer_pub)
         return self.decode(niddh, self.deserialize_niddh)
 
     def _retrieve_from_proof(self, issuer_pub, proof):
         proof = self.deserialize_proof(proof)
         c_r, enc_decryptor, nirenc, enc_niddh = extract_proof(proof)
-        decryptor = self._decrypt_decryptor(issuer_pub, enc_decryptor)
-        niddh = self._decrypt_niddh(issuer_pub, enc_niddh)
+        decryptor = self.nacl_decrypt_decryptor(issuer_pub, enc_decryptor)
+        niddh = self.nacl_decrypt_niddh(issuer_pub, enc_niddh)
         return c_r, decryptor, nirenc, niddh
 
     def decrypt_commitment(self, c_r, decryptor):
-        c_dec = self._cryptosys.decrypt_with_decryptor(c_r, decryptor)   # TODO
+        c_dec = self.elgamal_decrypt(c_r, decryptor)
         return c_dec
 
     def verify_document_integrity(self, t, c_dec):
