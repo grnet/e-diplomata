@@ -24,6 +24,7 @@ const useStyles = makeStyles((theme) => ({
 }/* ,{ name: "MuiSite" } */));
 
 export default function Login(props) {
+    console.log(props.data);
     const styles = useStyles();
     const auth = useAuth();
     const [select, setSelect] = React.useState('');
@@ -84,9 +85,9 @@ export default function Login(props) {
                                     const user = props.data[e.target.value];
                                     demoLogin(user);
                                 }}>
-                                {props.data && props.data.map((issuer, index) => (
+                                {props.data && props.data.map((entity, index) => (
                                     <MenuItem key={index} value={index}>
-                                        {issuer.title}
+                                        {props.type === "Holder" || "Verifier" ? entity.email : entity.title}
                                     </MenuItem>
                                 ))}
                             </TextField>}
