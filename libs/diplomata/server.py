@@ -57,7 +57,7 @@ class DiplomataRPC(object):
         return {
           's_req': s_req
         }
-    def publish_proof(self, s_req, r, c, issuer_key, verifier_pub, holder_pub, s_awd):
+    def publish_proof(self, s_req, r, c, issuer_key, verifier_pub, s_awd):
         issuer = Issuer(issuer_key)
         s_prf, proof = issuer.publish_proof(s_req, r, c, verifier_pub)
         return {
