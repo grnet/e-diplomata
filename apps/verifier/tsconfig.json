@@ -17,11 +17,12 @@
     "jsx": "preserve",
     "baseUrl": ".",
     "paths": {
-      "@diplomas/blockchain": ["../../libs/blockchain"],
-      "verifier":[
+      "@diplomas/ledger": [
+        "../../libs/blockchain"
+      ],
+      "verifier": [
         "src"
       ]
     }
   },
-  
 }

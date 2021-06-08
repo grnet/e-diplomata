@@ -20,12 +20,12 @@
     "react": "16.14.0",
     "react-dom": "16.14.0",
     "next": "10.0.9",
-    "@diplomas/blockchain": "~0.1.0",
+    "@diplomas/ledger": "~0.1.0",
     "i18next": "~20.2.1",
     "react-i18next": "~11.8.12",
     "lodash": "~4.17.21",
     "@material-ui/lab": "~4.0.0-alpha.57",
-    "@diplomas/design-system":"0.1.0"
+    "@diplomas/design-system": "0.1.0"
   },
   "devDependencies": {
     "@digigov/cli": "0.5.3-beta-1",
