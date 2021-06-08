@@ -1,0 +1,7 @@
+FROM node:12
+RUN apt update && apt install -y libsecret-1-dev
+RUN npm install -g --unsafe-perm @microsoft/rush
+COPY . /app
+WORKDIR /app
+RUN rush update --purge
+

@@ -1,0 +1,35 @@
+version: "3.8"
+services:
+  # mongodb:
+  #   image : mongo
+  #   container_name: mongodb
+  #   environment:
+  #   - PUID=1000
+  #   - PGID=1000
+  #   volumes:
+  #   - ./mongodb/database:/data/db
+  #   ports:
+  #   - 27017:27017
+  #   restart: unless-stopped
+  holder:
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
+    image: ediplomas/holder:latest
+    container_name: holder
+    volumes:
+      - ./:/app
+    ports:
+      - 3001:3001
+    command: cd /app/apps/holder && yarn dev
+  crypto:
+    build:
+      context: ./libs/diplomata
+      dockerfile: Dockerfile.dev
+    image: ediplomas/crypto:latest
+    container_name: crypto
+    volumes:
+      - ./libs/diplomata:/app
+    ports:
+      - 4242:4242
+
