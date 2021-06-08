@@ -12,6 +12,7 @@ const useStyles = makeStyles((theme) => ({
 }));
 
 export default function FilterItems({ handleChange, ...props }) {
+    console.log(props.dataFilters);
     const styles = useStyles();
     return (
         <>
@@ -21,26 +22,21 @@ export default function FilterItems({ handleChange, ...props }) {
                         Φίλτρα αναζήτησης
                     </Title>
                 </Grid>
-                <Grid item>
-                    <NormalText variant="body1">{props.filterTitles[1]}</NormalText>
-                </Grid>
-                <Grid item xs={12}>
-                    {props.types && <ComboBox
-                        options={props.types}
-                        onChange={handleChange}
-                        variant="standard"
-                    ></ComboBox>}
-                </Grid>
-                <Grid item>
-                    <NormalText variant="body1">{props.filterTitles[2]}</NormalText>
-                </Grid>
-                <Grid item xs={12}>
-                    {props.departments && <ComboBox
-                        options={props.departments}
-                        onChange={handleChange}
-                        variant="standard"
-                    ></ComboBox>}
-                </Grid>
+                {props.dataFilters &&
+                    props.dataFilters.map((row, index) => (
+                        <span key={index}>
+                            <Grid item>
+                                <NormalText variant="body1">{row.title}</NormalText>
+                            </Grid>
+                            <Grid item xs={12}>
+                                {row.filterData && <ComboBox
+                                    options={row.filterData}
+                                    onChange={handleChange}
+                                    variant="standard"
+                                ></ComboBox>}
+                            </Grid>
+                        </span>
+                    ))}
             </Grid>
         </>
     );
