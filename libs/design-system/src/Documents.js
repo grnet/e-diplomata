@@ -40,7 +40,7 @@ export default function Documents({ children, ...props }) {
 
     const styles = useStyles();
     const { data, fetch, ...rest } = useResourceMany(props.url, searchForm);
-    
+
     const delayedSearch = useCallback(
         debounce(
             (value) =>
@@ -67,41 +67,51 @@ export default function Documents({ children, ...props }) {
         return Math.ceil(rest.totalPages);
     }
 
+
     function handleChange(value, options, removeBoxItem) {
         if (removeBoxItem) {
-            if (options === props.types) {
-                const deleteKeySearchForm = delete searchForm.type;
-                setSearchForm((searchForm) => ({
-                    ...searchForm,
-                    ...deleteKeySearchForm,
-                    offset: 1,
-                }));
-            }
-            if (options === props.departments) {
-                const deleteKeySearchForm = delete searchForm.department;
-                setSearchForm((searchForm) => ({
-                    ...searchForm,
-                    ...deleteKeySearchForm,
-                    offset: 1,
-                }));
-            }
+            props.dataFilters.forEach(item => {
+                if (options === item.filterData) {
+                    var typeData = item.filterTypeData;
+                    const deleteKeySearchForm = delete searchForm[typeData];
+                    setSearchForm((searchForm) => ({
+                        ...searchForm,
+                        ...deleteKeySearchForm,
+                        offset: 1,
+                    }));
+                }
+            });
         } else {
-            if (options === props.types) {
-                setSearchForm((searchForm) => ({
-                    ...searchForm,
-                    type: value,
-                    offset: 1,
-                }));
-            }
-            if (options === props.departments) {
-                setSearchForm((searchForm) => ({
-                    ...searchForm,
-                    department: value,
-                    offset: 1,
-                }));
-            }
+
+            props.dataFilters.forEach(item => {
+                if (options === item.filterData) {
+                    var typeData = item.filterTypeData;
+                    setSearchForm((searchForm) => ({
+                        ...searchForm,
+                        [typeData]: value,
+                        offset: 1,
+                    }));
+                }
+            });
         }
     }
+
+    /*  if (options === item.filterData) {
+         if (item.filterTypeData === "type") {
+             setSearchForm((searchForm) => ({
+                 ...searchForm,
+                 type: value,
+                 offset: 1,
+             }));
+         } if (item.filterTypeData === "department") {
+             setSearchForm((searchForm) => ({
+                 ...searchForm,
+                 department: value,
+                 offset: 1,
+             }));
+         }
+ 
+     } */
 
     useEffect(() => {
         setDocuments(data);
@@ -110,10 +120,6 @@ export default function Documents({ children, ...props }) {
     useEffect(() => {
         fetch();
     }, [searchForm]);
-
-   /*  const createDeploma = function () {
-        router.push("/diplomas/create");
-    }; */
 
     return (
         <Layout>
@@ -126,8 +132,7 @@ export default function Documents({ children, ...props }) {
                     <Grid item xs={12}>
                         <Grid container direction="row">
                             <FilterItems
-                                types={props.types}
-                                departments={props.departments}
+                                dataFilters={props.dataFilters}
                                 filterTitles={props.filterTitles}
                                 handleChange={handleChange}
                             />
@@ -138,7 +143,7 @@ export default function Documents({ children, ...props }) {
                                     </NormalText>
                                 </Grid>
                                 <Grid item xs={12} style={{ textAlign: "center" }}>
-                                    <Title size="md">{props.filterTitles[0]}</Title>
+                                    <Title size="md">{props.title}</Title>
                                 </Grid>
                                 <List>
                                     {documents &&
