@@ -3,7 +3,7 @@
   "version": "0.2.7",
   "private": true,
   "scripts": {
-    "dev": "digigov app dev -p 3001",
+    "dev": "export PORT=3001 && digigov app dev",
     "build": "digigov app build",
     "start": "digigov app start",
     "lint": "digigov lint",
