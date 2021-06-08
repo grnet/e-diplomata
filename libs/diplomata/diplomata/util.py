@@ -1,6 +1,15 @@
 """
 """
 
+from Cryptodome.PublicKey import ECC
+
+def gen_curve(name):
+    """
+    Elliptic-curve generation
+    """
+    return ECC._curves[name]
+
+
 # El-Gamal Backend Layer Structures
 
 def set_cipher(c1, c2):
@@ -15,20 +24,20 @@ def extract_cipher(cipher):
     c2 = cipher['c2']
     return c1, c2
 
-def set_chaum_pedersen(u_comm, v_comm, s, d):
+def set_chaum_pedersen(g_comm, u_comm, challenge, response):
     return {
+        'g_comm': g_comm,
         'u_comm': u_comm,
-        'v_comm': v_comm,
-        's': s,
-        'd': d,
+        'challenge': challenge,
+        'response': response,
     }
 
 def extract_chaum_pedersen(proof):
+    g_comm = proof['g_comm']
     u_comm = proof['u_comm']
-    v_comm = proof['v_comm']
-    s = proof['s']
-    d = proof['d']
-    return u_comm, v_comm, s, d
+    challenge = proof['challenge']
+    response = proof['response']
+    return g_comm, u_comm, challenge, response
 
 def set_ddh_proof(ddh, proof):
     return {
@@ -44,16 +53,13 @@ def extract_ddh_proof(ddh_proof):
 
 # Basic Crypto Layer Structures
 
-def set_nirenc(proof_c1, proof_c2):
-    return {
-        'proof_c1': proof_c1,
-        'proof_c2': proof_c2,
-    }
+def set_nirenc(ddh, proof):
+    nirenc = set_ddh_proof(ddh, proof)
+    return nirenc
 
 def extract_nirenc(nirenc):
-    proof_c1 = nirenc['proof_c1']
-    proof_c2 = nirenc['proof_c2']
-    return proof_c1, proof_c2
+    ddh, proof = extract_ddh_proof(nirenc)
+    return ddh, proof
 
 
 # Transaction Layer Structures
@@ -69,18 +75,18 @@ def extract_keys(key):
     nacl_key = key['nacl']
     return ecc_key, nacl_key
 
-def set_proof(c_r, decryptor, nirenc, niddh):
+def set_proof(c_r, decryptor, nirenc, nidec):
     return {
         'c_r': c_r,
         'decryptor': decryptor, 
         'nirenc': nirenc, 
-        'niddh': niddh,
+        'nidec': nidec,
     }
 
 def extract_proof(proof):
     c_r = proof['c_r']
     decryptor = proof['decryptor']
     nirenc = proof['nirenc']
-    niddh = proof['niddh']
-    return c_r, decryptor, nirenc, niddh
+    nidec = proof['nidec']
+    return c_r, decryptor, nirenc, nidec
 

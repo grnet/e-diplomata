@@ -25,14 +25,14 @@ def test_elgamal_encdec():
     party_1 = Issuer(CURVE)
     party_2 = Verifier(CURVE)
 
-    pub_1 = party_1.get_public_shares(serialized=False, adapted=False)
-    pub_2 = party_2.get_public_shares(serialized=False, adapted=False)
+    pub_1 = party_1.get_public(serialized=False)
+    pub_2 = party_2.get_public(serialized=False)
 
     import random
     ps = random.sample(range(1000), 100)
     for i in range(100):
         verifier_pub  = pub_2['ecc']
-        verifier_priv = party_2._verifier.private
+        verifier_priv = party_2._elgamal_key.d
         cryptosys = party_1._cryptosys
         g = cryptosys.generator
         cipher, r = cryptosys.encrypt(verifier_pub, ps[i] * g)

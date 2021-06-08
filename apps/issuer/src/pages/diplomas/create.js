@@ -109,7 +109,7 @@ export default function CreateDiploma() {
   const styles = useStyles();
   const [formData, setFormData] = useState();
   const { data, loaded, loading, fetch } = useResourceAction(
-    "diplomas",
+    "issuer/documents",
     null,
     "POST",
     formData

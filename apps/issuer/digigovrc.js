@@ -3,7 +3,7 @@ const os = require("os");
 module.exports = {
   proxy: {
     "/api": {
-      target: "http://localhost:4000/api/",
+      target: "http://localhost:5000/api/",
       pathRewrite: {
         "^/api": "/",
       },

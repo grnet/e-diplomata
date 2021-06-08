@@ -1,84 +1,123 @@
+"""
+Diplomata Demo Script
+"""
+
+import sys
+import argparse
 import json
 from diplomata.protocol import KeyManager, Holder, Issuer, Verifier
 
+def _json_dump(payload):
+    print(json.dumps(payload, indent=2))
+
 if __name__ == '__main__':
+    prog = sys.argv[0]
+    parser = argparse.ArgumentParser(**{
+        'prog': prog,
+        'usage': 'python3 %s [OPTIONS]' % prog,
+        'epilog': '\n',
+        'description': __doc__,
+        'epilog': '',
+    })
 
-    CURVE = 'P-384'             # Cryptosystem config
+    parser.add_argument('--curve', type=str, default='P-384', 
+            help="Elliptic curve of El-Gamal cryptosystem (default: P-384)")
+    parser.add_argument('--title', type=str, default='This is a qualification', 
+            help="Content of title under verification (default: \"This is\
+            a qualification\")")
+    parser.add_argument('--hexify', action='store_true', default=False,
+            help="Hexify big integers at serialization (default: False)")
+    parser.add_argument('--flatten', action='store_true', default=False,
+            help="Flatten serialized objects (default: False)")
+    parser.add_argument('--verbose', action='store_true', default=False,
+            help="Display computation results at each step (default: False)")
 
-    km = KeyManager(CURVE)
-    holder_key   = km.generate_keys(serialized=True, adapted=False)
-    issuer_key   = km.generate_keys(serialized=True, adapted=False)
-    verifier_key = km.generate_keys(serialized=True, adapted=False)
+    args = parser.parse_args()
 
-    # Setup involved parties
-    holder   = Holder.create_from_key(curve=CURVE, key=holder_key)
-    issuer   = Issuer.create_from_key(curve=CURVE, key=issuer_key)
-    verifier = Verifier.create_from_key(curve=CURVE, key=verifier_key)
+    curve = args.curve
+    title = args.title
+    hexify = args.hexify
+    flatten = args.flatten
+    verbose = args.verbose
 
 
-    # Involved parties publish their keys
-    holder_pub   = holder.get_public_shares()
-    issuer_pub   = issuer.get_public_shares()
-    verifier_pub = verifier.get_public_shares()
+    # Setup
 
-    # The document under verification
-    title = "This is a qualification"
+    config = {
+        'curve': args.curve,
+        'hexifier': args.hexify,
+        'flattener': args.flatten,
+    }
 
-    print('\nstep 1')                           # step 1
+    km = KeyManager(**config)
 
-    # ISSUER commits to document t
+    holder_key = km.generate_keys()
+    issuer_key = km.generate_keys()
+    verifier_key = km.generate_keys()
+
+    holder = Holder.from_key(holder_key, **config)
+    issuer = Issuer.from_key(issuer_key, **config)
+    verifier = Verifier.from_key(verifier_key, **config)
+
+    holder_pub = holder.get_public()
+    issuer_pub = issuer.get_public()
+    verifier_pub = verifier.get_public()
+
+
+    # Run protocol
+
+    if verbose:
+        print('\nstep 1')                           # step 1
     s_awd, c, r = issuer.publish_award(title)
+    if verbose:
+        _json_dump({
+            's_awd': s_awd,
+            'c': c,
+            'r': r,
+        })
 
-    # ISSUER stores r privately, publishes the commitment c and
-    # publishes s_awd (ledger) sending it also to HOLDER
-    print('s_awd:', s_awd)
-    print('c:', c)
-    print('r:', r)
 
-    print('\nstep 2')                           # step 2
-
-    # HOLDER makes a request for proof of t (on behalf of ISSUER)
-    # addressed to VERIFIER
-
+    if verbose:
+        print('\nstep 2')                           # step 2
     # TODO
     from diplomata.protocol import AWARD
-    payload = holder.create_tag(AWARD, c=c)
-    # assert holder.verify_signature(s_awd, issuer_pub, payload)
-
+    tag = holder.create_tag(AWARD, c=c)
+    _issuer_pub = holder._key_manager._unflatten_public(issuer_pub)
+    assert holder.verify_signature(s_awd, _issuer_pub, tag)
     s_req = holder.publish_request(s_awd, verifier_pub)
+    if verbose:
+        _json_dump({
+            's_req': s_req,
+        })
 
-    # HOLDER publishes s_req (ledger)
-    print('s_req:', s_req)
 
-    print('\nstep 3')                           # step 3
-
-    # ISSUER generates the requested proof for VERIFIER, using commitment c
-    # to the original document and the privately stored randomness r used
-    # to generate it
-
+    if verbose:
+        print('\nstep 3')                           # step 3
     # TODO
     from diplomata.protocol import REQUEST
-    payload = issuer.create_tag(REQUEST, s_awd=s_awd, verifier=verifier_pub)
-    # assert issuer.verify_signature(s_req, holder_pub, payload)
-
+    tag = issuer.create_tag(REQUEST, s_awd=s_awd, verifier=verifier_pub)
+    _holder_pub = issuer._key_manager._unflatten_public(holder_pub)
+    assert issuer.verify_signature(s_req, _holder_pub, tag)
     s_prf, proof = issuer.publish_proof(s_req, r, c, verifier_pub)
+    if verbose:
+        _json_dump({
+            's_prf': s_prf,
+            'proof': proof,
+        })
 
-    # ISSUER publishes s_prf (ledger) and sends proof to VERIFIER
-    print('s_prf:', s_prf)
-    print('proof:', json.dumps(proof, indent=2))
 
-    print('\nstep 4')                           # step 4
-
-    # VERIFIER verifies proof against document and ISSUER's key
-
+    if verbose:
+        print('\nstep 4')                           # step 4
     # TODO
     from diplomata.protocol import PROOF
-    payload = verifier.create_tag(PROOF, s_req=s_req, **proof)
-    # assert verifier.verify_signature(s_prf, issuer_pub, payload)
-
+    tag = verifier.create_tag(PROOF, s_req=s_req, **proof)
+    _issuer_pub = verifier._key_manager._unflatten_public(issuer_pub)
+    assert verifier.verify_signature(s_prf, _issuer_pub, tag)
     s_ack, result = verifier.publish_ack(s_prf, title, proof, issuer_pub)
+    if verbose:
+        _json_dump({
+            's_ack': s_ack,
+        })
 
-    # VERIFIER publishes s_ack (ledger) and the verification result
-    print('s_ack:', s_ack)
     print('[%s] Verification: %s' % (('+', 'SUCCESS') if result else ('-',
         'FAILURE')))

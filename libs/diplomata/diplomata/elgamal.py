@@ -2,47 +2,28 @@
 ElGamal Backend
 """
 
-from Cryptodome.Signature import DSS
 from Cryptodome.PublicKey.ECC import EccPoint
 from Cryptodome.Math.Numbers import Integer
 from Cryptodome.PublicKey import ECC
 from Cryptodome.Hash import SHA384
 from diplomata.util import *
-from diplomata.adaptors import _ElGamalSerializer
 
 
-def gen_curve(name):
-    """
-    Elliptic-curve generation
-    """
-    return ECC._curves[name]
-
-def hash_into_scalar(bytes_seq, endianness='big'):
-    """
-    t -> H(t), where H(t) can act as scalar on elliptic points
-    """
-    value = int.from_bytes(SHA384.new(bytes_seq).digest(), endianness)
-    return Integer(value)
+def hash_into_scalar(payload, endianness='big'):
+    value = int.from_bytes(SHA384.new(payload).digest(), endianness)
+    out = Integer(value)
+    return out
 
 def fiat_shamir(*points):
-    """
-    Fiat-Shamir heuristic over elliptic curve points
-    """
     payload = ' '.join(map(lambda p: f'{p.xy}', points)).encode('utf-8')
     out = hash_into_scalar(payload)
     return out
 
 def _ecc_pub(ecc_key):
-    """
-    Public part of provided key
-    """
     return ecc_key.pointQ
 
 
-class ElGamalCrypto(_ElGamalSerializer):
-    """
-    The cryptosystem
-    """
+class ElGamalCrypto(object):
 
     def __init__(self, curve='P-384'):
         self.curve = gen_curve(name=curve)
@@ -56,13 +37,16 @@ class ElGamalCrypto(_ElGamalSerializer):
         return self.curve.order
 
     def random_scalar(self):
-        return Integer.random_range(
+        rand = Integer.random_range(
             min_inclusive=1, 
             max_exclusive=self.order
         )
+        return rand
 
-    def ecc_point_from_scalar(self, scalar):
-        return scalar * self.generator
+    def hash_into_element(self, payload):
+        g = self.generator
+        s = hash_into_scalar(payload)
+        return s * g
 
     def generate_key(self, curve='P-384'):
         return ECC.generate(curve=curve)
@@ -76,130 +60,54 @@ class ElGamalCrypto(_ElGamalSerializer):
         )                                   # r * g, m + r * y
         return cipher, r
 
+    def create_decryptor(self, r, pub):
+        return r * pub                      # r * y = r * x * g
+    
+    def decrypt_with_decryptor(self, cipher, decryptor):
+        _, c2 = extract_cipher(cipher)
+        m = c2 + (-decryptor)
+        return m
+
     def decrypt(self, priv, cipher):
         a, b = extract_cipher(cipher)
         m = -(a * priv) + b
         return m
 
-    def reencrypt(self, public, cipher):    
+    def reencrypt(self, pub, cipher):    
         g = self.generator                  # g
         r = self.random_scalar()            # r
         c1, c2 = extract_cipher(cipher)     # r_1 * g, m + r_1 * y
         cipher = set_cipher(
             r * g + c1,                     
-            c2 + r * public,
+            c2 + r * pub,
         )                                   # (r1 + r2) * g, m + (r1 + r2) * y
         return cipher, r
-    
-    def drenc(self, cipher, decryptor):
-        _, c2 = extract_cipher(cipher)
-        m = c2 + (-decryptor)
-        return m
 
     def generate_chaum_pedersen(self, ddh, z, *extras):
         g = self.generator
         p = self.order
-        r = self.random_scalar()
-    
+
         u, v, w = ddh
-        u_comm = r * u                                      # u commitment
-        v_comm = r * g                                      # g commitment
-    
-        c = fiat_shamir(u, v, w, u_comm, v_comm, *extras)   # challenge
-    
-        s = (r + z * c) % p                                 # response
-        d = z * u
-    
-        proof = set_chaum_pedersen(u_comm, v_comm, s, d)
+
+        r = self.random_scalar()
+
+        g_comm = r * g
+        u_comm = r * u
+
+        challenge = fiat_shamir(u, v, w, g_comm, u_comm, *extras)
+        response = (r + z * challenge) % p
+
+        proof = set_chaum_pedersen(g_comm, u_comm, challenge, response)
         return proof
     
     def verify_chaum_pedersen(self, ddh, proof, *extras):
         g = self.generator
+
         u, v, w = ddh
-        u_comm, v_comm, s, d = extract_chaum_pedersen(proof)
-        c = fiat_shamir(u, v, w, u_comm, v_comm, *extras)   # challenge
-        return (s * u == u_comm + c * d) and \
-               (s * g == v_comm + c * v)
+        g_comm, u_comm, challenge, response = extract_chaum_pedersen(proof)
 
-    def sign(self, key, message):
-        signer = DSS.new(key, 'fips-186-3')
-        hmsg = SHA384.new(message)
-        signature = signer.sign(hmsg)
-        return signature
-
-    def verify_signature(self, sig, pub, message):
-        pub = self.deserialize_ecc_public(pub, 
-            for_signature=True)
-        verifier = DSS.new(pub, 'fips-186-3')
-        hmsg = SHA384.new(message)
-        try:
-            verifier.verify(hmsg, sig)
-        except ValueError:
-            return False
-        return True
-
-
-class EccPointSerializer(object):
-    """
-    Serializer infrastructure for elliptic points and scalars
-    """
-
-    def _serialize_ecc_point(self, pt):
-        return self._cryptosys.serialize_ecc_point(pt)
-    
-    def _deserialize_ecc_point(self, pt):
-        return self._cryptosys.deserialize_ecc_point(pt)
-    
-    def _serialize_scalar(self, scalar):
-        return self._cryptosys.serialize_scalar(scalar)
-    
-    def _deserialize_scalar(self, scalar):
-        return self._cryptosys.deserialize_scalar(scalar)
-
-
-class ElGamalKeySerializer(EccPointSerializer):
-    """
-    Serializer infrastructure for El-Gamal keys
-    """
-
-    def _serialize_ecc_key(self, ecc_key):
-        return self._cryptosys.serialize_ecc_key(ecc_key)
-    
-    def _deserialize_ecc_key(self, ecc_key):
-        return self._cryptosys.deserialize_ecc_key(ecc_key)
-
-    def _serialize_ecc_public(self, pub):
-        return self._cryptosys.serialize_ecc_public(pub)
-
-    def _deserialize_ecc_public(self, pub):
-        return self._cryptosys.deserialize_ecc_public(pub)
-
-
-class ElGamalSerializer(EccPointSerializer):
-    """
-    Serializer infrastructure for ElGamal structures
-    """
-
-    def _serialize_cipher(self, cipher):
-        return self._cryptosys.serialize_cipher(cipher)
-    
-    def _deserialize_cipher(self, cipher):
-        return self._cryptosys.deserialize_cipher(cipher)
-
-    def _serialize_ddh(self, ddh):
-        return self._cryptosys.serialize_ddh(ddh)
-    
-    def _deserialize_ddh(self, ddh):
-        return self._cryptosys.deserialize_ddh(ddh)
-
-    def _serialize_chaum_pedersen(self, proof):
-        return self._cryptosys.serialize_chaum_pedersen(proof)
-    
-    def _deserialize_chaum_pedersen(self, proof):
-        return self._cryptosys.deserialize_chaum_pedersen(proof)
-    
-    def _serialize_ddh_proof(self, ddh_proof):
-        return self._cryptosys.serialize_ddh_proof(ddh_proof)
-    
-    def _deserialize_ddh_proof(self, ddh_proof):
-        return self._cryptosys.deserialize_ddh_proof(ddh_proof)
+        return all((
+            challenge == fiat_shamir(u, v, w, g_comm, u_comm, *extras),
+            response * g == g_comm + challenge * v,
+            response * u == u_comm + challenge * w,
+        ))
