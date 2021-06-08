@@ -1,0 +1,7 @@
+{
+  "name": "@diplomas/storage",
+  "version": "0.1.0",
+  "peerDependencies": {
+    "@diplomas/protocol": "0.1.0"
+  }
+}
