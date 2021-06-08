@@ -1,12 +1,16 @@
 import auth from "@diplomas/core/middlewares/auth"
-import Document from "@diplomas/core/models/Document";
-import Issuer from "@diplomas/core/models/Issuer";
+import {Document, IssuerUser} from "@diplomas/core/models";
 
 export default {
-    get: [
-        auth(Issuer), async function (req: any, res: any) {
-           const response = await Document.findOne({ _id: req.params.id });
-            return res.status(200).json(response);
-        }
-    ]
+  get: [
+    auth(IssuerUser), 
+    async function (req: any, res: any) {
+      // console.log(req.user, req.params)
+      const document = await Document
+        .findOne({_id: req.params.id, issuer: req.user._id})
+        .populate('issuer','title') as any;
+      const holder = await document.holder
+      res.status(200).json({...document.toJSON(), holder});
+    }
+  ]
 }

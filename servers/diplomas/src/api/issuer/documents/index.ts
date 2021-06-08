@@ -1,39 +1,33 @@
 import auth from "@diplomas/core/middlewares/auth";
-import { Issuer } from "@diplomas/core/models";
-import Document from "@diplomas/core/models/Document";
+import { IssuerUser, Document } from "@diplomas/core/models";
 
 export default {
-    get: [auth(Issuer), async function (req: any, res: any) {
+    get: [
+      auth(IssuerUser),
+       async function (req: any, res: any) {
         const limits = parseInt(req.query.limit) || 10;
         const offsets = parseInt(req.query.offset) || 0;
         const skip = (offsets - 1) * limits;
-        const searchValue = req.query.search || ""; 
+        console.log(req.user)
+        // const searchValue = req.query.search || "";
         const { limit, offset, search, ...queries } = req.query;
-        console.log(queries);
-        queries.issuer = req.user.id; 
-        
-        const counter = await Document.countDocuments({ ...queries }).where(
+        // Document.createIndexes({ "$**": "text" });
+        const counter = await Document.countDocuments(
             {
-                $or:[
-                    { title: { $regex: new RegExp(searchValue, 'i') } },
-                    { type: { $regex: new RegExp(searchValue, 'i') } },
-                    { department: { $regex: new RegExp(searchValue, 'i') } }
-                ]
-            });
-        const response = await Document.find({ ...queries }).where(
-            {
-                $or:[
-                    { title: { $regex: new RegExp(searchValue, 'i') } },
-                    { type: { $regex: new RegExp(searchValue, 'i') } },
-                    { department: { $regex: new RegExp(searchValue, 'i') } }
-                ]
-            })
-            .populate("holder", "firstName lastName", )
-        .skip(skip)
+                ...queries,
+                issuer: req.user.id
+            }
+        );
+        const docs = await Document.find({
+            ...queries,
+            issuer: req.user.id
+
+        })
+            .skip(skip)
             .limit(limits)
             .exec();
-        return res.send({
-            data: response,
+        res.send({
+            data: docs,
             meta: {
                 total: counter / limits,
                 count: counter,

@@ -1,8 +1,7 @@
 import { holderCredentials } from '@diplomas/core/utils/dummy_credentials';
 
 export default {
-    get:[async function (req: any, res: any) {
-        console.log(req)
+    get:[async function (_req: any, res: any) {
         res.json(holderCredentials);
     }]
 }

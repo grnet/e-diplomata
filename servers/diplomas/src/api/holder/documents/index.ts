@@ -1,42 +1,37 @@
-import auth from "@diplomas/core/middlewares/auth";
-import { Holder } from "@diplomas/core/models";
-import Document from "@diplomas/core/models/Document";
+import authFactory from "@diplomas/core/middlewares/auth";
+import { AwardedDocument, Holder } from "@diplomas/core/models";
 
 export default {
-    get: [auth(Holder), async function (req: any, res: any) {
-        const limits = parseInt(req.query.limit) || 10;
-        const offsets = parseInt(req.query.offset) || 0;
-        const skip = (offsets - 1) * limits;
-        const searchValue = req.query.search || "";
-        const { limit, offset, search, ...queries } = req.query;
-        console.log(queries);
-        queries.holder = req.user.id;
+  get: [
+    authFactory(Holder),
+    async function (req:any,res:any){
+      const limits = parseInt(req.query.limit) || 10;
+      const offsets = parseInt(req.query.offset) || 0;
+      const skip = (offsets - 1) * limits;
+      // const searchValue = req.query.search || "";
+      const { limit, offset, search, ...queries } = req.query;
+      // Document.createIndexes({ "$**": "text" });
+      const counter = await AwardedDocument.countDocuments(
+          {
+              ...queries,
+              holder: req.user.id
+          }
+      );
+      const docs = await AwardedDocument.find({
+          ...queries,
+          holder: req.user.id
 
-        const counter = await Document.countDocuments({ ...queries }).where(
-            {
-                $or: [
-                    { title: { $regex: new RegExp(searchValue, 'i') } },
-                    { type: { $regex: new RegExp(searchValue, 'i') } },
-                    { department: { $regex: new RegExp(searchValue, 'i') } }
-                ]
-            });
-        const response = await Document.find({ ...queries }).where(
-            {
-                $or: [
-                    { title: { $regex: new RegExp(searchValue, 'i') } },
-                    { type: { $regex: new RegExp(searchValue, 'i') } },
-                    { department: { $regex: new RegExp(searchValue, 'i') } }
-                ]
-            })
-            .skip(skip)
-            .limit(limits)
-            .exec();
-        return res.send({
-            data: response,
-            meta: {
-                total: counter / limits,
-                count: counter,
-            },
-        });
-    }]
+      }).populate('document holder issuer')
+          .skip(skip)
+          .limit(limits)
+          .exec();
+      res.send({
+          data: docs,
+          meta: {
+              total: counter / limits,
+              count: counter,
+          },
+      });
+    }
+  ]
 }

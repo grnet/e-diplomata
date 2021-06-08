@@ -1,6 +1,6 @@
 
-import Issuer from "@diplomas/core/models/Issuer";
+import {IssuerUser} from "@diplomas/core/models";
 import loginFactory from "@diplomas/core/utils/loginFactory";
 export default {
-  post: loginFactory(Issuer)
+  post: loginFactory(IssuerUser)
 }

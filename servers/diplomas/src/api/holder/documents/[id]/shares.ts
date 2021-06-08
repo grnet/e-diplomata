@@ -1,16 +1,18 @@
 // publishRequest
 
 import authFactory from "@diplomas/core/middlewares/auth";
-import Holder from "@diplomas/core/models/Holder";
+import {HolderUser} from "@diplomas/core/models";
 
 // list requests
 export default {
   get: [
-    authFactory(Holder),
-    async function (){}
+    authFactory(HolderUser),
+    async function (req, res){
+      
+    }
   ],
   post: [
-    authFactory(Holder),
+    authFactory(HolderUser),
     async function (){}
   ]
 }
