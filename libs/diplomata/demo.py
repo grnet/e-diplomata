@@ -81,9 +81,9 @@ if __name__ == '__main__':
         print('\nstep 2')                           # step 2
     # TODO
     from diplomata.protocol import AWARD
-    payload = holder.create_tag(AWARD, c=c)
+    tag = holder.create_tag(AWARD, c=c)
     _issuer_pub = holder._key_manager._unflatten_public(issuer_pub)
-    assert holder.verify_signature(s_awd, _issuer_pub, payload)
+    assert holder.verify_signature(s_awd, _issuer_pub, tag)
     s_req = holder.publish_request(s_awd, verifier_pub)
     if verbose:
         _json_dump({
@@ -95,9 +95,9 @@ if __name__ == '__main__':
         print('\nstep 3')                           # step 3
     # TODO
     from diplomata.protocol import REQUEST
-    payload = issuer.create_tag(REQUEST, s_awd=s_awd, verifier=verifier_pub)
+    tag = issuer.create_tag(REQUEST, s_awd=s_awd, verifier=verifier_pub)
     _holder_pub = issuer._key_manager._unflatten_public(holder_pub)
-    assert issuer.verify_signature(s_req, _holder_pub, payload)
+    assert issuer.verify_signature(s_req, _holder_pub, tag)
     s_prf, proof = issuer.publish_proof(s_req, r, c, verifier_pub)
     if verbose:
         _json_dump({
@@ -110,9 +110,9 @@ if __name__ == '__main__':
         print('\nstep 4')                           # step 4
     # TODO
     from diplomata.protocol import PROOF
-    payload = verifier.create_tag(PROOF, s_req=s_req, **proof)
+    tag = verifier.create_tag(PROOF, s_req=s_req, **proof)
     _issuer_pub = verifier._key_manager._unflatten_public(issuer_pub)
-    assert verifier.verify_signature(s_prf, _issuer_pub, payload)
+    assert verifier.verify_signature(s_prf, _issuer_pub, tag)
     s_ack, result = verifier.publish_ack(s_prf, title, proof, issuer_pub)
     if verbose:
         _json_dump({

@@ -178,6 +178,7 @@ class Party(_ElGamalSerializer):
         if from_serialized is True:
             sig = self.deserialize_signature(sig)
             pub = self._key_manager.deserialize_ecc_public(pub)
+        # import pdb; pdb.set_trace()
         verified = self._signer.verify_signature(
             sig, pub, message)
         return verified
@@ -189,8 +190,8 @@ class Holder(Party):
         super().__init__(curve, key, hexifier=hexifier, flattener=flattener)
 
     def publish_request(self, s_awd, ver_pub):
-        payload = self.create_tag(REQUEST, s_awd=s_awd, verifier=ver_pub)
-        s_req = self.sign(payload)
+        tag = self.create_tag(REQUEST, s_awd=s_awd, verifier=ver_pub)
+        s_req = self.sign(tag)
         return s_req
 
 
@@ -214,8 +215,8 @@ class Issuer(Party):
         c = self.serialize_cipher(c)
         r = self.serialize_scalar(r)
 
-        payload = self.create_tag(AWARD, c=c)
-        s_awd = self.sign(payload)
+        tag = self.create_tag(AWARD, c=c)
+        s_awd = self.sign(tag)
         return s_awd, c, r
 
     def elgamal_reencrypt(self, pub, c):
@@ -283,8 +284,8 @@ class Issuer(Party):
         proof = self.generate_proof(c, r)
         proof = self.nacl_encrypt_proof(proof, ver_pub)
         proof = self.serialize_proof(proof)
-        payload = self.create_tag(PROOF, s_req=s_req, **proof)
-        s_prf = self.sign(payload)
+        tag = self.create_tag(PROOF, s_req=s_req, **proof)
+        s_prf = self.sign(tag)
         return s_prf, proof
 
 
@@ -357,9 +358,9 @@ class Verifier(Party):
         except:
             pass    # TODO: Handle nacl decryption error
         result = self.verify_proof(proof, title, issuer_pub)
-        payload = self.create_tag(
+        tag = self.create_tag(
             ACK if result else NACK,
             result=result,
             s_prf=s_prf)
-        s_ack = self.sign(payload)
+        s_ack = self.sign(tag)
         return s_ack, result
