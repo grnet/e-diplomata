@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
-import KeysSchema from './Keys';
-const HolderSchema = new mongoose.Schema({
+import KeysSchema from '@diplomas/core/models/Keys';
+const HolderUserSchema = new mongoose.Schema({
   firstName: {
     type: String
   },
@@ -23,8 +23,9 @@ const HolderSchema = new mongoose.Schema({
     type: Date,
     default: Date.now()
   },
+  publicKey: String,
   keys: KeysSchema
 });
 
-// export model user with HolderSchema
-export default mongoose.model("Holder", HolderSchema);
+// export model user with HolderUserSchema
+export default mongoose.model("HolderUser", HolderUserSchema);

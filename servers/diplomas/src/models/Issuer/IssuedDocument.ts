@@ -1,20 +1,18 @@
 import mongoose, {Schema} from "mongoose";
 
-const AwardedDocumentSchema = new mongoose.Schema({
+const IssuedDocumentSchema = new mongoose.Schema({
   document: {
     type: Schema.Types.ObjectId,
     ref: 'Document'
   },
-  holder: {
-    type: Schema.Types.ObjectId,
-    ref: 'Holder'
-  },
+  holderPub: String,
   issuer: {
     type: Schema.Types.ObjectId,
     ref: 'Issuer'
   },
   c: {
-    type: String
+    type: Map,
+    of: Array
   },
   r: {
     type: String
@@ -22,7 +20,7 @@ const AwardedDocumentSchema = new mongoose.Schema({
   signature: {
     type: String
   },
-  transactionStatus: {
+  status: {
     type: String
   },
   transaction: {
@@ -34,5 +32,5 @@ const AwardedDocumentSchema = new mongoose.Schema({
   }
 });
 
-// export model Document with AwardedDocumentSchema
-export default mongoose.model("AwardedDocument", AwardedDocumentSchema);
+// export model Document with IssuedDocumentSchema
+export default mongoose.model("IssuedDocument", IssuedDocumentSchema);

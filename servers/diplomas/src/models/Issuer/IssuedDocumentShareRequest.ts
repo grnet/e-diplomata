@@ -1,6 +1,6 @@
 import mongoose, {Schema} from "mongoose";
 
-const HolderTitleRequestSchema = new mongoose.Schema({
+const IssuedDocumentShareRequestSchema = new mongoose.Schema({
   holder: {
     type: Schema.Types.ObjectId,
     ref: 'Holder'
@@ -15,7 +15,10 @@ const HolderTitleRequestSchema = new mongoose.Schema({
   year: {
     type: String
   },
-  titleType: {
+  qualificationTitle: {
+    type: String
+  },
+  qualificationType: {
     type: String
   },
   status: {
@@ -32,4 +35,4 @@ const HolderTitleRequestSchema = new mongoose.Schema({
 });
 
 // export model Document with HolderDocumentSchema
-export default mongoose.model("HolderTitleRequest", HolderTitleRequestSchema);
+export default mongoose.model("IssuedDocumentShareRequest", IssuedDocumentShareRequestSchema);
