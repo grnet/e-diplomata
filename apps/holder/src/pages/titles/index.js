@@ -1,19 +1,19 @@
 import React from "react";
-import Documents from "@diplomas/design-system/Documents"
+import Documents from "@diplomas/design-system/Documents";
 import TitleItem from "holder/components/TitleItem";
 
 export default function Titles() {
-  const types = ['Bachelor', 'Master', 'Doctorate']
-  const departments = ['Main', 'Science']
+  const types = ['Bachelor', 'Master', 'Doctorate'];
+  const departments = ['Main', 'Science'];
+  const dataFilters = [{ title: "Είδος τίτλου σπουδών", filterData: types, filterTypeData: "type" }, { title: "Ίδρυμα/Σχολή", filterData: departments, filterTypeData: "department" }];
   const url = "holder/documents";
-  const filterTitles = ["Τίτλοι Σπουδών", "Είδος τίτλου σπουδών", "Ίδρυμα/Σχολή"]
+  const title = "Τίτλοι Σπουδών";
   return (
     <>
       <Documents
-        types={types}
-        departments={departments}
+        dataFilters={dataFilters}
         url={url}
-        filterTitles={filterTitles}
+        title={title}
       >
         <TitleItem />
       </Documents>
