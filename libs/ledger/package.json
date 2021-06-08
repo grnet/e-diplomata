@@ -1,5 +1,5 @@
 {
-  "name": "@diplomas/blockchain",
+  "name": "@diplomas/ledger",
   "version": "0.1.0",
   "license": "MIT",
   "main": "dist/index.js",
@@ -13,6 +13,7 @@
   },
   "scripts": {
     "dev": "tsdx watch",
+    "ganache": "node ganache.js",
     "build": "tsdx build",
     "test": "tsdx test",
     "lint": "tsdx lint",
@@ -39,10 +40,12 @@
     "@types/node": "~14.14.37",
     "@types/jest": "~26.0.22",
     "jest": "~26.6.3",
-    "ts-jest": "~26.5.5"
+    "ts-jest": "~26.5.5",
+    "ganache-cli": "~6.12.2"
   },
   "dependencies": {
-    "ethers": "~5.1.0",
-    "abi-decoder": "~2.4.0"
+    "ethers": "~5.2.0",
+    "abi-decoder": "~2.4.0",
+    "@diplomas/protocol": "0.1.0"
   }
 }

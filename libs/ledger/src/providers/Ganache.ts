@@ -1,6 +1,8 @@
-import { ethers } from "ethers";
+import { ethers } from 'ethers';
 
-export const provider = new ethers.providers.JsonRpcProvider('http://localhost:8545');
+export const provider = new ethers.providers.JsonRpcProvider(
+  'http://localhost:8545'
+);
 // for myaddress we set the Issuer, Holder, Verifier account
 export const account = provider.getSigner(0);
 export const address = account._address;
