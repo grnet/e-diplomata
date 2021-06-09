@@ -1,9 +1,9 @@
-import authFactory from "@diplomas/core/middlewares/auth";
-import { AwardedDocument, Holder } from "@diplomas/core/models";
+import authFactory from "@diplomas/server/middlewares/auth";
+import { AwardedDocument, HolderUser } from "@diplomas/server/models";
 
 export default {
   get: [
-    authFactory(Holder),
+    authFactory(HolderUser),
     async function (req:any,res:any){
       const limits = parseInt(req.query.limit) || 10;
       const offsets = parseInt(req.query.offset) || 0;
@@ -21,8 +21,8 @@ export default {
           ...queries,
           holder: req.user.id
 
-      }).populate('document holder issuer')
-          .skip(skip)
+      })
+          .skip(skip||0)
           .limit(limits)
           .exec();
       res.send({

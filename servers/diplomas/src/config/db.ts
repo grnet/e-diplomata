@@ -1,10 +1,10 @@
 
-const mongoose = require("mongoose");
+import mongoose from "mongoose";
 
 // Replace this with your MONGOURI.
-const MONGOURI = "mongodb://localhost:27017";
+const MONGOURI = process.env.MONGOURI || "mongodb://0.0.0.0:27017";
 
-const InitiateMongoServer = async (uri) => {
+export const InitiateMongoServer = async (uri?:string) => {
   try {
     return await mongoose.connect(uri || MONGOURI, {
       useNewUrlParser: true,
@@ -16,4 +16,3 @@ const InitiateMongoServer = async (uri) => {
   }
 };
 
-module.exports = InitiateMongoServer;

@@ -1,8 +1,7 @@
 import mongoose from "mongoose";
-import KeysSchema from '@diplomas/core/models/Keys';
-import Document from '@diplomas/core/models/Issuer/Document';
+import KeysSchema from '@diplomas/server/models/Keys';
+import Document from '@diplomas/server/models/Issuer/Document';
 import ContractSchema from "../Contract";
-import IssuedDocument from "./IssuedDocument";
 
 const IssuerUserSchema = new mongoose.Schema({
   email: {
@@ -29,15 +28,6 @@ IssuerUserSchema.methods.createQualification = async function(data, holderPub){
     holderPub,
     issuer: this._id
   })
-  return qualification
-}
-IssuerUserSchema.methods.awardQualification = async function(data, holderPub){
-  const qualification = await IssuedDocument.create({
-    ...data,
-    holderPub,
-    issuer: this._id
-  })
-  const {signature, c, r}= await Dipl
   return qualification
 }
 // export model user with IssuerSchema

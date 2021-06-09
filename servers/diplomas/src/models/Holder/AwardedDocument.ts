@@ -1,4 +1,4 @@
-import { getProfile } from "@diplomas/core/utils/auth";
+import { getProfile } from "@diplomas/server/utils/auth";
 import mongoose, {Schema} from "mongoose";
 
 const AwardedDocumentSchema = new mongoose.Schema({

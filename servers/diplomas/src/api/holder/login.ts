@@ -1,6 +1,6 @@
 
-import Holder from "@diplomas/core/models/Holder";
-import loginFactory from "@diplomas/core/utils/loginFactory";
+import {HolderUser} from "@diplomas/server/models";
+import loginFactory from "@diplomas/server/utils/loginFactory";
 export default {
-  post: loginFactory(Holder)
+  post: loginFactory(HolderUser)
 }

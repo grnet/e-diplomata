@@ -1,12 +1,11 @@
-import { HolderUser as Holder, IssuerUser as Issuer, Document, VerifierUser as Verifier } from '@diplomas/core/models';
+import { HolderUser as Holder, IssuerUser as Issuer, Document, VerifierUser as Verifier } from '@diplomas/server/models';
 import bcrypt from "bcryptjs";
-import { holderCredentials, verifierCredentials, issuerCredentials } from '@diplomas/core/utils/dummy_credentials';
-import { DiplomasCrypto } from '@diplomas/crypto-bindings';
-import * as ledger from '@diplomas/ledger';
-import { Profile } from '@diplomas/core/models';
+import { holderCredentials, verifierCredentials, issuerCredentials } from '@diplomas/server/utils/dummy_credentials';
+import Crypto from '@diplomas/crypto';
+import Ledger from '@diplomas/ledger';
+import { Profile } from '@diplomas/server/models';
 
-const InitiateMongoServer = require("../config/db");
-
+import {InitiateMongoServer} from '@diplomas/server/config/db'
 const titles = ['Mechanical Engineer', 'Accountant', 'Logistics', 'Doctor']
 const deans = ['Nikos Gryspos', 'Maria Lekousi', 'Avgerinos Lokos']
 const loadData = async () => {
@@ -23,18 +22,19 @@ const loadData = async () => {
 
   }
   const salt = await bcrypt.genSalt(10);
-
+  const crypto = new Crypto()
+  
   console.log('create holders')
   const holdersData = await Promise.all(holderCredentials.map(async (holder) => {
     console.log(holder.email)
-    const keys = await DiplomasCrypto.generate_keys()
+    const keys = await crypto.generateKeys()
     return {
       ...holder,
       password: bcrypt.hashSync(holder.password, salt),
       publicKey: keys.public.join('-'),
       keys: {
         crypto: keys,
-        wallet: await ledger.generateWallet({networkType: 'ganache', party: 'Holder'})
+        wallet: await Ledger.generateWallet({networkType: 'ganache', party: 'Holder'})
       }
     }
   }));
@@ -54,14 +54,14 @@ const loadData = async () => {
 
   const verifiersData = await Promise.all(verifierCredentials.map(async (verifier) => {
     console.log(verifier.email)
-    const keys = await DiplomasCrypto.generate_keys()
+    const keys = await crypto.generateKeys()
     return {
       ...verifier,
       password: bcrypt.hashSync(verifier.password, salt),
       publicKey: keys.public.join('-'),
       keys: {
         crypto: keys,
-        wallet: await ledger.generateWallet({networkType: 'ganache', party: 'Verifier'})
+        wallet: await Ledger.generateWallet({networkType: 'ganache', party: 'Verifier'})
       }
     }
   }));
@@ -80,7 +80,7 @@ const loadData = async () => {
 
   const issuersData = await Promise.all(issuerCredentials.map(async (issuer) => {
     console.log(issuer.email)
-    const keys = await DiplomasCrypto.generate_keys()
+    const keys = await crypto.generateKeys()
 
     return {
       ...issuer,
@@ -88,7 +88,7 @@ const loadData = async () => {
       publicKey: keys.public.join('-'),
       keys: {
         crypto: keys,
-        wallet: await ledger.generateWallet({networkType: 'ganache', party: 'Issuer'})
+        wallet: await Ledger.generateWallet({networkType: 'ganache', party: 'Issuer'})
       }
     }
   }));

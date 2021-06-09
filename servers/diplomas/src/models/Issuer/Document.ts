@@ -1,4 +1,4 @@
-import { getProfile } from "@diplomas/core/utils/auth";
+import { getProfile } from "@diplomas/server/utils/auth";
 import mongoose, {Schema} from "mongoose";
 
 const DocumentSchema = new mongoose.Schema({
@@ -15,7 +15,10 @@ const DocumentSchema = new mongoose.Schema({
   dean: String,
   certificateNumber: String,
   supervisors: String,
-  award: String,
+  award: {
+    type: Schema.Types.ObjectId,
+    ref: 'IssuedDocument'
+  },
   status: String,
   createdAt: {
     type: Date,

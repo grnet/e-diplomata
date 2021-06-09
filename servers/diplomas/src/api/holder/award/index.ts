@@ -1,9 +1,10 @@
-import { AwardedDocument, HolderUser } from "@diplomas/core/models"
+import { AwardedDocument, HolderUser } from "@diplomas/server/models"
 
 export default {
   post: [
     async function(req:any,res:any){
       const holder = await HolderUser.findOne({publicKey: req.body.holderPub})
+      console.log(req.body)
       if(!holder){
         res.status(500).json({error: 'Holder not found'})
       }

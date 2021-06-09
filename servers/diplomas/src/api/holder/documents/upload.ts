@@ -1,4 +1,4 @@
-import { storageMiddleware } from "@diplomas/core/middlewares/files";
+import { storageMiddleware } from "@diplomas/server/middlewares/files";
 
 export default {
   post: [

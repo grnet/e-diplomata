@@ -1,5 +1,5 @@
 import mongoose from "mongoose";
-import KeysSchema from '@diplomas/core/models/Keys';
+import KeysSchema from '@diplomas/server/models/Keys';
 
 const VerifierUserSchema = new mongoose.Schema({
   title: String,

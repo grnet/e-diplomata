@@ -1,5 +1,5 @@
-import { Profile } from "@diplomas/core/models";
-import { findOneFactory } from "@diplomas/core/utils/findOne";
+import { Profile } from "@diplomas/server/models";
+import { findOneFactory } from "@diplomas/server/utils/findOne";
 
 export default {
   get: [

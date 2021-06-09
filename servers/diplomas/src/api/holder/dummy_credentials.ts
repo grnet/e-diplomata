@@ -1,4 +1,4 @@
-import { holderCredentials } from '@diplomas/core/utils/dummy_credentials';
+import { holderCredentials } from '@diplomas/server/utils/dummy_credentials';
 
 export default {
     get:[async function (_req: any, res: any) {

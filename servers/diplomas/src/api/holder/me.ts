@@ -1,6 +1,6 @@
-import Holder from "@diplomas/core/models/Holder";
-import meFactory from '@diplomas/core/utils/meFactory';
+import {HolderUser} from "@diplomas/server/models";
+import meFactory from '@diplomas/server/utils/meFactory';
 
 export default {
-  get: meFactory(Holder)
+  get: meFactory(HolderUser)
 }

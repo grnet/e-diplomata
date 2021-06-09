@@ -1,5 +1,5 @@
-import auth from "@diplomas/core/middlewares/auth";
-import { IssuerUser, Document } from "@diplomas/core/models";
+import auth from "@diplomas/server/middlewares/auth";
+import { IssuerUser, Document } from "@diplomas/server/models";
 
 export default {
     get: [
