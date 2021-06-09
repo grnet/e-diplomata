@@ -10,6 +10,9 @@
   "author": "",
   "license": "ISC",
   "dependencies": {
-    "zerorpc": "^0.9.8"
+    "zerorpc": "0.9.8",
+    "@diplomas/protocol": "0.1.0",
+    "typescript": "4.3.2",
+    "tslib": "~2.2.0"
   }
 }

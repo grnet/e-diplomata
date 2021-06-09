@@ -7,13 +7,22 @@
     "test": "echo \"Error: no test specified\" && exit 1"
   },
   "peerDependencies":{
-    "@digigov/ui": "0.4.1",
+    "@digigov/ui": "0.4.8",
     "@material-ui/core": "4.11.3",
     "@material-ui/icons": "4.11.2",
     "react": "16.14.0",
     "react-dom": "16.14.0",
-    "@material-ui/lab": "~4.0.0-alpha.57"
+    "@material-ui/lab": "~4.0.0-alpha.57",
+    "@digigov/auth": "~0.2.7",
+    "@digigov/form": "~0.3.8",
+    "classnames": "~2.3.1",
+    "lodash": "~4.17.21"
   },
   "author": "",
-  "license": "ISC"
+  "license": "ISC",
+  "devDependencies": {
+    "@babel/runtime": "~7.14.0"
+  },
+  "dependencies": {"prop-types":"~15.7.2"
+  }
 }
