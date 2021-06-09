@@ -1,5 +1,9 @@
 export type Key = string[]
 export interface CryptoInterface {
+  generateKeys: () => {
+    private: Key,
+    public: Key
+  }
   computeAward: (
     document: any, 
     issuerKey: Key

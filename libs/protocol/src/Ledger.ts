@@ -24,18 +24,14 @@ export interface LedgerConstructorInterface {
   abi: Abi[];
 }
 export interface LedgerInterface {
-  constructor: (
-    props: LedgerConstructorInterface
-  ) => LedgerInterface;
+  config: LedgerConstructorInterface;
   publish: (
     signature: string
-  ) => { hash?: string, error?: string }
+  ) => Promise<{ hash?: string, error?: string }>
   getTransaction: (
     transactionHash: string, 
     minConfirmations?: number
   ) => Promise<{ 
-    hash: string;
-    error?: string;
     status: 'confirmed' | 'pending' | 'fail';
     data?: string;
   }>
@@ -43,9 +39,7 @@ export interface LedgerInterface {
     transactionHash: string, 
     minConfirmations?: number
   ) => Promise<{ 
-    hash: string;
-    error?: string;
     status: 'confirmed' | 'pending' | 'fail';
-    data: string;
+    data?: string;
   }>
 }

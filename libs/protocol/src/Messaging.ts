@@ -5,7 +5,7 @@ export interface MessagingInterface {
     status: 'success' | 'fail';
   }>
 
-  getEntity: (pubKey) => Promise<{
+  getEntity: (pubKey:string) => Promise<{
     title: string;
     publicKey: string;
     walletAddress: string;

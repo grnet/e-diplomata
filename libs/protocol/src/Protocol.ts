@@ -22,7 +22,7 @@ export interface ProtocolInterfaceConstructor {
 }
 
 export interface ProtocolInterface  {
-  award: (documentId: string, holderPub: string, issuerKey: Key) => Promise<StorageEntry>;
+  award: (documentId: string, issuerKey: Key) => Promise<StorageEntry>;
   request: (awardDocumentId: string, verifierPub: Key) => Promise<StorageEntry>;
   proof: (requestId: string, verifierPub: Key) => Promise<StorageEntry>;
   acknowledge: (proofRequestId: string, document: any) => Promise<StorageEntry>;
@@ -43,10 +43,15 @@ export class Protocol implements ProtocolInterface {
     this.user = props.user
   }
 
-  async award(documentID, holderPub, issuerKey) {
-    const document = await this.storage.getBy('Document', {id: documentID})
-    const holder = await this.messaging.getEntity(holderPub)
-    const { s_awd, c, r } = await this.crypto.computeAward(document, issuerKey)
+  async award(documentID, issuerKey) {
+    console.log('getting document', documentID)
+    const document = await this.storage.getBy('Document', {_id: documentID}) as any
+    // const holder = await this.messaging.getEntity(holderPub)
+    console.log(document)
+    const holderPub = document.holderPub
+    console.log('computing award')
+    const { s_awd, c, r } = await this.crypto.computeAward(JSON.stringify(document), issuerKey)
+    console.log('creating issued document')
     const issuedDocument = await this.storage.create('IssuedDocument',{
       document: document.id,
       holderPub: holderPub,
@@ -56,28 +61,31 @@ export class Protocol implements ProtocolInterface {
       signature: s_awd,
       status: 'pending'
     }) as any
-    const {hash: pendingHash} =  await this.ledger.publish(s_awd)
-    const {hash, status, error} = await this.ledger.getTransaction(pendingHash)
+    console.log('Created issued document',issuedDocument._id)
+    document.award = issuedDocument._id
+    await this.storage.update('Document', documentID, document)
+    console.log('publishing award')
+    const {hash} =  await this.ledger.publish(s_awd)
+    const {status} = await this.ledger.getTransactionSync(hash)
     issuedDocument.status = status;
-    issuedDocument.error = error;
     this.storage.update('IssuedDocument', issuedDocument.id, issuedDocument)
     if(status === 'confirmed'){
+      console.log('published award')
       await this.messaging.sendMessage(holderPub, 'award', {...document, award: hash})
     }
     return issuedDocument
   }
 
   async request(awardedDocumentID, verifierPub) {
-    const awardedDocument = await this.storage.getBy('AwardedDocument', {id: awardedDocumentID}) as any
+    const awardedDocument = await this.storage.getBy('AwardedDocument', {_id: awardedDocumentID}) as any
     const {s_awd, c} = awardedDocument 
     const issuer = await this.messaging.getEntity(awardedDocument.issuerPub)
     const verifier = await this.messaging.getEntity(verifierPub) 
     const request = await this.storage.create('Request', {awardedDocumentID, verifier}) as any
     const {s_req} = await this.crypto.computeRequest(s_awd, c, verifier.publicKey.split('|'), this.user.keys.crypto.private)
-    const {hash: pendingHash} = await this.ledger.publish(s_req)
-    const {hash, status, error} = await this.ledger.getTransaction(pendingHash)
+    const {hash} = await this.ledger.publish(s_req)
+    const {status} = await this.ledger.getTransaction(hash)
     request.status = status;
-    request.error = error;
     this.storage.update('Request', request.id, request)
     if(status === 'confirmed'){
       await this.messaging.sendMessage(issuer.publicKey, 'request', {hash, s_awd})
@@ -99,25 +107,25 @@ export class Protocol implements ProtocolInterface {
       verifier.publicKey.split('|'), 
       this.user.keys.crypto.private
     )
-    const {hash: pendingHash} = await this.ledger.publish(s_prf)
-    const {hash, status, error} = await this.ledger.getTransaction(pendingHash)
+    const {hash} = await this.ledger.publish(s_prf)
+    const {status} = await this.ledger.getTransaction(hash)
     if(status === 'confirmed'){
       await this.messaging.sendMessage(verifierPub, 'proof', {proof, hash})
     }
     request.status = 'confirmed';
     request.signatureTransaction = hash
-    request.error = error
     await this.storage.update('Request', request.id, request)
     return request
   }
 
   acknowledge(proofRequestId, document) {
+    console.log(proofRequestId, document)
     return {} as any
   }
 }
 
 
-
+export default Protocol
 
 
 export class Authority extends Protocol {
