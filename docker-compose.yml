@@ -22,6 +22,12 @@ services:
     ports:
       - 3001:3001
     command: /bin/sh -c 'cd apps/holder && rushx dev'
+    depends_on: 
+      - server
+    links: 
+      - server
+    environment: 
+      SERVERURI: http://server:5000/api/
   issuer:
     build:
       context: .
@@ -33,6 +39,12 @@ services:
     ports:
       - 3000:3000
     command: /bin/sh -c 'cd apps/issuer && rushx dev'
+    depends_on: 
+      - server
+    links: 
+      - server
+    environment: 
+      SERVERURI: http://server:5000/api/
   verifier:
     build:
       context: .
@@ -44,6 +56,12 @@ services:
     ports:
       - 3002:3002
     command: /bin/sh -c 'cd apps/verifier && rushx dev'
+    depends_on: 
+      - server
+    links: 
+      - server
+    environment: 
+      SERVERURI: http://server:5000/api/
   server:
     build:
       context: .
@@ -55,6 +73,18 @@ services:
     ports:
       - 5000:5000
     command: /bin/sh -c 'cd servers/diplomas && rushx dev'
+    depends_on: 
+      - mongodb
+      - crypto
+      - ganache
+    links: 
+      - mongodb
+      - crypto
+      - ganache
+    environment: 
+      MONGOURI: mongodb://mongodb:27017
+      ZERORPCURI: tcp://crypto:4242
+      GANACHEURI: http://ganache:8545
   ganache:
     build:
       context: .
