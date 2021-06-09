@@ -36,7 +36,7 @@ export default function Diploma() {
   const [status, setStatus] = useState();
   const id = router.query.id;
   const { data, invalidate } = useResource("issuer/documents", id);
-
+  const {fetch: award} = useResourceAction('issuer/documents', `${id}/award`)
   useEffect(() => {
     setDiploma(data);
   }, [data]);
@@ -78,11 +78,18 @@ export default function Diploma() {
                   </SummaryListItemValue>
                 </SummaryListItem>
                 <SummaryListItem>
+                  <SummaryListItemKey>Awarded</SummaryListItemKey>
+                  <SummaryListItemValue>
+                    {diploma.award}
+                  </SummaryListItemValue>
+                </SummaryListItem>
+                <SummaryListItem>
                   <SummaryListItemKey>Τμήμα/Σχολή</SummaryListItemKey>
                   <SummaryListItemValue>{diploma.department}</SummaryListItemValue>
                 </SummaryListItem>
               </SummaryList>
             )}
+            <Button onClick={award}>Award</Button>
           </Grid>
           <Grid container direction="row">
             <Grid item xs={4}>

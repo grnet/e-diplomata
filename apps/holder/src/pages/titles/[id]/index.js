@@ -19,6 +19,7 @@ import {
 import Layout from "@diplomas/design-system/Layout";
 import { useResourceAction } from "@digigov/ui/api";
 import Grid from "@material-ui/core/Grid";
+import Link from "@digigov/ui/core/Link";
 
 const useStyles = makeStyles(
   {
@@ -35,7 +36,7 @@ export default function Title() {
   const [status, setStatus] = useState();
   const [title, setTitle] = useState();
   const id = router.query.id;
-  const { data, fetch: refetch, invalidate } = useResource("titles", id);
+  const { data, fetch: refetch, invalidate } = useResource("holder/documents", id);
   const { data: dataChanged, loaded, loading, fetch } = useResourceAction(
     "share",
     null,
@@ -89,11 +90,11 @@ export default function Title() {
               <SummaryList>
                 <SummaryListItem>
                   <SummaryListItemKey>Όνομα</SummaryListItemKey>
-                  <SummaryListItemValue>{title.firstName}</SummaryListItemValue>
+                  <SummaryListItemValue>{title.holder.firstName}</SummaryListItemValue>
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Επώνυμο</SummaryListItemKey>
-                  <SummaryListItemValue>{title.lastName}</SummaryListItemValue>
+                  <SummaryListItemValue>{title.holder.lastName}</SummaryListItemValue>
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Πατρώνυμο</SummaryListItemKey>
@@ -101,29 +102,29 @@ export default function Title() {
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Τίτλος Σπουδών</SummaryListItemKey>
-                  <SummaryListItemValue>{title.degree}</SummaryListItemValue>
+                  <SummaryListItemValue>{title.title}</SummaryListItemValue>
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Είδος Τίτλου Σπουδών</SummaryListItemKey>
                   <SummaryListItemValue>
-                    {title.typeOfDegree}
+                    {title.type}
                   </SummaryListItemValue>
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Βαθμός</SummaryListItemKey>
-                  <SummaryListItemValue>{title.numberOfDegree}</SummaryListItemValue>
+                  <SummaryListItemValue>{title.grade}</SummaryListItemValue>
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Τμήμα/Σχολή</SummaryListItemKey>
-                  <SummaryListItemValue>{title.school}</SummaryListItemValue>
+                  <SummaryListItemValue>{title.department}</SummaryListItemValue>
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Ίδρυμα</SummaryListItemKey>
-                  <SummaryListItemValue>{title.institution}</SummaryListItemValue>
+                  <SummaryListItemValue>{title.issuer}</SummaryListItemValue>
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Πρυτανική Αρχή</SummaryListItemKey>
-                  <SummaryListItemValue>{title.rector}</SummaryListItemValue>
+                  <SummaryListItemValue>{title.dean}</SummaryListItemValue>
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Κατάσταση</SummaryListItemKey>
@@ -131,12 +132,13 @@ export default function Title() {
                 </SummaryListItem>
                 <SummaryListItem>
                   <SummaryListItemKey>Ημερομηνία Έκδοσης</SummaryListItemKey>
-                  <SummaryListItemValue>{title.year}</SummaryListItemValue>
+                  <SummaryListItemValue>{title.degreeDate}</SummaryListItemValue>
                 </SummaryListItem>
               </SummaryList>
             )}
           </Grid>
           <Grid container direction="row">
+            <Link href={document.location.href+'share'}>Διαμοιρασμός</Link>
             <Grid item xs={4}>
               {title && (title.status === "fail") && (<Button onClick={updateStatus}>Retry</Button>)}
               {title && (title.status === "pending") && (<Button>Wait..</Button>)}
