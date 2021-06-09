@@ -7,7 +7,11 @@ const AUTH_API = process.env.AUTH_API || 'http://localhost:5000/'
 export class Messaging implements MessagingInterface {
   async sendMessage (pubKey, transaction, data) {
     const entity = await this.getEntity(pubKey)
-    const response = await fetch(`${entity.service}`)
+    const response = await fetch(`${entity.service}/api/${entity.type.toLowerCase()}/${transaction}/`, {
+      method: 'POST',
+      body: JSON.stringify(data),
+      headers: { 'Content-Type': 'application/json' },
+    })
     return await response.json()
   }
 
@@ -16,3 +20,4 @@ export class Messaging implements MessagingInterface {
     return await response.json()
   }
 }
+export default Messaging
