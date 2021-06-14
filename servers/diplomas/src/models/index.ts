@@ -1,13 +1,6 @@
-export { default as AwardedDocument } from './AwardedDocument';
-export { default as AwardedDocumentShareRequest } from './AwardedDocumentShareRequest';
-export { default as Document } from './Document';
-export { default as Holder } from './Holder';
-export { default as HolderDocument } from './HolderDocument';
-export { default as HolderTitleRequest } from './HolderTitleRequest';
-export { default as Issuer } from './Issuer';
-export { default as IssuerTitleRequest } from './IssuerTitleRequest';
+export * from './Auth';
+export * from './Holder';
+export * from './Issuer';
 export { default as Keys } from './Keys';
 export { default as Transaction } from './Transaction';
-export { default as VerifiedDocument } from './VerifiedDocument';
-export { default as Verifier } from './Verifier';
-export * from './VerifierShare';
+export * from './Verifier';

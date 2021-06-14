@@ -1,6 +1,6 @@
-import Issuer from "@diplomas/core/models/Issuer";
-import meFactory from '@diplomas/core/utils/meFactory';
+import {IssuerUser} from "@diplomas/server/models";
+import meFactory from '@diplomas/server/utils/meFactory';
 
 export default {
-  get: meFactory(Issuer)
+  get: meFactory(IssuerUser)
 }

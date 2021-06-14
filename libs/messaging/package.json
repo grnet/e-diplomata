@@ -1,0 +1,11 @@
+{
+  "name": "@diplomas/messaging",
+  "version": "0.1.0",
+  "dependencies": {
+    "node-fetch":"2.6.1"
+  },
+  "peerDependencies": {
+    "@diplomas/protocol": "0.1.0",
+    "tslib": "~2.2.0"
+  }
+}

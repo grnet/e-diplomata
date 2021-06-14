@@ -1,135 +1,112 @@
-import { Holder, Issuer } from '../models';
+import { HolderUser as Holder, IssuerUser as Issuer, Document, VerifierUser as Verifier } from '@diplomas/server/models';
 import bcrypt from "bcryptjs";
-const InitiateMongoServer = require("../config/db");
-InitiateMongoServer();
-// import diplomata from '@diplomas/crypto';
-// import ledger from '@diplomas/ledger';
-const diplomata = {
-  generate_keys: (type?: string)=>{
-    return {
-      private: ['a string'],
-      public: ['another string', type]
-    }
-  }
-}
-const ledger = diplomata
+import { holderCredentials, verifierCredentials, issuerCredentials } from '@diplomas/server/utils/dummy_credentials';
+import Crypto from '@diplomas/crypto';
+import Ledger from '@diplomas/ledger';
+import { Profile } from '@diplomas/server/models';
 
+import {InitiateMongoServer} from '@diplomas/server/config/db'
 const titles = ['Mechanical Engineer', 'Accountant', 'Logistics', 'Doctor']
 const deans = ['Nikos Gryspos', 'Maria Lekousi', 'Avgerinos Lokos']
-const loadData = async ()=>{
+const loadData = async () => {
+  await InitiateMongoServer();
+  console.log('dropping collections')
+  try{
+    await Holder.collection.drop()
+    await Issuer.collection.drop()
+    await Verifier.collection.drop()
+    await Document.collection.drop()
+    await Profile.collection.drop()
+  }
+  catch(e){
+
+  }
   const salt = await bcrypt.genSalt(10);
-  const holdersData = [
-    {
-      firstName: 'Mario',
-      lastName: 'Menexe',
-      fatherName: 'Niko',
-      email: 'mario@menexe.com',
-      password: await bcrypt.hash('1234567', salt),
+  const crypto = new Crypto()
+  
+  console.log('create holders')
+  const holdersData = await Promise.all(holderCredentials.map(async (holder) => {
+    console.log(holder.email)
+    const keys = await crypto.generateKeys()
+    return {
+      ...holder,
+      password: bcrypt.hashSync(holder.password, salt),
+      publicKey: keys.public.join('-'),
       keys: {
-        crypto: await diplomata.generate_keys(),
-        wallet: await ledger.generate_keys('holder')
+        crypto: keys,
+        wallet: await Ledger.generateWallet({networkType: 'ganache', party: 'Holder'})
       }
-    },
-    {
-      firstName: 'Aggeliki',
-      lastName: 'Antoniou',
-      fatherName: 'Billy',
-      email: 'aggeliki@antoniou.com',
-      password: await bcrypt.hash('1234567', salt),
+    }
+  }));
+  const holderProfiles = holdersData.map((holder) => {
+    console.log(holder.email)
+    return {
+      title: `${holder.firstName} ${holder.lastName}`,
+      publicKey: holder.keys.crypto.public.join('-'),
+      walletAddress: holder.keys.wallet.public,
+      service: 'http://localhost:5000',
+      type: 'Holder',
+    }
+  });
+  const holders = await Holder.insertMany(holdersData) as any;
+  console.log(holders)
+  console.log('create verifiers')
+
+  const verifiersData = await Promise.all(verifierCredentials.map(async (verifier) => {
+    console.log(verifier.email)
+    const keys = await crypto.generateKeys()
+    return {
+      ...verifier,
+      password: bcrypt.hashSync(verifier.password, salt),
+      publicKey: keys.public.join('-'),
       keys: {
-        crypto: await diplomata.generate_keys(),
-        wallet: await ledger.generate_keys('holder')
+        crypto: keys,
+        wallet: await Ledger.generateWallet({networkType: 'ganache', party: 'Verifier'})
       }
-    },
-    {
-      firstName: 'Nikos',
-      lastName: 'Likos',
-      fatherName: 'Zonni',
-      email: 'nikos@likos.com',
-      password: await bcrypt.hash('1234567', salt),
+    }
+  }));
+  const verifierProfiles = verifiersData.map((verifier) => {
+    console.log(verifier.email)
+    return {
+      title: verifier.title,
+      publicKey: verifier.keys.crypto.public.join('-'),
+      walletAddress: verifier.keys.wallet.public,
+      service: 'http://localhost:5000',
+      type: 'Verifier',
+    }
+  });
+  await Verifier.insertMany(verifiersData);
+  console.log('create issuers')
+
+  const issuersData = await Promise.all(issuerCredentials.map(async (issuer) => {
+    console.log(issuer.email)
+    const keys = await crypto.generateKeys()
+
+    return {
+      ...issuer,
+      password: bcrypt.hashSync(issuer.password, salt),
+      publicKey: keys.public.join('-'),
       keys: {
-        crypto: await diplomata.generate_keys(),
-        wallet: await ledger.generate_keys('holder')
+        crypto: keys,
+        wallet: await Ledger.generateWallet({networkType: 'ganache', party: 'Issuer'})
       }
-    },
-    {
-      firstName: 'Antonia',
-      lastName: 'Vazelou',
-      fatherName: 'Nikos',
-      email: 'antonia@vazelou.com',
-      password: await bcrypt.hash('1234567', salt),
-      keys: {
-        crypto: await diplomata.generate_keys(),
-        wallet: await ledger.generate_keys('holder')
-      }
-    },
-    {
-      firstName: 'Olga',
-      lastName: 'Feretou',
-      fatherName: 'Dimos',
-      email: 'olga@feretou.com',
-      password: await bcrypt.hash('1234567', salt),
-      keys: {
-        crypto: await diplomata.generate_keys(),
-        wallet: await ledger.generate_keys('holder')
-      }
-    },
-  ]
-  const holders = await Holder.insertMany(holdersData)
-  const verifiersData = [
-    {
-      title: 'My Company',
-      email: 'root@mycompany.com',
-      password: await bcrypt.hash('1234567', salt),
-      keys: {
-        crypto: await diplomata.generate_keys(),
-        wallet: await ledger.generate_keys('verifier')
-      }
-    },
-    {
-      title: 'Happy Company',
-      email: 'root@happycompany.com',
-      password: await bcrypt.hash('1234567', salt),
-      keys: {
-        crypto: await diplomata.generate_keys(),
-        wallet: await ledger.generate_keys('holder')
-      }
-    },
-    {
-      title: 'State Desk',
-      email: 'root@statedesk.gr',
-      password: await bcrypt.hash('1234567', salt),
-      keys: {
-        crypto: await diplomata.generate_keys(),
-        wallet: await ledger.generate_keys('holder')
-      }
-    },
-  ]
-  const verifiers = await Holder.insertMany(verifiersData)
-  const issuersData = [
-    {
-      title: 'University of Athens',
-      email: 'root@uoa.gr',
-      password: await bcrypt.hash('1234567', salt),
-      keys: {
-        crypto: await diplomata.generate_keys(),
-        wallet: await ledger.generate_keys('issuer')
-      }
-    },
-    {
-      title: 'University of Crete',
-      email: 'root@uoc.gr',
-      password: await bcrypt.hash('1234567', salt),
-      keys: {
-        crypto: await diplomata.generate_keys(),
-        wallet: await ledger.generate_keys('issuer')
-      }
-    },
-  ]
-  const issuers = await Issuer.insertMany(issuersData)
-  for (const issuer of issuers){
-    for(const holder of holders){
-      const qualification = await issuer.createQualification({
+    }
+  }));
+  const issuerProfiles = issuersData.map((issuer) => {
+    console.log(issuer.email)
+    return {
+      title: issuer.title,
+      publicKey: issuer.keys.crypto.public.join('-'),
+      walletAddress: issuer.keys.wallet.public,
+      service: 'http://localhost:5000',
+      type: 'Issuer',
+    }
+  });
+  const issuers = await Issuer.insertMany(issuersData) as any
+  await Profile.insertMany([...holderProfiles, ...verifierProfiles, ...issuerProfiles])
+  for (const issuer of issuers) {
+    for (const holder of holders) {
+      await issuer.createQualification({
         title: titles[Math.floor(Math.random() * titles.length)],
         type: 'Bsc',
         department: 'Main',
@@ -138,10 +115,11 @@ const loadData = async ()=>{
         dean: deans[Math.floor(Math.random() * deans.length)],
         certificateNumber: Math.floor(Math.random() * 1000),
         supervisors: 'Kostas Minos'
-      }, holder.email)
-      console.log(qualification)
+      }, holder.publicKey)
+      // console.log(qualification)
     }
   }
-  console.log(holders, issuers, verifiers, )
+  console.log('Loaded!')
+  process.exit()
 }
 loadData()

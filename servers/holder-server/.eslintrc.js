@@ -1,1 +1,0 @@
-module.exports = require('@digigov/cli-lint/eslintrc')();

@@ -1,5 +1,5 @@
-import Verifier from "@diplomas/core/models/Verifier";
-import signupFactory from "@diplomas/core/utils/signupFactory";
+import Verifier from "@diplomas/server/models/Verifier";
+import signupFactory from "@diplomas/server/utils/signupFactory";
 
 export default {
   post: signupFactory(Verifier)

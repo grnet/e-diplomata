@@ -1,6 +1,6 @@
 import mongoose from "mongoose";
 
-const PrivatePublic = new mongoose.Schema({
+const PrivatePublicCrypto = new mongoose.Schema({
   private: {
     type: Array,
     of: String
@@ -10,11 +10,19 @@ const PrivatePublic = new mongoose.Schema({
     of: String
   }
 })
+const PrivatePublicWallet = new mongoose.Schema({
+  private: {
+    type: String,
+  },
+  public: {
+    type: String,
+  }
+})
 
 
 const KeysSchema = new mongoose.Schema({
-  crypto: PrivatePublic,
-  wallet: PrivatePublic,
+  crypto: PrivatePublicCrypto,
+  wallet: PrivatePublicWallet,
 });
 
 // export model Document with DocumentSchema

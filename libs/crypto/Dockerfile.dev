@@ -1,0 +1,8 @@
+FROM python:3.6-slim
+
+COPY . /app
+WORKDIR /app
+RUN pip3 install -r requirements.txt
+RUN pip3 install -r requirements-dev.txt
+RUN ls
+CMD python3 server.py

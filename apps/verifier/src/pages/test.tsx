@@ -5,7 +5,7 @@ import React, { Component } from "react";
 //import zip = require('BlockchainControllerLibrary');
 //const BlockchainControllerLibrary = new zip();
 //
-import {deployContract, publishAward, publishProof} from '@diplomas/blockchain';
+import {deployContract, publishAward, publishProof} from '@diplomas/ledger';
 
 class Verifier extends Component {
 

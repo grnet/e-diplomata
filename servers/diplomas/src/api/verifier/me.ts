@@ -1,5 +1,5 @@
-import Verifier from "@diplomas/core/models/Verifier";
-import meFactory from '@diplomas/core/utils/meFactory';
+import Verifier from "@diplomas/server/models/Verifier";
+import meFactory from '@diplomas/server/utils/meFactory';
 
 export default {
   get: meFactory(Verifier)
