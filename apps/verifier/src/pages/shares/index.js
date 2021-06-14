@@ -8,15 +8,33 @@ export default function SharedTitle() {
   const dataFilters = [{ title: "Είδος τίτλου σπουδών", filterData: types, filterTypeData: "type" }, { title: "Ίδρυμα/Σχολή", filterData: departments, filterTypeData: "department" }];
   const url = "verifier/documents/shares";
   const title = "Τίτλοι Σπουδών";
+  const presentation = {
+    url: (row) => `/diplomas/${row._id}`,
+    fields: [
+      {
+        label: 'Τιτλος σπουδων',
+        key: 'title'
+      },
+      {
+        label: 'Είδος τίτλου Σπουδών',
+        key: 'type'
+      },
+      {
+        label: 'Τμήμα/Σχολή',
+        key: 'department'
+      }
+    ]
+  }
+
   return (
     <>
       <Documents
         dataFilters={dataFilters}
         url={url}
         title={title}
+        presentation={presentation}
       >
-        <SharedTitleItem />
-      </Documents>
+       </Documents>
     </>
   );
 }
