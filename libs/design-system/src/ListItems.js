@@ -1,4 +1,4 @@
-import React from "react";
+import React,{ Fragment } from "react";
 import Typography from "@material-ui/core/Typography";
 import Link from "next/link";
 import ListItem from "@material-ui/core/ListItem";
@@ -13,11 +13,11 @@ export default function ListItems({row, presentation}) {
         <ListItemText
           secondary={
             <Typography variant="body2" color="textPrimary">
-              {presentation.fields.map(field=>{
+              {presentation.fields.map((field,index)=>{
                 return (
-                  <>
+                  <Fragment key={index}>
                     {field.label}: <strong>{row[field.key]}</strong> |{" "}
-                  </>
+                  </Fragment>
                 )
               })}
             
