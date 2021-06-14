@@ -17,6 +17,7 @@ import { debounce } from "lodash";
 import Pagination from "@material-ui/lab/Pagination";
 import SearchBar from "@diplomas/design-system/SearchBar";
 import Layout from "@diplomas/design-system/Layout";
+import ListItems from "@diplomas/design-system/ListItems";
 import SearchItems from "@diplomas/design-system/SearchItems";
 import FilterItems from "@diplomas/design-system/FilterItems";
 
@@ -30,7 +31,7 @@ const useStyles = makeStyles((theme) => ({
     },
 }));
 
-export default function Documents({ children, ...props }) {
+export default function Documents({ ...props }) {
     const router = useRouter();
     const [documents, setDocuments] = useState([]);
     const [searchForm, setSearchForm] = useState({
@@ -95,24 +96,6 @@ export default function Documents({ children, ...props }) {
             });
         }
     }
-
-    /*  if (options === item.filterData) {
-         if (item.filterTypeData === "type") {
-             setSearchForm((searchForm) => ({
-                 ...searchForm,
-                 type: value,
-                 offset: 1,
-             }));
-         } if (item.filterTypeData === "department") {
-             setSearchForm((searchForm) => ({
-                 ...searchForm,
-                 department: value,
-                 offset: 1,
-             }));
-         }
- 
-     } */
-
     useEffect(() => {
         setDocuments(data);
     }, [data]);
@@ -147,14 +130,15 @@ export default function Documents({ children, ...props }) {
                                 </Grid>
                                 <List>
                                     {documents &&
-                                        documents.map((row, index) => (
-                                            <div key={index}>
-                                                {React.Children.map(children, child => (
-                                                    React.cloneElement(child, { ...row })
-                                                ))}
-                                                {index + 1 <= documents.length && <Divider />}
-                                            </div>
-                                        ))}
+                                        documents.map((row, index) => {
+                                            return (
+                                                <div key={index}>
+                                                    {props.presentation && <ListItems row={row} presentation={props.presentation} />}
+                                                    {index + 1 <= documents.length && <Divider />}
+                                                </div>
+                                            )
+
+                                        })}
                                 </List>
                                 <Pagination
                                     className={styles.page}
