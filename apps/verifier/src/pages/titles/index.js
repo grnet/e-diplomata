@@ -8,14 +8,31 @@ export default function Titles() {
   const dataFilters = [{ title: "Είδος τίτλου σπουδών", filterData: types, filterTypeData: "type" }, { title: "Ίδρυμα/Σχολή", filterData: departments, filterTypeData: "department" }];
   const url = "verifier/documents/titles";
   const title = "Τίτλοι Σπουδών";
+  const presentation = {
+    url: (row) => `/titles/${row._id}`,
+    fields: [
+      {
+        label: 'Τιτλος σπουδων',
+        key: 'title'
+      },
+      {
+        label: 'Είδος τίτλου Σπουδών',
+        key: 'type'
+      },
+      {
+        label: 'Τμήμα/Σχολή',
+        key: 'department'
+      }
+    ]
+  }
   return (
     <>
       <Documents
         dataFilters={dataFilters}
         url={url}
         title={title}
+        presentation={presentation}
       >
-        <TitleItem />
       </Documents>
     </>
   );
