@@ -6,7 +6,7 @@ export default function Title() {
   const props = {
     title: "Issuer Title",
     content: "Content Text",
-    url: "titles",
+    url: "issuer/documents",
     href: "/titles",
     showButtons: false,
     presentation: {
