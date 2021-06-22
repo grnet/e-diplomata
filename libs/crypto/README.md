@@ -63,40 +63,6 @@ s_ack, result = verifier.publish_ack(s_prf, title, proof, issuer_pub)   # step 4
 assert result
 ```
 
-## API (TODO)
-
-Refer to [TYPES.md](./TYPES.md) for a specification of the JSON structures
-appearing in the presentation layer.
-
-### `KeyManager`
-
-#### .generate_keys()
-#### .get_public_shares()
-
-### `Party`
-
-#### .from_key()
-#### .get_public()
-#### .sign()
-#### .verify_signature()
-#### .encrypt()
-#### .decrypt()
-
-### `Holder`
-
-#### Holder.publish_request()
-
-### `Issuer`
-
-#### Issuer.publish_award()
-#### Issuer.publish_proof()
-
-### `Verifier`
-
-#### Verifier.publish_ack()
-
-## Dev
-
 ### Tests
 
 ```commandline
